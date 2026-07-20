@@ -32,6 +32,41 @@ uv tool list
 /Users/will/.local/bin/discli
 ```
 
+## 環境變數
+
+目前 `discli` 的執行程式碼使用 7 個不重複的環境變數：
+
+| 環境變數 | 用途 | 必要性或預設值 |
+|---|---|---|
+| `DISCORD_BOT_TOKEN` | Discord Bot Token | 可改用 `--token` 或 `discli config set token` |
+| `DISCLI_PROFILE` | 覆寫本次執行的權限設定檔 | 選用；可用值為 `full`、`chat`、`readonly`、`moderation` |
+| `DEEPGRAM_API_KEY` | Deepgram STT 與 TTS 的 API Key | 使用 Deepgram 時必要 |
+| `OPENAI_API_KEY` | OpenAI Whisper STT 與 TTS 的 API Key | 使用 OpenAI 語音功能時必要 |
+| `ELEVENLABS_API_KEY` | ElevenLabs TTS 的 API Key | 使用 ElevenLabs 時必要 |
+| `DISCLI_DEEPGRAM_MODEL` | Deepgram STT 模型 | 選用；預設為 `nova-3` |
+| `DISCLI_DEEPGRAM_LANGUAGE` | Deepgram STT 辨識語言 | 選用；預設為 `multi` |
+
+只使用 Discord 文字、REST API 或基本 Gateway 功能時，不需要設定語音
+供應商的環境變數。`DISCORD_BOT_TOKEN` 也可以改存於 discli 設定檔。
+
+Shell 設定範例：
+
+```sh
+export DISCORD_BOT_TOKEN="your-discord-bot-token"
+export DISCLI_PROFILE="readonly"
+
+# 以下只在使用對應語音供應商時設定。
+export DEEPGRAM_API_KEY="your-deepgram-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
+export ELEVENLABS_API_KEY="your-elevenlabs-api-key"
+
+# 以下為選用的 Deepgram STT 覆寫值。
+export DISCLI_DEEPGRAM_MODEL="nova-3"
+export DISCLI_DEEPGRAM_LANGUAGE="multi"
+```
+
+不得將實際 Token 或 API Key 寫入 Git 追蹤的檔案。
+
 ## 更新本機版本
 
 切換至要安裝的分支或提交後，重新執行：
