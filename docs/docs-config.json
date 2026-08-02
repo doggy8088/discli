@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "discli",
-    "description": "Discord CLI for AI Agents & Humans — documentation",
+    "description": "供 AI 代理與人類使用的 Discord CLI 文件",
     "url": "https://discli.dev"
   },
   "branding": {
@@ -30,81 +30,81 @@
         { "label": "GitHub", "href": "https://github.com/DevRohit06/discli" },
         { "label": "PyPI", "href": "https://pypi.org/project/discord-cli-agent/" }
       ],
-      "cta": { "label": "Get Started", "href": "/getting-started/installation" }
+      "cta": { "label": "開始使用", "href": "/getting-started/installation" }
     },
     "sidebar": [
       {
-        "label": "Getting Started",
+        "label": "快速上手",
         "items": [
-          { "label": "Installation", "href": "/getting-started/installation" },
-          { "label": "Quickstart", "href": "/getting-started/quickstart" },
-          { "label": "Configuration", "href": "/getting-started/configuration" },
-          { "label": "Your First Bot", "href": "/getting-started/your-first-bot" }
+          { "label": "安裝", "href": "/getting-started/installation" },
+          { "label": "快速上手", "href": "/getting-started/quickstart" },
+          { "label": "設定", "href": "/getting-started/configuration" },
+          { "label": "第一個機器人", "href": "/getting-started/your-first-bot" }
         ]
       },
       {
-        "label": "Guides",
+        "label": "指南",
         "items": [
-          { "label": "CLI Usage", "href": "/guides/cli-usage" },
-          { "label": "Building Agents", "href": "/guides/building-agents" },
-          { "label": "Serve Mode", "href": "/guides/serve-mode" },
-          { "label": "Streaming Responses", "href": "/guides/streaming-responses" },
-          { "label": "Slash Commands", "href": "/guides/slash-commands" },
-          { "label": "Security & Permissions", "href": "/guides/security-permissions" },
-          { "label": "Scripting & Automation", "href": "/guides/scripting-automation" },
-          { "label": "Components & Modals", "href": "/guides/components-modals" },
-          { "label": "Voice", "href": "/guides/voice" },
-          { "label": "AI Agent", "href": "/guides/ai-agent" }
+          { "label": "CLI 用法", "href": "/guides/cli-usage" },
+          { "label": "建立代理", "href": "/guides/building-agents" },
+          { "label": "Serve 模式", "href": "/guides/serve-mode" },
+          { "label": "串流回覆", "href": "/guides/streaming-responses" },
+          { "label": "斜線指令", "href": "/guides/slash-commands" },
+          { "label": "安全與權限", "href": "/guides/security-permissions" },
+          { "label": "腳本與自動化", "href": "/guides/scripting-automation" },
+          { "label": "元件與表單", "href": "/guides/components-modals" },
+          { "label": "語音功能", "href": "/guides/voice" },
+          { "label": "AI 代理", "href": "/guides/ai-agent" }
         ]
       },
       {
-        "label": "Use Cases",
+        "label": "應用場景",
         "items": [
-          { "label": "AI Support Agent", "href": "/use-cases/ai-support-agent" },
-          { "label": "Meeting Transcription", "href": "/use-cases/meeting-transcription" },
-          { "label": "Moderation Bot", "href": "/use-cases/moderation-bot" },
-          { "label": "Thread-Based Support", "href": "/use-cases/thread-based-support" },
-          { "label": "Channel Logger", "href": "/use-cases/channel-logger" },
-          { "label": "CI Notifications", "href": "/use-cases/ci-notifications" },
-          { "label": "AI Serve Agent", "href": "/use-cases/ai-serve-agent" }
+          { "label": "AI 客服代理", "href": "/use-cases/ai-support-agent" },
+          { "label": "會議逐字稿", "href": "/use-cases/meeting-transcription" },
+          { "label": "審核機器人", "href": "/use-cases/moderation-bot" },
+          { "label": "討論串客服", "href": "/use-cases/thread-based-support" },
+          { "label": "頻道紀錄器", "href": "/use-cases/channel-logger" },
+          { "label": "CI 通知", "href": "/use-cases/ci-notifications" },
+          { "label": "AI Serve 代理", "href": "/use-cases/ai-serve-agent" }
         ]
       },
       {
-        "label": "Architecture",
+        "label": "架構",
         "items": [
-          { "label": "Overview", "href": "/architecture/overview" },
-          { "label": "Connection Model", "href": "/architecture/connection-model" },
-          { "label": "Serve Protocol", "href": "/architecture/serve-protocol" },
-          { "label": "Security Model", "href": "/architecture/security-model" },
-          { "label": "Token Resolution", "href": "/architecture/token-resolution" }
+          { "label": "總覽", "href": "/architecture/overview" },
+          { "label": "連線模型", "href": "/architecture/connection-model" },
+          { "label": "Serve 通訊協定", "href": "/architecture/serve-protocol" },
+          { "label": "安全性模型", "href": "/architecture/security-model" },
+          { "label": "權杖解析", "href": "/architecture/token-resolution" }
         ]
       },
       {
-        "label": "Comparisons",
+        "label": "比較",
         "items": [
-          { "label": "vs Discord Libraries", "href": "/comparisons/vs-discord-libraries" },
-          { "label": "vs CLI Tools", "href": "/comparisons/vs-cli-tools" },
-          { "label": "vs Hosted Bots", "href": "/comparisons/vs-hosted-bots" },
-          { "label": "Why discli?", "href": "/comparisons/why-discli" }
+          { "label": "與 Discord 函式庫比較", "href": "/comparisons/vs-discord-libraries" },
+          { "label": "與 CLI 工具比較", "href": "/comparisons/vs-cli-tools" },
+          { "label": "與托管機器人比較", "href": "/comparisons/vs-hosted-bots" },
+          { "label": "為什麼選擇 discli？", "href": "/comparisons/why-discli" }
         ]
       },
       {
-        "label": "Troubleshooting",
+        "label": "疑難排解",
         "items": [
-          { "label": "Common Issues", "href": "/troubleshooting/common-issues" },
-          { "label": "Windows Quirks", "href": "/troubleshooting/windows-quirks" },
-          { "label": "Edge Cases", "href": "/troubleshooting/edge-cases" },
-          { "label": "FAQ", "href": "/troubleshooting/faq" }
+          { "label": "常見問題", "href": "/troubleshooting/common-issues" },
+          { "label": "Windows 特殊狀況", "href": "/troubleshooting/windows-quirks" },
+          { "label": "邊界情境", "href": "/troubleshooting/edge-cases" },
+          { "label": "常見問答", "href": "/troubleshooting/faq" }
         ]
       },
       {
-        "label": "Reference",
+        "label": "參考",
         "items": [
-          { "label": "CLI Commands", "href": "/reference/cli-commands" },
-          { "label": "Serve Actions", "href": "/reference/serve-actions" },
-          { "label": "Serve Events", "href": "/reference/serve-events" },
-          { "label": "Permission Profiles", "href": "/reference/permission-profiles" },
-          { "label": "Component Types", "href": "/reference/component-types" }
+          { "label": "CLI 指令", "href": "/reference/cli-commands" },
+          { "label": "Serve 動作", "href": "/reference/serve-actions" },
+          { "label": "Serve 事件", "href": "/reference/serve-events" },
+          { "label": "權限設定檔", "href": "/reference/permission-profiles" },
+          { "label": "元件類型", "href": "/reference/component-types" }
         ]
       }
     ]
@@ -117,27 +117,27 @@
   },
   "footer": {
     "layout": "full",
-    "tagline": "Discord CLI for AI Agents & Humans",
-    "copyright": "\u00a9 {year} Rohit Kushwaha. MIT License.",
+    "tagline": "供 AI 代理與人類使用的 Discord CLI",
+    "copyright": "© {year} Rohit Kushwaha。MIT 授權條款。",
     "showBranding": true,
     "socials": {
       "github": "https://github.com/DevRohit06/discli"
     },
     "links": [
       {
-        "title": "Docs",
+        "title": "文件",
         "items": [
-          { "label": "Getting Started", "href": "/getting-started/installation" },
-          { "label": "Guides", "href": "/guides/cli-usage" },
-          { "label": "Reference", "href": "/reference/cli-commands" }
+          { "label": "快速上手", "href": "/getting-started/installation" },
+          { "label": "指南", "href": "/guides/cli-usage" },
+          { "label": "參考", "href": "/reference/cli-commands" }
         ]
       },
       {
-        "title": "Community",
+        "title": "社群",
         "items": [
           { "label": "GitHub", "href": "https://github.com/DevRohit06/discli" },
           { "label": "PyPI", "href": "https://pypi.org/project/discord-cli-agent/" },
-          { "label": "Contributing", "href": "https://github.com/DevRohit06/discli/blob/main/CONTRIBUTING.md" }
+          { "label": "參與貢獻", "href": "https://github.com/DevRohit06/discli/blob/main/CONTRIBUTING.md" }
         ]
       }
     ]
@@ -149,7 +149,7 @@
   "search": {
     "enabled": true,
     "provider": "local",
-    "placeholder": "Search docs..."
+    "placeholder": "搜尋文件..."
   },
   "integrations": {
     "editPage": {

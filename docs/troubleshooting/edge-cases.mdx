@@ -1,22 +1,22 @@
 ---
-title: Edge Cases
-description: Technical edge cases and how to handle them
+title: 邊界情境
+description: 特定情境下的技術性問題與處理方式
 ---
 
-# Edge Cases
+# 邊界情境
 
-These are less common issues that arise in specific scenarios. If you have hit something weird that is not in [Common Issues](/troubleshooting/common-issues), check here.
+這些問題發生頻率較低，通常只在特定場景出現。若你遇到不在 [常見問題](/troubleshooting/common-issues) 的情況，可先從這裡查找。
 
-## Large guild member fetches
+## 大型伺服器成員清單
 
-**Symptom:** `discli member list` returns only a partial list for a server with 1,000+ members.
+**症狀：** `discli member list` 對 1000+ 成員伺服器只回傳部分成員。
 
-**Cause:** Discord requires the **Server Members Intent** (a privileged intent) to fetch the full member list. Without it, only cached/online members are returned.
+**原因：** Discord 要求有 **Server Members Intent**（受保護 Intents）才能完整抓取成員；沒有時只會回傳快取或線上成員。
 
-**Fix:**
+**修正方式：**
 
-1. Enable **Server Members Intent** in the [Developer Portal](https://discord.com/developers/applications) under **Bot** > **Privileged Gateway Intents**
-2. For very large guilds (10,000+), Discord paginates member lists. discli handles pagination automatically, but the request may take several seconds
+1. 在開發者主控台的 **Bot** > **Privileged Gateway Intents** 啟用 **Server Members Intent**。
+2. 大型伺服器（10,000+）會分頁回傳。discli 有自動分頁邏輯，但請求仍可能需要數秒。
 
 This is one of the few places where a one-shot command still depends on a privileged intent.
 `discli member list` reaches Discord over HTTP and sends no intents, but the endpoint itself is
@@ -25,68 +25,68 @@ gated and work with the intent disabled — see [Connection
 Model](/architecture/connection-model).
 
 <Callout type="warning">
-The Server Members Intent must be explicitly approved by Discord for bots in 100+ guilds. If your bot is in many servers, you will need to apply through the Developer Portal's verification process.
+Server Members Intent 需 Discord 審核通過，對於超過 100 個伺服器的機器人尤為明確。若你的機器人屬於此類，請透過開發者驗證流程申請。
 </Callout>
 
-## Interaction token expiry
+## 互動 token 過期
 
-**Symptom:** Responding to a slash command returns `Invalid Webhook Token` or `Interaction token expired`.
+**症狀：** 回應 Slash 指令時得到 `Invalid Webhook Token` 或 `Interaction token expired`。
 
-**Cause:** Discord interaction tokens expire **15 minutes** after the command is invoked. If your agent takes too long to process and respond, the token becomes invalid.
+**原因：** Discord 互動 token 在指令叫用後 **15 分鐘** 後失效；若處理過久未回應，token 會變為無效。
 
-**Fix:**
+**修正方式：**
 
-- **Acknowledge immediately** — send a deferred response within 3 seconds, then follow up with the actual reply
-- **Keep processing fast** — if your AI model takes a long time, acknowledge first and then edit the response
+- **先立即回應**：3 秒內送出延遲回覆，再以實際結果回填
+- **縮短主流程時間**：若 AI 花太久，先 `defer`，後續再更新回應
 
 ```json
 {"action": "interaction_defer", "interaction_id": "1234567890"}
 ```
 
-Then follow up within 15 minutes:
+再於 15 分鐘內跟進：
 
 ```json
 {"action": "interaction_followup", "interaction_id": "1234567890", "content": "Here's your answer..."}
 ```
 
-## Slash command sync delay
+## Slash 指令同步延遲
 
-**Symptom:** You registered a new slash command but it does not appear in Discord's command picker.
+**症狀：** 已註冊新指令但 Discord 命令選單仍未顯示。
 
-**Cause:** Global slash commands can take up to **1 hour** to propagate. Guild-specific commands sync **instantly**.
+**原因：** 全域 Slash 指令可能要最多 **1 小時** 才會傳播；伺服器內同步會立即生效。
 
-**Fix:** During development, always use guild-specific commands:
+**修正方式：**開發階段建議只用伺服器同步：
 
 ```bash
-# Instant — guild-specific
+# 立即生效：伺服器同步
 discli slash register --guild 1234567890 --name mycommand --description "Test command"
 
-# Slow — global (up to 1 hour)
+# 緩慢：全域同步（最多 1 小時）
 discli slash register --name mycommand --description "Test command"
 ```
 
-Deploy globally only when your command is stable and tested.
+確認功能穩定後再全域發布。
 
-## Discord 2000 character limit
+## Discord 訊息長度上限 2000
 
-**Symptom:** `discli message send` fails or truncates when the message content exceeds 2000 characters.
+**症狀：** `discli message send` 在超過 2000 字元時失敗或被截斷。
 
-**Cause:** Discord enforces a hard 2000-character limit on message content. This is an API-level restriction that cannot be bypassed.
+**原因：** Discord 限制訊息內容最大 2000 字元，這是 API 層限制，無法繞過。
 
-**Fix:**
+**修正方式：**
 
 <Tabs>
-<Tab title="Split messages">
-Break long content into chunks under 2000 characters. Most AI models can be prompted to keep responses concise:
+<Tab title="拆段發送">
+讓輸出以 2000 字元以下區塊拆成多則訊息。可在 prompt 中要求 AI：
 
 ```bash
-# In your system prompt
+# 在 system prompt 中限制
 "Keep responses under 1900 characters. If you need more space, split across multiple messages."
 ```
 </Tab>
 
-<Tab title="Use streaming">
-In `discli serve`, use the streaming action to send content incrementally. The message is edited in place as new content arrives, and the final message stays within the limit:
+<Tab title="改用串流">
+在 `discli serve` 使用串流 action 逐步發送內容。訊息會在原文中即時更新，最後仍保留在長度限制內：
 
 ```json
 {"action": "message_send", "channel": "#general", "content": "First part of a long response..."}
@@ -95,134 +95,134 @@ In `discli serve`, use the streaming action to send content incrementally. The m
 </Tab>
 </Tabs>
 
-## Rate limit 429 from Discord
+## Discord 429 速率限制
 
-**Symptom:** You see HTTP 429 responses in stderr or your actions are delayed.
+**症狀：** stderr 出現 HTTP 429，或 actions 執行被延遲。
 
-**Cause:** Discord's API has per-route rate limits. Sending too many requests to the same endpoint in a short window triggers a 429 with a `retry_after` value.
+**原因：** Discord API 在每個路徑有不同速率限制。短時間多次呼叫同 endpoint 會回 429，並附 `retry_after`。
 
-**Fix:** discli handles 429 responses automatically with exponential backoff. If you see persistent 429s:
+**修正方式：** discli 會自動對 429 做指數退避。若持續 429，請：
 
-- Reduce the frequency of your actions
-- Avoid sending messages in tight loops
-- discli's built-in rate limiter (5 destructive actions per 5 seconds) is designed to stay well under Discord's limits
+- 降低行為頻率
+- 避免短時間大量發送
+- 注意 discli 預設內建 5 次破壞性操作/5 秒，目的是留有安全緩衝
 
 <Callout type="note">
-discli's internal rate limiter is **stricter** than Discord's to provide a safety margin. If you are hitting discli's rate limiter, you are likely close to Discord's limits too.
+discli 內建速率限制比 Discord 預設更嚴格，若你碰到它，通常你的行為也接近 Discord 限制上限。
 </Callout>
 
-## Cache misses in member_info
+## member_info 快取未命中
 
-**Symptom:** `discli member info @username` is slow or returns partial data the first time, then works fine on subsequent calls.
+**症狀：** `discli member info @username` 第一次較慢或資料不完整，第二次起就正常。
 
-**Cause:** discli caches member data from gateway events. If the bot recently started or the member has not been active, their data may not be in the cache. discli falls back to an API fetch, which is slower.
+**原因：** discli 的成員資料主要來自 gateway 快取。機器人新啟動或該使用者近期未活躍時，快取可能沒資料，會回退為 API 抓取，故較慢。
 
-**Fix:** This is expected behavior. The first lookup may take 100-500ms (API fetch) while subsequent lookups return in under 1ms (cache hit). No action needed unless latency is critical, in which case pre-warm the cache:
+**修正方式：** 屬預期行為。首次查詢通常 100–500ms，之後快取命中可降到 1ms 以內。若對延遲敏感，可在啟動階段預熱快取：
 
 ```bash
-# Pre-warm by listing members at startup
+# 啟動時預先列出成員（捨棄輸出）
 discli member list "My Server" --limit 1000 > /dev/null
 ```
 
-## Bot mentions itself
+## 機器人回應自己
 
-**Symptom:** Your agent responds to its own messages, creating an infinite loop that floods the channel.
+**症狀：** 代理回覆自己的訊息，導致無限循環。
 
-**Cause:** The bot receives its own `message_create` events. If your agent does not filter these out, it will respond to itself endlessly.
+**原因：** 代理收到自身訊息事件而未過濾，進而對自己回應。
 
-**Fix:** Always filter out bot messages:
+**修正方式：** 一定要過濾 bot 訊息：
 
 ```python
 for line in proc.stdout:
     event = json.loads(line)
     if event.get("type") == "message_create":
-        # Skip messages from bots (including ourselves)
+        # 跳過所有 bot 訊息（含自己）
         if event["data"].get("is_bot", False):
             continue
-        # Process the message...
+        # 繼續處理訊息...
 ```
 
 <Callout type="danger">
-An unfiltered self-mention loop can generate hundreds of messages in seconds, potentially hitting rate limits and flooding the channel. Always filter `is_bot: true` events in your agent.
+若未過濾自我回應，可能在數秒內產生上百則訊息，造成速率上限與頻道灌訊息。
 </Callout>
 
-## Multiple serve instances
+## 多個 serve 實例
 
-**Symptom:** Starting a second `discli serve` with the same bot token causes the first instance to disconnect or both instances receive duplicate/missing events.
+**症狀：** 使用同一 bot token 啟動第二個 `discli serve`，第一個實例斷線，或兩邊都出現重複/缺漏事件。
 
-**Cause:** Discord's gateway allows only one active connection per bot token (without sharding). Opening a second connection forces the first to reconnect, causing a reconnect loop.
+**原因：** Discord Gateway 同一 bot token 一般只允許一個連線（未分片）。第二個連線會迫使第一個重連，形成反覆重連循環。
 
-**Fix:**
+**修正方式：**
 
-- Run only **one** `discli serve` instance per bot token
-- CLI commands (`discli message send`, `discli member list`, etc.) are stateless REST calls and can run concurrently without issues
-- `discli listen` and `discli voice` commands *do* open gateway connections, so they contend for the same single-connection slot as `discli serve`. Do not run them against a token that already has a `serve` attached — see [Connection Model](/architecture/connection-model)
-- If you need multiple agents, create separate bot tokens for each
+- 每個 bot token 僅啟動**一個** `discli serve`
+- CLI 指令（如 `discli message send`、`discli member list`）是無狀態 REST 呼叫，可同時執行
+- `discli listen` 與 `discli voice` 指令會開啟 Gateway 連線，因此會與 `discli serve` 競爭同一個連線名額。請勿對已連接 `serve` 的 token 執行這些指令；詳見[連線模型](/architecture/connection-model)
+- 若需多個代理，請為每個代理建立不同的 bot token
 
-## Attachments and embeds
+## 附件與 embed
 
-**Symptom:** You want to send an image, file, or rich embed through discli.
+**症狀：** 你要透過 discli 發送圖片、檔案或 embed。
 
-**Cause:** Embeds are now fully supported in both CLI and serve mode. File attachments work via CLI and via the `files` field in serve mode actions.
+**原因：** embed 現在在 CLI 與 serve 都支援。檔案可透過 CLI 的 `--file`，serve 可透過 `files` 欄位傳送。
 
-**Fix:**
+**修正方式：**
 
-- For **CLI usage**, file attachments work via the `--file` flag, and rich embeds via `--embed-*` flags:
-  ```bash
-  discli message send "#general" "Here's the report" --file ./report.csv
-  discli message send "#general" "Update" --embed-title "Status" --embed-color "5865F2"
+- **CLI 使用**：附件用 `--file`，embed 用 `--embed-*` 旗標：
+-  ```bash
+discli message send "#general" "這是回報內容" --file ./report.csv
+discli message send "#general" "更新" --embed-title "狀態" --embed-color "5865F2" --embed-field "變更" "修正錯誤並提升效能"
   ```
-- For **serve mode**, embeds are sent via the `embed` JSON field, and interactive components (buttons, select menus, modals) via the `components` field. See [Components & Modals](/guides/components-modals) for details
+- **Serve 使用**：embed 透過 `embed` JSON，互動元件（按鈕、選單）透過 `components`。詳細請參考 [元件與模態視窗](/guides/components-modals)。
 
-## Hex color validation
+## 十六進位顏色驗證
 
-**Symptom:** Embed color is rejected or displays incorrectly.
+**症狀：** embed 顏色被拒絕或顯示不正確。
 
-**Cause:** Discord expects embed colors as integer values. discli accepts hex color strings and converts them.
+**原因：** Discord embed 顏色使用整數，discli 會接受十六進位字串並自動轉換。
 
-**Fix:** discli accepts hex colors with or without the `#` prefix. Both `"5865F2"` and `"#5865F2"` are valid. Invalid hex strings (e.g., `"ZZZZZZ"`, `"12345"`) are rejected with a clear error message.
+**修正方式：** discli 接受有無 `#` 的十六進位字串；`"5865F2"` 與 `"#5865F2"` 皆合法。非法值（如 `"ZZZZZZ"`、`"12345"`）會回傳清楚的錯誤訊息。
 
-## Member timeout duration
+## 成員時限（timeout）秒數
 
-**Symptom:** `member_timeout` action fails with an invalid duration error.
+**症狀：** `member_timeout` 回傳秒數無效。
 
-**Cause:** Discord enforces a maximum timeout duration of 28 days.
+**原因：** Discord 的 timeout 上限是 28 天。
 
-**Fix:** The `duration` field accepts values from `0` to `2419200` seconds (28 days). Use `0` to remove an existing timeout. Values exceeding the maximum are rejected.
+**修正方式：** `duration` 可接受 `0` 到 `2419200` 秒（28 天）。若設為 `0` 代表取消既有 timeout。超過上限會被拒絕。
 
-## Permission name validation
+## 權限名稱驗證
 
-**Symptom:** `channel_set_permissions` or `role_edit` fails with an invalid permission name.
+**症狀：** `channel_set_permissions` 或 `role_edit` 回傳權限名稱無效。
 
-**Cause:** Permission names are validated against `discord.Permissions()` to ensure they are real Discord permission names.
+**原因：** 權限名稱會用 `discord.Permissions()` 驗證，保證名稱真實存在。
 
-**Fix:** Use the exact Discord permission names (e.g., `send_messages`, `manage_channels`, `view_channel`). Run `discli role list` to see what permissions existing roles have — those names are the valid ones.
+**修正方式：** 請使用正確的 Discord 權限名稱（如 `send_messages`、`manage_channels`、`view_channel`）。可用 `discli role list` 查看現有角色權限，並取其名稱。
 
-## Forum channels in channel list
+## 討論區頻道在 channel_list 中
 
-**Symptom:** Forum channels were previously missing from `channel_list` results.
+**症狀：** `channel_list` 裡原本看不見 forum 伺服器頻道。
 
-**Fix:** Forum channels now appear in channel list results alongside text, voice, and category channels. They are listed with type `forum`.
+**修正方式：** 論壇頻道已加入列表，與文字、語音、分類一併顯示，`type` 會是 `forum`。
 
-## Voice state events with null channels
+## 語音狀態事件帶 null channel
 
-**Symptom:** A `voice_state` event has both `channel` and `old_channel` as `null`.
+**症狀：** 某筆 `voice_state` 事件的 `channel` 與 `old_channel` 皆為 `null`。
 
-**Cause:** This can happen in rare edge cases when Discord sends a voice state update for a user whose channel information is not cached.
+**原因：** 少見情況下，Discord 發送的語音狀態更新可能找不到對應快取中的頻道資料。
 
-**Fix:** This is handled gracefully — the event is still emitted with `null` channel fields. Your agent should check for `null` values before processing voice state events
+**修正方式：** 此情況預期會被順利處理，事件仍會送出且含 `null` 欄位。你的代理應在處理前先檢查 `null`。
 
-## Thread auto-archive
+## 自動封存討論串
 
-**Symptom:** A thread your bot was active in becomes archived and the bot can no longer post to it.
+**症狀：** bot 先前活躍的討論串自動封存，導致無法再發言。
 
-**Cause:** Discord automatically archives threads after a period of inactivity (1 hour, 24 hours, 3 days, or 7 days depending on server settings). Archived threads are read-only.
+**原因：** Discord 會依活躍時間自動封存討論串（1 小時、24 小時、3 天、7 天，取伺服器設定）。封存後討論串為唯讀。
 
-**Fix:**
+**修正方式：**
 
-- **Bot messages reset the archive timer** — as long as your bot (or any user) posts in the thread regularly, it stays active
-- To unarchive a thread programmatically, send a message to it — Discord automatically unarchives threads when a new message is sent
-- Set a longer auto-archive duration when creating threads:
+- **發言會重置封存計時器。** 只要 bot 或使用者都持續留言，討論串會維持活躍
+- 要取消封存可直接對討論串發訊息，Discord 會自動解封
+- 建立時可指定較長封存時間：
   ```bash
-  discli thread create "#general" "Support Thread" --auto-archive 1440  # 24 hours
+discli thread create "#general" "Support Thread" --auto-archive 1440  # 24 小時
   ```

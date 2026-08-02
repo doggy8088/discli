@@ -1,28 +1,28 @@
 ---
-title: CI Notifications
-description: Send build status and deploy alerts to Discord from GitHub Actions
+title: CI 通知
+description: 透過 discli 將建置狀態與部署警示從 GitHub Actions 發送到 Discord
 ---
 
-# CI Notifications
+# CI 通知
 
-Send build status updates, deploy alerts, and test summaries to Discord directly from your CI/CD pipeline using discli.
+在 CI/CD 流程中直接使用 discli 將建置狀態、部署警示與測試摘要發送到 Discord。
 
-## The problem
+## 問題背景
 
-Your team uses Discord for communication, but deploy notifications live in GitHub, email, or a separate tool. Developers miss failed builds, successful deploys go unnoticed, and nobody knows what is currently running in production.
+團隊已在 Discord 協作，但部署通知仍散落在 GitHub、郵件或獨立工具，造成關鍵通知被忽略，開發者可能錯過失敗部署，也不知道生產環境目前正在執行什麼。
 
-## The solution
+## 解法
 
-Add discli to your CI/CD pipeline as a lightweight notification step. No webhooks to configure, no separate bot infrastructure -- just `pip install discord-cli-agent` and a single `discli message send` command.
+在 CI/CD 流程中加入 discli，避免額外的 webhook 或 bot 架構，僅需 `pip install discord-cli-agent` 並在最後執行 `discli message send`。
 
-## Full working code
+## 完整可執行範例
 
 <Tabs>
   <Tab title="GitHub Actions">
-    ### Basic deploy notification
+    ### 基本部署通知
 
     ```yaml
-    name: Deploy and Notify
+name: 部署並通知
 
     on:
       push:
@@ -34,32 +34,32 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
         steps:
           - uses: actions/checkout@v4
 
-          - name: Deploy to production
+      - name: 部署到正式環境
             run: |
-              # Your deploy steps here
-              echo "Deploying..."
+              # 在此加入你的部署步驟
+              echo "部署中..."
 
-          - name: Notify Discord (success)
+          - name: 通知 Discord（成功）
             if: success()
             env:
               DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
             run: |
               pip install discord-cli-agent
-              discli message send "#deploys" "Deploy **${{ github.sha }}** to production succeeded. Branch: \`${{ github.ref_name }}\` | Author: ${{ github.actor }} | [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+              discli message send "#deploys" "版本 **${{ github.sha }}** 已成功部署到 production。分支：\`${{ github.ref_name }}\` | 作者：${{ github.actor }} | [查看提交](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
 
-          - name: Notify Discord (failure)
+          - name: 通知 Discord（失敗）
             if: failure()
             env:
               DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
             run: |
               pip install discord-cli-agent
-              discli message send "#deploys" "Deploy **${{ github.sha }}** FAILED. Branch: \`${{ github.ref_name }}\` | Author: ${{ github.actor }} | [View run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              discli message send "#deploys" "版本 **${{ github.sha }}** 部署 **失敗**。分支：\`${{ github.ref_name }}\` | 作者：${{ github.actor }} | [檢視執行結果](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
     ```
 
-    ### With test summary
+    ### 含測試摘要
 
     ```yaml
-    name: Test and Notify
+name: 測試並通知
 
     on:
       pull_request:
@@ -71,34 +71,34 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
         steps:
           - uses: actions/checkout@v4
 
-          - name: Run tests
+          - name: 執行測試
             id: tests
             run: |
-              # Run tests and capture summary
+              # 執行測試並擷取摘要
               python -m pytest --tb=short 2>&1 | tee test-output.txt
               echo "result=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
-          - name: Notify Discord
+          - name: 通知 Discord
             if: always()
             env:
               DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
             run: |
               pip install discord-cli-agent
 
-              # Extract test summary (last 3 lines of pytest output)
+              # 抓取 pytest 最後 3 行摘要
               SUMMARY=$(tail -3 test-output.txt | tr '\n' ' ')
 
-              if [ "${{ steps.tests.outputs.result }}" = "0" ]; then
-                STATUS="PASSED"
+if [ "${{ steps.tests.outputs.result }}" = "0" ]; then
+                STATUS="通過"
               else
-                STATUS="FAILED"
+                STATUS="失敗"
               fi
 
-              discli message send "#ci" "**Tests ${STATUS}** for PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}
+              discli message send "#ci" "**測試 ${STATUS}**：PR #${{ github.event.pull_request.number }}｜${{ github.event.pull_request.title }}
               \`\`\`
               ${SUMMARY}
               \`\`\`
-              [View PR](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}) | [View run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+              [檢視 PR](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}) | [檢視執行結果](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
     ```
   </Tab>
 
@@ -111,7 +111,7 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
     deploy:
       stage: deploy
       script:
-        - echo "Deploying..."
+        - echo "部署中..."
 
     notify_success:
       stage: notify
@@ -120,7 +120,7 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
         DISCORD_BOT_TOKEN: $DISCORD_BOT_TOKEN
       script:
         - pip install discord-cli-agent
-        - discli message send "#deploys" "Deploy ${CI_COMMIT_SHORT_SHA} to production succeeded. Branch: ${CI_COMMIT_REF_NAME} | Author: ${GITLAB_USER_LOGIN}"
+        - discli message send "#deploys" "版本 ${CI_COMMIT_SHORT_SHA} 已成功部署到 production。分支：${CI_COMMIT_REF_NAME} | 作者：${GITLAB_USER_LOGIN}"
 
     notify_failure:
       stage: notify
@@ -129,19 +129,19 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
         DISCORD_BOT_TOKEN: $DISCORD_BOT_TOKEN
       script:
         - pip install discord-cli-agent
-        - discli message send "#deploys" "Deploy ${CI_COMMIT_SHORT_SHA} FAILED. Branch: ${CI_COMMIT_REF_NAME} | [View pipeline](${CI_PIPELINE_URL})"
+        - discli message send "#deploys" "版本 ${CI_COMMIT_SHORT_SHA} 部署 **失敗**。分支：${CI_COMMIT_REF_NAME} | [檢視 pipeline](${CI_PIPELINE_URL})"
     ```
   </Tab>
 
   <Tab title="Shell script">
     ```bash
     #!/bin/bash
-    # ci-notify.sh — Reusable CI notification script.
-    # Usage: ./ci-notify.sh <status> <channel> [details]
+    # ci-notify.sh — 可重複使用的 CI 通知腳本。
+    # 用法：./ci-notify.sh <status> <channel> [details]
 
-    STATUS="${1:?Usage: $0 <success|failure> <channel> [details]}"
-    CHANNEL="${2:?Usage: $0 <status> <channel> [details]}"
-    DETAILS="${3:-No additional details.}"
+    STATUS="${1:?用法：$0 <success|failure> <channel> [details]}"
+    CHANNEL="${2:?用法：$0 <status> <channel> [details]}"
+    DETAILS="${3:-無其他補充資訊。}"
 
     COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
@@ -154,162 +154,108 @@ Add discli to your CI/CD pipeline as a lightweight notification step. No webhook
         ICON="**[FAILURE]**"
     fi
 
-    MESSAGE="${ICON} Deploy \`${COMMIT}\` on \`${BRANCH}\` by ${AUTHOR} at ${TIMESTAMP}
+    MESSAGE="${ICON} 版本 \`${COMMIT}\`，分支 \`${BRANCH}\`，作者 ${AUTHOR}，時間 ${TIMESTAMP}
     ${DETAILS}"
 
     discli message send "$CHANNEL" "$MESSAGE"
     ```
 
-    Use it from any CI system:
+    在任一 CI 系統直接呼叫：
 
     ```bash
-    # On success
-    ./ci-notify.sh success "#deploys" "All 142 tests passed."
+    # 成功
+    ./ci-notify.sh success "#deploys" "142 項測試全部通過。"
 
-    # On failure
-    ./ci-notify.sh failure "#deploys" "3 tests failed in auth module."
+    # 失敗
+    ./ci-notify.sh failure "#deploys" "驗證模組中有 3 項測試失敗。"
     ```
   </Tab>
 </Tabs>
 
-## Step-by-step explanation
+## 逐步解說
 
 <Steps>
-  <Step title="Store your bot token as a CI secret">
-    Add your Discord bot token as a secret in your CI provider:
+  <Step title="在 CI 秘密參數中存放機器人權杖">
+    將機器人權杖加入 CI 的密鑰管理：
 
-    - **GitHub Actions:** Settings > Secrets and variables > Actions > New repository secret. Name it `DISCORD_BOT_TOKEN`.
-    - **GitLab CI:** Settings > CI/CD > Variables. Name it `DISCORD_BOT_TOKEN` and mark it as masked.
+    - **GitHub Actions：** Settings（設定）> Secrets and variables（祕密與變數）> Actions > New repository secret（新增儲存庫祕密），名稱 `DISCORD_BOT_TOKEN`
+    - **GitLab CI：** Settings > CI/CD > Variables，名稱 `DISCORD_BOT_TOKEN`，並標註為 masked
 
-    discli automatically reads the `DISCORD_BOT_TOKEN` environment variable, so no `discli config set` step is needed.
+    discli 會自動讀取 `DISCORD_BOT_TOKEN` 環境變數，不必再額外執行 `discli config set`。
 
     <Callout type="danger">
-      Never hardcode your bot token in workflow files or commit it to your repository. Always use your CI provider's secrets mechanism.
+      不要在工作流程檔中硬編碼機器人權杖，也不要將其提交到原始碼庫。務必使用 CI 平台的密鑰機制。
     </Callout>
   </Step>
 
-  <Step title="Install discli in the CI environment">
-    Add a `pip install discord-cli-agent` step before sending notifications. This installs discli and its dependencies (discord.py, click) in the CI runner.
+  <Step title="在 CI 環境安裝 discli">
+    在發送通知前先執行 `pip install discord-cli-agent`，安裝 CLI 與必要相依（discord.py、click）。
 
     ```yaml
     - run: pip install discord-cli-agent
     ```
 
     <Callout type="tip">
-      To speed up CI runs, cache the pip install or pin a specific version: `pip install discord-cli-agent==X.Y.Z`.
+      可快取 pip 套件，或固定版本加快執行：`pip install discord-cli-agent==X.Y.Z`。
     </Callout>
   </Step>
 
-  <Step title="Send the notification">
-    Use `discli message send` with a channel name and your message. discli resolves `#deploys` to the correct channel ID automatically.
+  <Step title="送出通知">
+    使用 `discli message send` 指定頻道與訊息內容。discli 會自動解析 `#deploys` 對應的頻道 ID。
 
     ```bash
-    discli message send "#deploys" "Deploy abc1234 to production succeeded."
+    discli message send "#deploys" "abc1234 部署到正式環境完成。"
     ```
 
-    You can include Markdown formatting in the message -- Discord renders bold, italic, code blocks, and links.
+    訊息支援 Markdown，Discord 會渲染粗體、斜體、程式碼區塊與連結。
   </Step>
 
-  <Step title="Handle success and failure separately">
-    Use conditional steps to send different messages based on the build outcome:
+  <Step title="分開處理成功與失敗">
+    以條件式步驟在成功與失敗時推送不同訊息：
 
     ```yaml
-    # GitHub Actions conditionals
-    - if: success()    # Runs only if previous steps succeeded
-    - if: failure()    # Runs only if a previous step failed
-    - if: always()     # Runs regardless of outcome
+    # GitHub Actions 條件
+    - if: success()    # 只在前一步成功時執行
+    - if: failure()    # 只在前一步失敗時執行
+  - if: always()     # 不論結果都執行
     ```
 
-    This ensures your team gets notified about failures even when the deploy step crashes.
+    即使部署步驟當機，也能保證失敗資訊仍會送到團隊。
   </Step>
 </Steps>
 
-## Thread-per-deploy pattern
+## 每次部署建立討論串模式
 
-For high-frequency deploys, create a thread for each deploy to keep the channel organized:
+在高頻部署場景，可為每次部署建立一條討論串，避免主頻道雜亂：
 
 ```bash
 #!/bin/bash
-# deploy-thread.sh — Create a thread per deploy with full details.
+# deploy-thread.sh — 每次部署建立一個討論串，儲存完整資訊。
 
 CHANNEL="#deploys"
 COMMIT=$(git rev-parse --short HEAD)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# Send the initial message
-RESULT=$(discli --json message send "$CHANNEL" "Deploying \`${COMMIT}\` from \`${BRANCH}\`...")
+  # 發送初始訊息
+  RESULT=$(discli --json message send "$CHANNEL" "版本 \`${COMMIT}\`（\`${BRANCH}\`）開始部署...")
 MSG_ID=$(echo "$RESULT" | jq -r '.id')
 
-# Create a thread on that message
-THREAD=$(discli --json thread create "$CHANNEL" "$MSG_ID" "Deploy ${COMMIT}")
+# 依該訊息建立討論串
+THREAD=$(discli --json thread create "$CHANNEL" "$MSG_ID" "部署 ${COMMIT}")
 THREAD_ID=$(echo "$THREAD" | jq -r '.id')
 
-# Post detailed info in the thread
-discli thread send "$THREAD_ID" "**Commit:** \`${COMMIT}\`
-**Branch:** \`${BRANCH}\`
-**Author:** $(git log -1 --format='%an')
-**Message:** $(git log -1 --format='%s')
-**Timestamp:** $(date -u +"%Y-%m-%d %H:%M UTC")"
+# 在討論串貼上詳細資訊
+  discli thread send "$THREAD_ID" "**提交：** \`${COMMIT}\`
+**分支：** \`${BRANCH}\`
+**作者：** $(git log -1 --format='%an')
+**訊息：** $(git log -1 --format='%s')
+**時間：** $(date -u +\"%Y-%m-%d %H:%M UTC\")"
 
-# ... run deploy ...
+  # ... 執行部署 ...
 
-# Post result
+# 回報結果
 if deploy_command_here; then
-    discli thread send "$THREAD_ID" "Deploy **succeeded** in $(elapsed_time)s."
+    discli thread send "$THREAD_ID" "部署於 $(elapsed_time) 秒內**完成**。"
 else
-    discli thread send "$THREAD_ID" "Deploy **failed**. Check the CI logs for details."
-fi
+    discli thread send "$THREAD_ID" "部署**失敗**。請檢查 CI 日誌取得細節。"
 ```
-
-## Edge cases and pitfalls
-
-<Callout type="warning">
-  **Channel name vs. ID.** If your bot is in multiple servers with a channel named `#deploys`, discli will pick the first match. Use the numeric channel ID (e.g., `1234567890123456789`) instead of the name to avoid sending to the wrong server.
-</Callout>
-
-<Callout type="warning">
-  **Rate limits in parallel jobs.** If you have a matrix build with 10 parallel jobs all notifying the same channel, you will hit Discord's rate limit. Send a single consolidated notification from a downstream job instead:
-
-  ```yaml
-  notify:
-    needs: [build-linux, build-mac, build-windows]
-    if: always()
-    steps:
-      - run: discli message send "#ci" "Build matrix complete. Results: ..."
-  ```
-</Callout>
-
-<Callout type="warning">
-  **Message length in CI.** Test output and error logs can be long. Discord's 2000 character limit means you need to truncate. Extract just the summary line or last few lines of output rather than piping the full log.
-</Callout>
-
-<Callout type="warning">
-  **CI runner network access.** Your CI runner must be able to reach Discord's API (`discord.com` on port 443). If you are behind a corporate firewall or using self-hosted runners, ensure this is not blocked.
-</Callout>
-
-## Extending the pipeline
-
-<CardGroup cols={2}>
-  <Card title="Rich embeds">
-    Use `--embed-title` and `--embed-desc` flags to send formatted embed messages with color-coded status indicators.
-
-    ```bash
-    discli message send "#deploys" "" \
-      --embed-title "Deploy Succeeded" \
-      --embed-desc "Commit abc1234 deployed to prod."
-    ```
-  </Card>
-  <Card title="Failure alerts with diff link">
-    Include a link to the diff that caused the failure so developers can jump straight to the problem:
-
-    ```bash
-    discli message send "#alerts" "Build failed: [view diff](https://github.com/org/repo/compare/abc...def)"
-    ```
-  </Card>
-  <Card title="Deployment tracking">
-    Maintain a `#deploy-log` channel as a persistent record of all deployments. Combine with the [Channel Logger](/use-cases/channel-logger) to create a searchable deployment history.
-  </Card>
-  <Card title="Rollback notifications">
-    Add a notification step to your rollback procedure so the team knows when a deploy was reverted and why.
-  </Card>
-</CardGroup>

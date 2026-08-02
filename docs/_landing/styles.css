@@ -1,6 +1,6 @@
 /* ============================================================
-   discli — Dev Tool Landing
-   Full dark, code-forward (Daytona + E2B hybrid)
+   discli — 開發工具首頁
+   全黑主題、程式導向（Daytona + E2B 混合）
    ============================================================ */
 
 :root {
@@ -25,7 +25,7 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* === Scoped Reset === */
+/* === 區域性重設 === */
 .landing-page *, .landing-page *::before, .landing-page *::after {
   box-sizing: border-box;
   margin: 0;
@@ -57,14 +57,14 @@
   border-radius: 4px;
 }
 
-/* === Layout === */
+/* === 版面配置 === */
 .container {
   max-width: var(--max-w);
   margin: 0 auto;
   padding: 0 32px;
 }
 
-/* === NAV === */
+/* === 導覽 === */
 .nav {
   position: sticky;
   top: 0;
@@ -116,7 +116,7 @@
 }
 .landing-page .nav-cta:hover { opacity: 0.85; }
 
-/* === BUTTONS === */
+/* === 按鈕樣式 === */
 .landing-page .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -174,7 +174,7 @@
 
 .cta-row { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 
-/* === HERO === */
+/* === 首頁主視覺 === */
 .hero {
   position: relative;
   padding: 100px 0 0;
@@ -248,7 +248,7 @@
   flex-wrap: wrap;
 }
 
-/* Hero terminal */
+/* 主視覺終端機 */
 .hero-term {
   margin-top: 64px;
   border: 1px solid var(--border);
@@ -257,7 +257,7 @@
   background: var(--bg-card);
 }
 
-/* === TERMINAL (shared) === */
+/* === 終端機樣式（共用） === */
 .term-chrome {
   display: flex;
   align-items: center;
@@ -315,7 +315,7 @@
 }
 .copy-btn:hover { border-color: var(--border-hover); color: var(--text); }
 
-/* Terminal lines */
+/* 終端機內容列 */
 .tl { white-space: pre-wrap; word-break: break-all; }
 #termBody .tl { opacity: 0; transition: opacity 0.4s ease; }
 .tl-green { color: var(--green); }
@@ -334,12 +334,12 @@
 }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* Syntax */
+/* 語法顏色 */
 .c-kw { color: #818cf8; }
 .c-str { color: var(--green); }
 .c-val { color: #fb923c; }
 
-/* === SECTIONS === */
+/* === 區塊版面 === */
 .section {
   padding: 96px 0;
   border-top: 1px solid var(--border);
@@ -370,7 +370,7 @@
   margin-bottom: 48px;
 }
 
-/* === FEATURES (3-col grid) === */
+/* === 功能區塊（3 欄） === */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -406,7 +406,7 @@
   line-height: 1.65;
 }
 
-/* === PROTOCOL (2 cards) === */
+/* === 通訊協定（2 張卡） === */
 .protocol-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -448,7 +448,7 @@
   font-size: 0.78rem;
 }
 
-/* === USE CASES (3x2 grid) === */
+/* === 使用案例（3x2） === */
 .cases-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -478,7 +478,7 @@
 .case-card h3 { font-size: 1rem; color: var(--text); margin-bottom: 6px; }
 .case-card p { font-size: 0.84rem; }
 
-/* === LEVELS (5-col) === */
+/* === 自主等級（5 欄） === */
 .levels-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -518,7 +518,7 @@
 .lv h3 { font-size: 0.9rem; color: var(--text); margin-bottom: 4px; }
 .lv p { font-size: 0.78rem; }
 
-/* === CTA === */
+/* === 行動呼籲（CTA） === */
 .cta-center { text-align: center; }
 .cta-h2 {
   font-size: clamp(2rem, 5vw, 3rem);
@@ -531,7 +531,7 @@
   margin-bottom: 32px;
 }
 
-/* === FOOTER === */
+/* === 頁尾 === */
 .footer {
   border-top: 1px solid var(--border);
   padding: 64px 0 32px;

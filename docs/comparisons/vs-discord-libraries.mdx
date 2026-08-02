@@ -1,49 +1,49 @@
 ---
-title: discli vs Discord Libraries
-description: How discli compares to discord.py and discord.js
+title: discli 與 Discord 函式庫
+description: discli 與 discord.py 與 discord.js 的差異
 ---
 
-# discli vs Discord Libraries
+# discli 與 Discord 函式庫
 
-discord.py and discord.js are the two dominant libraries for building Discord bots. They are powerful, battle-tested, and backed by large communities. discli takes a fundamentally different approach: instead of being a library you import, it is a standalone tool you run.
+discord.py 與 discord.js 是目前建置 Discord 機器人最常用的兩套函式庫，成熟且有大型社群支援。discli 的定位不同：它不是你匯入到程式的函式庫，而是一個可直接執行的獨立工具。
 
-## What they are
+## 它們是什麼
 
-**discord.py** is an async Python library that wraps the Discord API. You write a Python program, define event handlers, and run it as a long-lived process. **discord.js** is the JavaScript equivalent built on Node.js. Both give you full, fine-grained control over every Discord API endpoint.
+**discord.py** 是 async 的 Python 函式庫，包裝 Discord API。你需要寫一個 Python 程式、定義事件處理器，並長時間執行。**discord.js** 是 Node.js 生態下對應的 JavaScript 函式庫。兩者都能提供對每個 API endpoint 的完整精細控制。
 
-**discli** is a command-line tool and agent protocol. You interact with Discord through shell commands or a bidirectional JSONL stream. No library imports, no event loop management, no language lock-in.
+**discli** 則是 CLI 工具與代理協定。你透過命令列或雙向 JSONL 串流與 Discord 互動，沒有函式庫匯入、沒有自己維護 event loop，也不受特定語言鎖定。
 
-## Where discord.py/js excel
+## discord.py / discord.js 的優勢
 
-- **Full API coverage** — every endpoint, every object, every event
-- **Fine-grained control** — custom caches, sharding strategies, voice connections
-- **Massive ecosystems** — thousands of extensions, tutorials, and StackOverflow answers
-- **Production-proven** — bots serving millions of users across tens of thousands of guilds
+- **完整 API 覆蓋**：每個 endpoint、每個物件、每種事件都能操作
+- **精細控制**：自定義快取、shard 策略、語音連線
+- **龐大生態**：大量擴充套件、教學與 StackOverflow 解答
+- **生產實績**：服務數百萬使用者、覆蓋成千上萬伺服器的 bot 常見於成熟專案
 
-## Where discli differs
+## discli 的差異
 
-- **No boilerplate** — send a message in one command, not 30 lines of setup
-- **Language-agnostic** — any language that can spawn a subprocess or read JSONL works
-- **Security built-in** — permission profiles, audit logs, and rate limiting out of the box
-- **Dual-mode** — use it as a CLI for one-off tasks or as a persistent server for agents
-- **AI-native** — the JSONL agent protocol was designed for LLM tool-use from day one
+- **無樣板程式**：傳送一則訊息只需一個指令，不需 30 行初始化程式
+- **語言無關**：只要能啟動子程序或讀寫 JSONL 的任何語言都能用
+- **內建安全機制**：預設有權限設定檔、稽核紀錄與速率限制
+- **雙模式使用**：可做一次性 CLI 指令，也可做代理常駐伺服器
+- **AI 原生設計**：JSONL 代理協定從一開始就以 LLM 工具使用為核心
 
-## Comparison table
+## 比較表
 
-| Aspect | discord.py / discord.js | discli |
+| 面向 | discord.py / discord.js | discli |
 |---|---|---|
-| **Setup** | `pip install` / `npm install`, write bot class, configure intents | `pip install discord-cli-agent`, set token, run |
-| **Language** | Python / JavaScript only | Any language (CLI or subprocess) |
-| **Event loop** | You manage `asyncio` / Node event loop | discli manages it internally |
-| **Intents** | Configured in code | Configured via `discli config` or flags |
-| **Security** | Roll your own | Built-in permission profiles, audit log, rate limits |
-| **AI integration** | Write custom glue code | Native JSONL agent protocol |
-| **Streaming** | Manual websocket handling | `discli listen` or `discli serve` streams JSONL |
-| **Learning curve** | Moderate to steep | Low — if you can use a terminal, you can use discli |
+| **初始設定** | `pip install` / `npm install`、撰寫 bot class、設定 intents | `pip install discord-cli-agent`、設定 token、執行 |
+| **語言** | 僅 Python / JavaScript | 任何語言（CLI 或子程序） |
+| **事件迴圈** | 你自行管理 `asyncio` / Node event loop | discli 內部管理 |
+| **Intents** | 在程式中設定 | 透過 `discli config` 或旗標設定 |
+| **安全機制** | 需自行實作 | 內建權限設定檔、稽核紀錄、速率限制 |
+| **AI 串接** | 需要自訂整合邏輯 | 原生 JSONL 代理協定 |
+| **串流** | 自行處理 websocket | `discli listen` 或 `discli serve` 自動輸出 JSONL |
+| **學習門檻** | 中等到較高 | 較低：只要會用終端機即可 |
 
-## Code comparison
+## 程式碼比較
 
-Here is the same task — a bot that listens for messages and replies — in both approaches.
+以下示範同一件事：機器人接收訊息後回覆。兩邊做法如下：
 
 <Tabs>
 <Tab title="discord.py">
@@ -69,10 +69,10 @@ async def on_message(message):
 client.run("YOUR_BOT_TOKEN")
 ```
 
-That is 16 lines of Python with imports, intent configuration, a client class, two async event handlers, and a blocking `run()` call. Real bots add error handling, cogs, and command frameworks on top of this.
+這段 Python 需要 16 行匯入、intent 設定、client class、兩個 async 事件處理器與一個阻塞的 `run()` 呼叫。實際機器人通常還會再加錯誤處理、cog、指令框架等。
 </Tab>
 
-<Tab title="discli (any language)">
+<Tab title="discli（任意語言）">
 ```python
 import subprocess, json
 
@@ -97,30 +97,30 @@ for line in proc.stdout:
             proc.stdin.flush()
 ```
 
-No Discord-specific imports. No async/await. No intent objects. The same pattern works from Node.js, Go, Rust, Ruby, or a bash script.
+沒有 Discord 專屬匯入、沒有 async/await、沒有 intent 物件。這個模式可直接套用到 Node.js、Go、Rust、Ruby，甚至是 bash script。
 </Tab>
 </Tabs>
 
-## When to use discord.py or discord.js
+## 何時選擇 discord.py 或 discord.js
 
 <Callout type="tip">
-discord.py and discord.js are the right choice when you need deep control over the Discord API itself.
+當你需要對 Discord API 本體做深度控制時，discord.py / discord.js 通常是更合適的選擇。
 </Callout>
 
-Choose a library when you need:
+以下情境建議使用函式庫：
 
-- **Rich embeds, buttons, select menus, and modals** — full component builder APIs
-- **Voice and audio** — connect to voice channels, play audio, record
-- **Complex stateful bots** — conversation trees, multi-step wizards, persistent state machines
-- **Webhooks and OAuth2 flows** — user-facing authentication and integrations
-- **Extreme scale** — sharding across 10,000+ guilds with custom caching strategies
+- **豐富 embeds、按鈕、下拉選單、modal**：完整元件建構 API
+- **語音與音訊**：連接語音頻道、播放音訊、錄製
+- **複雜有狀態機制**：對話樹、跨步驟精靈、長時間狀態機
+- **Webhook 與 OAuth2 流程**：使用者導向驗證與整合
+- **極大規模需求**：跨 10,000+ 伺服器的分 shard 快取策略
 
-## When to use discli
+## 何時選擇 discli
 
-Choose discli when you need:
+以下情境建議使用 discli：
 
-- **AI agents that talk to Discord** — the JSONL protocol was built for this
-- **Bash scripting and CI/CD** — pipe Discord messages like any other Unix tool
-- **Security guardrails** — permission profiles prevent agents from doing things they should not
-- **Fast prototyping** — go from idea to working bot in minutes, not hours
-- **Language freedom** — use whatever language your team already knows
+- **與 Discord 互動的 AI 代理**：JSONL 協定就是為此設計
+- **Bash 腳本與 CI/CD**：可像一般 Unix 工具一樣串接資訊流
+- **安全邊界**：權限設定檔可防止代理做出不該做的操作
+- **快速原型**：從想法到可用機器人只要幾分鐘
+- **語言自由**：用團隊既有的任何語言完成整合

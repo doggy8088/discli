@@ -1,41 +1,40 @@
 ---
-title: Thread-Based Support
-description: Auto-create threads for each support request to keep channels clean
+title: 以討論串承接支援
+description: 每筆支援需求自動建立獨立討論串，保持主頻道整潔
 ---
 
-# Thread-Based Support
+# 以討論串承接支援
 
-Automatically create a dedicated thread for every support request so your main channels stay clean and organized.
+當使用者在同一支援頻道發起多筆問題時，訊息常常互相交錯、難以追蹤。這個範例會為每一筆提及自動建立討論串，讓主頻道保持整潔。
 
-## The problem
+## 問題背景
 
-When multiple users ask questions in the same support channel, conversations overlap and become impossible to follow. Important questions get buried. Users do not know if their issue is being tracked.
+同一支援頻道內如果有多人同時詢問，訊息會快速交錯：重要問題可能被埋掉，使用者也不清楚自己的問題是否有被跟進。討論串讓每則工單具備獨立空間。
 
-## The solution
+## 解法
 
-A bot that watches a support channel and automatically:
+建立一個監聽機器人：
 
-1. Creates a new thread when a user @mentions the bot
-2. Sends an acknowledgment inside the thread
-3. Handles follow-up messages within the thread
-4. Optionally integrates with AI for automated responses
+1. 當使用者在指定支援頻道提及機器人時，建立新討論串
+2. 在討論串內立即回覆「已收到」
+3. 後續回覆在同一討論串處理
+4. 可依需求整合 AI 做自動回應
 
-Each support request gets its own contained thread, making it easy to track, resolve, and archive.
-
-## Full working code
+## 完整可執行範例
 
 ```python
 #!/usr/bin/env python3
-"""Thread-Based Support — auto-create threads for support requests."""
+"""討論串支援 — 自動為支援需求建立獨立串。"""
 
 import json
 import subprocess
 import sys
 
-SUPPORT_CHANNELS = {"support", "help", "questions"}  # Channel names to watch
+SUPPORT_CHANNELS = {"support", "help", "questions"}  # 要監聽的頻道名稱
+
 
 def run_discli(*args):
-    """Run a discli command with JSON output and return parsed result."""
+    """執行不需 JSON 的 discli 指令並輸出錯誤。"""
     result = subprocess.run(
         ["discli", "--json", *args],
         capture_output=True,
@@ -49,8 +48,9 @@ def run_discli(*args):
     except json.JSONDecodeError:
         return None
 
+
 def run_discli_plain(*args):
-    """Run a discli command without JSON output."""
+    """執行純文字輸出的 discli 指令。"""
     result = subprocess.run(
         ["discli", *args],
         capture_output=True,
@@ -59,17 +59,18 @@ def run_discli_plain(*args):
     if result.returncode != 0:
         print(f"[error] discli {' '.join(args)}: {result.stderr.strip()}", file=sys.stderr)
 
-# Track active threads so we can handle follow-ups
+
+# 追蹤已經建立過討論串的頻道
 active_threads = {}  # thread_id -> {"author_id": str, "channel_id": str}
 
-# Start listening
+# 開始監聽
 proc = subprocess.Popen(
     ["discli", "--json", "listen", "--events", "messages"],
     stdout=subprocess.PIPE,
     text=True,
 )
 
-print("Thread support bot running. Ctrl+C to stop.", file=sys.stderr)
+print("討論串支援機器人已啟動，按 Ctrl+C 可停止。", file=sys.stderr)
 
 for line in proc.stdout:
     line = line.strip()
@@ -88,18 +89,18 @@ for line in proc.stdout:
     message_id = event.get("message_id", "")
     content = event.get("content", "")
 
-    # --- New support request: bot mentioned in a watched channel ---
+    # --- 新的支援請求：使用者在監控中的頻道提及機器人 ---
     if (
         event.get("mentions_bot")
         and channel_name in SUPPORT_CHANNELS
         and channel_id not in active_threads
     ):
-        # Create a thread from the user's message
+        # 從原訊息建立討論串
         thread = run_discli(
             "thread", "create",
             channel_id,
             message_id,
-            f"Support - {author}",
+            f"支援 - {author}",
         )
 
         if thread and thread.get("id"):
@@ -109,80 +110,78 @@ for line in proc.stdout:
                 "channel_id": channel_id,
             }
 
-            # Send welcome message in the thread
+            # 發送歡迎訊息
             run_discli(
                 "thread", "send",
                 thread_id,
-                f"Hi {author}! I've created this thread for your request.\n\n"
-                f"**Your question:** {content}\n\n"
-                f"A team member will respond here shortly. "
-                f"Please share any additional details in this thread.",
+                f"{author}，這個討論串已建立。\n\n"
+                f"**你的問題：** {content}\n\n"
+                f"團隊成員會盡快回覆，請在本討論串補充更多細節。",
             )
 
-            print(f"[thread] Created '{thread.get('name')}' for {author}", file=sys.stderr)
+            print(f"[討論串] 已為 {author} 建立 '{thread.get('name')}'", file=sys.stderr)
         continue
 
-    # --- Follow-up in an active thread ---
+    # --- 討論串內追問 ---
     if channel_id in active_threads:
-        # Skip bot messages to avoid loops
+        # 避免機器人自己回圈
         if event.get("is_bot"):
             continue
 
-        # Show typing while processing
+        # 顯示 typing 代表有在處理
         subprocess.Popen(
             ["discli", "typing", channel_id, "--duration", "3"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
 
-        # Simple acknowledgment (replace with AI in production)
+        # 可在此接 AI 回覆，這裡示範簡訊息
         thread_info = active_threads[channel_id]
         run_discli(
             "thread", "send",
             channel_id,
-            f"Thanks for the additional details, {author}. "
-            f"A team member has been notified and will respond soon.",
+            f"{author}，收到你補充的細節，已通知團隊成員，將盡快回覆。",
         )
 
-        print(f"[follow-up] {author} in thread {channel_id}", file=sys.stderr)
+        print(f"[追蹤回覆] {author} 在討論串 {channel_id}", file=sys.stderr)
 ```
 
-## Step-by-step explanation
+## 逐步解說
 
 <Steps>
-  <Step title="Configure watched channels">
-    The `SUPPORT_CHANNELS` set defines which channels trigger thread creation. Only messages in these channels that @mention the bot will create a new thread.
+  <Step title="設定監看頻道">
+    `SUPPORT_CHANNELS` 定義哪些頻道可以觸發討論串。只有這些頻道且提及機器人的訊息才會建立新串。
 
     ```python
     SUPPORT_CHANNELS = {"support", "help", "questions"}
     ```
 
     <Callout type="tip">
-      You can use channel IDs instead of names for more precise matching, especially if you have multiple servers with similarly named channels.
+      頻道有大量同名時，可改用頻道 ID 提高精準度，避免名稱重複誤判。
     </Callout>
   </Step>
 
-  <Step title="Listen for messages">
-    The script starts a `discli listen` process that streams all messages as JSON. Each message includes the `channel` name, `channel_id`, and a `mentions_bot` flag.
+  <Step title="監聽訊息">
+    腳本透過 `discli listen` 開啟長連線，所有訊息以 JSON 串流輸出。事件內含 `channel`、`channel_id` 與 `mentions_bot`。
 
     ```bash
     discli --json listen --events messages
     ```
   </Step>
 
-  <Step title="Create a thread">
-    When the bot is mentioned in a support channel, it creates a thread attached to the user's message. The thread name includes the author for easy identification.
+  <Step title="建立討論串">
+    當使用者在支援頻道提及機器人時，機器人會建立串接到原始訊息的討論串。討論串名稱會帶有提問人名。
 
     ```bash
-    discli --json thread create CHANNEL_ID MESSAGE_ID "Support - Alice"
+discli --json thread create CHANNEL_ID MESSAGE_ID "支援 - Alice"
     ```
 
-    The command returns a JSON object with the new thread's `id`, which the script stores for follow-up tracking.
+    指令回傳含新串的 `id`，腳本會保留此 ID 供追蹤。
 
     ```json
     {
       "id": "1234567890123456789",
-      "name": "Support - Alice",
+      "name": "支援 - Alice",
       "parent_channel": "support",
       "parent_channel_id": "9876543210987654321",
       "message_id": "1111111111111111111"
@@ -190,50 +189,33 @@ for line in proc.stdout:
     ```
   </Step>
 
-  <Step title="Send an acknowledgment">
-    The bot immediately sends a welcome message inside the thread so the user knows their request was received.
+  <Step title="回覆確認訊息">
+    機器人會立刻在討論串回一則歡迎訊息，讓使用者知道需求已被接收。
 
     ```bash
-    discli thread send THREAD_ID "Hi Alice! I've created this thread for your request..."
+discli thread send THREAD_ID "Alice，你的需求已建立專用討論串，請在此補充細節..."
     ```
   </Step>
 
-  <Step title="Handle follow-ups">
-    The script tracks active thread IDs in a dictionary. When a new message arrives in a known thread, it shows a typing indicator and responds. The example sends a simple acknowledgment, but this is where you would plug in AI or a ticket system.
+  <Step title="處理追問">
+    腳本以字典追蹤「活躍中」討論串 ID，收到該串內訊息時回覆中間狀態。你可在此接上 AI 或工單系統。
   </Step>
 </Steps>
 
-## Edge cases and pitfalls
+## 邊際案例與陷阱
 
 <Callout type="warning">
-  **CREATE_PUBLIC_THREADS permission.** Your bot must have the `Create Public Threads` permission in the channels it watches. Without this, the `thread create` command will fail with a 403 error.
+  **CREATE_PUBLIC_THREADS 權限。** 機器人需要目標頻道具備建立公開討論串權限，否則 `thread create` 會回傳 403。
 </Callout>
 
 <Callout type="warning">
-  **Thread auto-archive.** Discord automatically archives threads after 1 hour of inactivity (24 hours for boosted servers). Once archived, messages in the thread will not trigger events. If you need longer-lived threads, periodically send a keep-alive message or instruct users to unarchive.
+  **討論串自動歸檔。** Discord 會在一段時間未活動後歸檔討論串（一般預設 1 小時，推升伺服器可達 24 小時）。歸檔後將無法繼續回覆。高頻需求可定期保活或延長歸檔時間。
 </Callout>
 
 <Callout type="warning">
-  **Thread limits.** Servers have a maximum of 1000 active threads. If your server handles high support volume, implement a thread-closing mechanism that archives resolved threads.
+  **討論串上限。** 單一伺服器最多允許 1000 條活躍討論串，若請求量大，需建立關單與自動關閉機制。
 </Callout>
 
 <Callout type="warning">
-  **Duplicate threads.** If a user mentions the bot multiple times quickly, the script might create duplicate threads. The `channel_id not in active_threads` check prevents this for the parent channel, but consider adding a per-user cooldown for robustness.
+  **多種頻道名稱。** 若有多個伺服器存在相同頻道名稱，建議改用 channel_id，避免跨伺服器誤關聯。
 </Callout>
-
-## Extending the system
-
-<CardGroup cols={2}>
-  <Card title="AI-powered responses">
-    Replace the static acknowledgment with Claude to provide instant answers in threads. See [AI Support Agent](/use-cases/ai-support-agent) for the integration pattern.
-  </Card>
-  <Card title="Resolution workflow">
-    Add a close command (e.g., "!resolved") that archives the thread and logs the resolution. Track open vs. resolved threads for metrics.
-  </Card>
-  <Card title="Human handoff">
-    When the AI cannot answer confidently, notify a support role with `discli message send "#staff-alerts" "New ticket needs human review: ..."` and include a link to the thread.
-  </Card>
-  <Card title="Priority routing">
-    Parse the initial message for keywords like "urgent", "broken", or "billing" and assign priority labels. Route high-priority threads to specific staff members via DM with `discli dm send`.
-  </Card>
-</CardGroup>

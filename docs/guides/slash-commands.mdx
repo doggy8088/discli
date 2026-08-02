@@ -1,54 +1,54 @@
 ---
-title: Slash Commands
-description: Register and handle Discord slash commands
+title: Slash 指令
+description: 註冊並處理 Discord Slash 指令
 ---
 
-Slash commands let users interact with your bot through Discord's built-in command interface. Type `/` in any channel and your bot's commands appear with descriptions, parameter hints, and auto-completion.
+Slash 指令可讓使用者透過 Discord 內建的命令介面與機器人互動。你在任何頻道輸入 `/`，就會看到機器人的指令，並附帶說明、參數提示與自動補完。
 
-## How It Works
+## 運作方式
 
-1. You define commands in a JSON file
-2. Pass the file to `discli serve --slash-commands commands.json`
-3. discli registers them with Discord on startup
-4. When a user invokes a command, you receive a `slash_command` event
-5. You respond using `interaction_followup`
+1. 你在 JSON 檔案中定義指令
+2. 將檔案傳給 `discli serve --slash-commands commands.json`
+3. discli 啟動時會向 Discord 註冊這些指令
+4. 當使用者叫用指令時，會收到 `slash_command` 事件
+5. 你使用 `interaction_followup` 回應
 
-## Step 1: Define Your Commands
+## 步驟 1：定義指令
 
-Create a JSON file describing your slash commands:
+建立一個描述 Slash 指令的 JSON 檔案：
 
 ```json commands.json
 [
   {
     "name": "ask",
-    "description": "Ask the bot a question",
+    "description": "向機器人提問",
     "params": [
       {
         "name": "question",
         "type": "string",
-        "description": "Your question",
+        "description": "你的問題",
         "required": true
       }
     ]
   },
   {
     "name": "status",
-    "description": "Check bot status"
+    "description": "檢查機器人狀態"
   },
   {
     "name": "search",
-    "description": "Search recent messages",
+    "description": "搜尋近期訊息",
     "params": [
       {
         "name": "query",
         "type": "string",
-        "description": "Search term",
+        "description": "搜尋關鍵字",
         "required": true
       },
       {
         "name": "limit",
         "type": "integer",
-        "description": "Max results (default 10)",
+        "description": "最大結果數（預設 10）",
         "required": false
       }
     ]
@@ -56,38 +56,38 @@ Create a JSON file describing your slash commands:
 ]
 ```
 
-### Command Schema
+### 指令結構
 
-Each command object supports:
+每個指令物件支援：
 
-| Field | Type | Required | Description |
+| 欄位 | 類型 | 是否必填 | 說明 |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Command name (lowercase, no spaces, 1-32 chars) |
-| `description` | string | Yes | What the command does (1-100 chars) |
-| `params` | array | No | List of parameters |
+| `name` | string | 是 | 指令名稱（小寫，不能有空格，1–32 字） |
+| `description` | string | 是 | 指令用途（1–100 字） |
+| `params` | array | 否 | 參數清單 |
 
-### Parameter Schema
+### 參數結構
 
-Each parameter supports:
+每個參數支援：
 
-| Field | Type | Required | Description |
+| 欄位 | 類型 | 是否必填 | 說明 |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Parameter name |
-| `type` | string | Yes | `string`, `integer`, `number`, or `boolean` |
-| `description` | string | Yes | Parameter description |
-| `required` | boolean | No | Default: `true` |
+| `name` | string | 是 | 參數名稱 |
+| `type` | string | 是 | `string`、`integer`、`number`、或 `boolean` |
+| `description` | string | 是 | 參數用途 |
+| `required` | boolean | 否 | 預設值：`true` |
 
-## Step 2: Start Serve with Slash Commands
+## 步驟 2：以 Slash 指令啟動 serve
 
 ```bash
 discli serve --slash-commands commands.json
 ```
 
-On startup, discli will:
+啟動後，discli 會：
 
-1. Connect to Discord and emit the `ready` event
-2. Register your slash commands with every guild the bot is in
-3. Emit a `slash_commands_synced` event when registration is complete
+1. 連線到 Discord 並送出 `ready` 事件
+2. 在機器人加入的每個伺服器中註冊 Slash 指令
+3. 註冊完成後送出 `slash_commands_synced` 事件
 
 ```json
 {"event": "ready", "bot_id": "123456", "bot_name": "MyBot#1234"}
@@ -95,12 +95,12 @@ On startup, discli will:
 ```
 
 <Callout type="note">
-discli copies commands to each guild individually for **instant availability**. Global command registration (without guild-specific sync) can take up to 1 hour to propagate across Discord. By syncing to each guild directly, your commands are available immediately after the `slash_commands_synced` event.
+discli 會將指令逐個同步到每個伺服器，達到**即時可用**。若改用全域註冊（未指定伺服器），Discord 可能要花到 1 小時才能完成傳播。透過直接逐伺服器同步，指令會在 `slash_commands_synced` 事件之後立即可用。
 </Callout>
 
-## Step 3: Handle Slash Command Events
+## 步驟 3：處理 Slash 指令事件
 
-When a user invokes a slash command, you receive a `slash_command` event:
+當使用者叫用 Slash 指令時，你會收到 `slash_command` 事件：
 
 ```json
 {
@@ -118,24 +118,24 @@ When a user invokes a slash command, you receive a `slash_command` event:
 }
 ```
 
-Key fields:
+主要欄位：
 
-| Field | Description |
+| 欄位 | 說明 |
 |-------|-------------|
-| `command` | The slash command name |
-| `args` | Dictionary of parameter name to value (as strings) |
-| `interaction_token` | Unique token for responding to this interaction |
-| `is_admin` | Whether the invoking user has Administrator permission |
-| `channel_id` | Channel where the command was invoked |
-| `user` / `user_id` | Who invoked it |
+| `command` | Slash 指令名稱 |
+| `args` | 參數名稱到值的字典（字串） |
+| `interaction_token` | 用來回應該互動的唯一 token |
+| `is_admin` | 是否為叫用者有伺服器管理員權限 |
+| `channel_id` | 指令叫用的頻道 |
+| `user` / `user_id` | 呼叫者身份 |
 
-## Step 4: Respond to Interactions
+## 步驟 4：回應互動
 
-The interaction is automatically deferred with a "thinking" indicator when the user invokes the command. You have three actions for responding to interactions:
+使用者叫用指令時，互動會自動顯示「思考中」提示。你可用以下三種行為回應互動：
 
 ### interaction_followup
 
-Send a visible followup message. Supports embeds and components:
+送出一則可見回覆。支援 embed 與組件：
 
 ```json
 {"action": "interaction_followup", "interaction_token": "abc-123-def", "content": "Here's your answer!"}
@@ -147,25 +147,25 @@ Send a visible followup message. Supports embeds and components:
 
 ### interaction_respond
 
-Send an ephemeral response that only the invoking user can see:
+送出僅供叫用者可見的暫時訊息：
 
 ```json
-{"action": "interaction_respond", "interaction_token": "abc-123-def", "content": "Only you see this", "ephemeral": true}
+{"action": "interaction_respond", "interaction_token": "abc-123-def", "content": "只有你能看到這則訊息", "ephemeral": true}
 ```
 
 ### interaction_edit
 
-Edit the original interaction response. Useful for updating buttons or content after user action:
+編輯原始互動回覆，常見於按鈕或內容在使用者操作後更新：
 
 ```json
 {"action": "interaction_edit", "interaction_token": "abc-123-def", "content": "Updated!", "components": []}
 ```
 
 <Callout type="danger">
-**Interaction tokens expire after 15 minutes.** If you do not send a followup within 15 minutes, the interaction fails and the user sees "The application did not respond." Always respond as quickly as possible, even if just to acknowledge receipt.
+**互動 token 會在 15 分鐘後過期。** 若你沒有在 15 分鐘內送出 followup，互動會失敗，使用者會看到「應用程式未回應」。無論成功與否都應盡速回應，哪怕只是回報已收到。
 </Callout>
 
-## Full Working Example
+## 完整可執行範例
 
 ```python
 import json
@@ -203,7 +203,7 @@ class SlashBot:
         if wait:
             q = Queue()
             self.pending[rid] = q
-        self.proc.stdin.write(json.dumps(action) + "\n")
+        self.proc.stdin.write(json.dumps(動作) + "\n")
         self.proc.stdin.flush()
         if wait:
             result = q.get(timeout=15)
@@ -212,7 +212,7 @@ class SlashBot:
         return None
 
     def followup(self, token, content):
-        """Send a followup response to a slash command interaction."""
+        """送出 slash command 互動的 followup 回覆。"""
         self.send({
             "action": "interaction_followup",
             "interaction_token": token,
@@ -220,11 +220,11 @@ class SlashBot:
         })
 
 
-# Define command handlers
+# 定義指令處理函式
 def handle_ask(bot, event):
     question = event["args"].get("question", "")
-    # In a real bot, you'd call an LLM here
-    answer = f"You asked: {question}\n\nThis is where an AI response would go."
+    # 實際環境中可接 AI 模型呼叫
+    answer = f"你問了：{question}\n\nAI 回覆內容可在這裡產生。"
     bot.followup(event["interaction_token"], answer)
 
 
@@ -233,7 +233,7 @@ def handle_status(bot, event):
     count = len(servers.get("servers", []))
     bot.followup(
         event["interaction_token"],
-        f"Online and monitoring {count} server(s).",
+        f"已上線，正在監控 {count} 個伺服器。",
     )
 
 
@@ -249,10 +249,10 @@ def handle_search(bot, event):
 
     messages = result.get("messages", [])
     if not messages:
-        bot.followup(event["interaction_token"], f"No messages found matching '{query}'.")
+        bot.followup(event["interaction_token"], f"找不到符合『{query}』的訊息。")
         return
 
-    lines = [f"Found {len(messages)} result(s) for '{query}':\n"]
+    lines = [f"找到 {len(messages)} 則結果，條件為『{query}』：\n"]
     for msg in messages[:10]:
         lines.append(f"**{msg['author']}**: {msg['content'][:100]}")
     bot.followup(event["interaction_token"], "\n".join(lines))
@@ -268,25 +268,25 @@ HANDLERS = {
 def main():
     bot = SlashBot("commands.json")
 
-    # Wait for ready
+    # 等待 ready
     while True:
         event = bot.events.get()
         if event.get("event") == "ready":
             print(f"Ready as {event['bot_name']}")
             break
 
-    # Wait for slash commands to sync
+    # 等待指令同步完成
     while True:
         event = bot.events.get()
         if event.get("event") == "slash_commands_synced":
-            print(f"Registered {event['count']} commands in {event['guilds']} guilds")
+            print(f"已註冊 {event['count']} 組指令到 {event['guilds']} 個伺服器")
             break
-        # Don't block forever if sync event doesn't come
+        # 避免無限等待
         if event.get("event") == "error":
-            print(f"Error: {event.get('message')}")
+            print(f"錯誤：{event.get('message')}")
             break
 
-    # Main event loop
+    # 主事件迴圈
     while True:
         event = bot.events.get()
         if event.get("event") == "slash_command":
@@ -297,12 +297,12 @@ def main():
                 except Exception as e:
                     bot.followup(
                         event["interaction_token"],
-                        f"An error occurred: {e}",
+                        f"發生錯誤：{e}",
                     )
             else:
                 bot.followup(
                     event["interaction_token"],
-                    f"Unknown command: {event['command']}",
+                    f"未知指令：{event['command']}",
                 )
 
 
@@ -310,15 +310,15 @@ if __name__ == "__main__":
     main()
 ```
 
-## Streaming Slash Command Responses
+## 串流式 Slash 指令回應
 
-For longer responses, you can stream the output instead of sending it all at once. Use `stream_start` with the `interaction_token`:
+較長回應可改成串流輸出，不需一次傳回全部結果。透過 `interaction_token` 使用 `stream_start`：
 
 ```python
 def handle_ask_streaming(bot, event):
     question = event["args"].get("question", "")
 
-    # Start a stream that responds to the slash command interaction
+    # 開始可回應 slash 互動的串流
     result = bot.send({
         "action": "stream_start",
         "channel_id": event["channel_id"],
@@ -326,12 +326,12 @@ def handle_ask_streaming(bot, event):
     }, wait=True)
 
     if "error" in result:
-        bot.followup(event["interaction_token"], f"Error: {result['error']}")
+        bot.followup(event["interaction_token"], f"錯誤：{result['error']}")
         return
 
     stream_id = result["stream_id"]
 
-    # Stream from your LLM
+    # 從 LLM 串流回傳
     for chunk in call_llm(question):
         bot.send({
             "action": "stream_chunk",
@@ -342,53 +342,53 @@ def handle_ask_streaming(bot, event):
     bot.send({"action": "stream_end", "stream_id": stream_id})
 ```
 
-See the [Streaming Responses](/guides/streaming-responses) guide for full details.
+詳情請見 [串流回應](/guides/streaming-responses)。
 
-## Registration Timing
+## 註冊時機
 
 <Callout type="tip">
-discli syncs commands to each guild individually on startup, which means they are available immediately. If your bot joins a new guild while running, the new guild will not have the slash commands until you restart `discli serve`.
+discli 在啟動時會對每個伺服器分別同步指令，因而可立即可用。若機器人執行中加入新伺服器，新的伺服器會在你重新啟動 `discli serve` 後才有 Slash 指令。
 </Callout>
 
-### When commands appear
+### 指令何時出現
 
-| Method | Timing |
+| 方法 | 時機 |
 |--------|--------|
-| Guild-specific sync (what discli does) | Instant |
-| Global registration only | Up to 1 hour |
+| 僅同步到伺服器（discli 行為） | 立即 |
+| 僅全域註冊 | 最多 1 小時 |
 
-### When commands update
+### 指令更新時機
 
-If you change your `commands.json`, restart `discli serve` to re-register the updated commands.
+若你修改 `commands.json`，請重啟 `discli serve` 以重新註冊更新後的指令。
 
-## Admin-Only Commands
+## 僅限管理員指令
 
-The `slash_command` event includes an `is_admin` field. Use it to gate sensitive commands:
+`slash_command` 事件包含 `is_admin` 欄位。可用來保護敏感指令：
 
 ```python
 def handle_admin_command(bot, event):
     if not event["is_admin"]:
         bot.followup(
             event["interaction_token"],
-            "This command requires administrator permission.",
+            "此指令需要管理員權限。",
         )
         return
-    # ... proceed with admin action
+    # ... 繼續執行管理動作
 ```
 
-## Parameter Type Mapping
+## 參數類型對應表
 
-| JSON type | Python type | Discord type |
+| JSON 類型 | Python 類型 | Discord 類型 |
 |-----------|------------|-------------|
-| `string` | `str` | String option |
-| `integer` | `int` | Integer option |
-| `number` | `float` | Number option |
-| `boolean` | `bool` | Boolean option |
+| `string` | `str` | 字串選項 |
+| `integer` | `int` | 整數選項 |
+| `number` | `float` | 數值選項 |
+| `boolean` | `bool` | 布林值選項 |
 
-Optional parameters (where `required` is `false`) will be absent from the `args` dictionary if the user does not provide them.
+可選參數（`required` 為 `false`）在使用者未提供時，`args` 字典中不會出現。
 
-## Next Steps
+## 下一步
 
-- [Streaming Responses](/guides/streaming-responses) -- Stream long responses to slash commands
-- [Serve Mode](/guides/serve-mode) -- Full protocol reference
-- [Security & Permissions](/guides/security-permissions) -- Control what your agent can do
+- [串流回應](/guides/streaming-responses) ─ 對 Slash 指令進行長回應串流
+- [Serve 模式](/guides/serve-mode) ─ 全流程與全部 動作/事件 參考
+- [權限與存取控制](/guides/security-permissions) ─ 控制代理可做的事

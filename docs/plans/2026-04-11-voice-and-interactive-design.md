@@ -1,43 +1,52 @@
-# Voice & Interactive Features Design
+# 語音與互動功能設計
 
-**Date:** 2026-04-11
-**Status:** Approved
-**Approach:** Layered Modules (engines separate from CLI/serve)
+**日期：** 2026-04-11
+**狀態：** 已核准
+**做法：** 分層模組（引擎與 CLI/serve 分離）
 
-## Summary
+## 摘要
 
-Add full-duplex voice (TTS speak + STT listen/transcribe), audio playback, and rich interactive components (modals, multi-step workflows, persistent dashboards) to discli. Both CLI commands and serve mode JSONL actions for all features.
+在 discli 新增：
 
-## Voice Engine
+- 全雙工語音（TTS 說話 + STT 轉錄聽到的內容）
+- 音訊播放
+- 豐富的互動元件（模態視窗、多步驟工作流程、持久化儀表板）
 
-### Dependencies
+上述功能同時支援 CLI 指令與 serve 模式 JSONL actions。
 
-Required:
-- `PyNaCl` — discord.py voice encryption
-- `discord-ext-voice-recv` — voice receive support (discord.py doesn't support it natively)
-- `silero-vad` — voice activity detection
-- `audioop-lts` — PCM audio manipulation (Python 3.13+ compatible)
+## 語音引擎
 
-TTS providers (optional extras):
-- `elevenlabs` — best quality, ~200ms TTFB, streaming (recommended default)
-- `openai` — solid middle ground
-- `piper-tts` — local/offline, lightweight
+### 依賴
 
-STT providers (optional extras):
-- `deepgram-sdk` — real-time WebSocket streaming, ~100-300ms (recommended default)
-- `openai` — Whisper API, batch only
-- `faster-whisper` — local, near-real-time with VAD
+必要元件：
 
-### Architecture (`src/discli/voice_engine.py`)
+- `PyNaCl` — Discord.py 的語音加密支援
+- `discord-ext-voice-recv` — 語音接收支援（Discord.py 本身未內建）
+- `silero-vad` — 語音活動偵測
+- `audioop-lts` — PCM 音訊處理（Python 3.13+ 相容）
 
-- **`VoiceEngine`** — connection pool (one voice client per guild), exposes async methods for connect/disconnect/move/speak/play/listen
-- **`TTSProvider` protocol** — `async synthesize(text, voice, speed) -> AsyncIterator[bytes]` (streaming PCM chunks)
-- **`STTProvider` protocol** — `async transcribe(audio_stream) -> AsyncIterator[TranscriptionResult]` (streaming partial + final results)
-- **`AudioPlayer`** — per-connection queue-based player. Handles TTS output + file/URL playback. Supports interrupt priority.
-- **`AudioListener`** — wraps discord-ext-voice-recv, per-user PCM buffers, silero-vad for speech segmentation, feeds segments to STT provider
-- **`VoiceSession`** — full-duplex: simultaneous listen + speak on one connection
+TTS 提供者（可選 extras）：
 
-### Configuration (`~/.discli/config.json`)
+- `elevenlabs` — 最佳品質、約 200ms TTFB、可串流（建議預設）
+- `openai` — 穩定且品質均衡
+- `piper-tts` — 本地端、離線、輕量
+
+STT 提供者（可選 extras）：
+
+- `deepgram-sdk` — 即時 WebSocket 串流，約 100–300ms（建議預設）
+- `openai` — Whisper API，批次模式
+- `faster-whisper` — 本地運作，搭配 VAD 可近乎即時
+
+### 架構（`src/discli/voice_engine.py`）
+
+- **`VoiceEngine`** — 連線池（每個公會一條連線），提供非同步方法：connect/disconnect/move/speak/play/listen
+- **`TTSProvider` 協定** — `async synthesize(text, voice, speed) -> AsyncIterator[bytes]`（回傳串流 PCM chunks）
+- **`STTProvider` 協定** — `async transcribe(audio_stream) -> AsyncIterator[TranscriptionResult]`（回傳 partial 與 final 結果）
+- **`AudioPlayer`** — 每連線共用佇列式播放器。處理 TTS 輸出與檔案/URL 播放，支援插斷優先順序。
+- **`AudioListener`** — 封裝 `discord-ext-voice-recv`，每位使用者有 PCM 緩衝區，搭配 silero-vad 做語音切片，將片段交給 STT 提供者
+- **`VoiceSession`** — 全雙工連線：同一連線同時收聽與發聲
+
+### 設定（`~/.discli/config.json`）
 
 ```json
 {
@@ -52,87 +61,102 @@ STT providers (optional extras):
 }
 ```
 
-API keys via env vars: `ELEVENLABS_API_KEY`, `DEEPGRAM_API_KEY`, `OPENAI_API_KEY`.
+API key 透過環境變數提供：`ELEVENLABS_API_KEY`、`DEEPGRAM_API_KEY`、`OPENAI_API_KEY`。
 
-### CLI Commands (`commands/voice.py`)
+### CLI 指令（`commands/voice.py`）
 
-- `discli voice join <channel>` / `leave` / `move` / `status`
+- `discli voice join <channel>`、`leave`、`move`、`status`
 - `discli voice speak <text> [--voice] [--speed]`
-- `discli voice play <source> [--volume]` (file path or URL)
-- `discli voice stop` / `pause` / `resume`
+- `discli voice play <source> [--volume]`（檔案路徑或 URL）
+- `discli voice stop`、`pause`、`resume`
 - `discli voice listen [--duration] [--continuous]`
-- `discli voice converse [--channel]` — full duplex mode
+- `discli voice converse [--channel]` — 全雙工模式
 
-### Serve Mode Actions
+### Serve 動作
 
-- `voice_connect`, `voice_disconnect`, `voice_move`
-- `voice_speak`, `voice_play`, `voice_stop`, `voice_pause`, `voice_resume`
-- `voice_listen_start`, `voice_listen_stop`
+- `voice_connect`、`voice_disconnect`、`voice_move`
+- `voice_speak`、`voice_play`、`voice_stop`、`voice_pause`、`voice_resume`
+- `voice_listen_start`、`voice_listen_stop`
 - `voice_set_config`
 
-### Serve Mode Events
+### Serve 事件
 
 - `voice_transcription` — `{user_id, username, text, confidence, channel_id, is_partial}`
 - `voice_playback_started` / `voice_playback_finished`
 - `voice_connected` / `voice_disconnected`
 - `voice_user_speaking` / `voice_user_silent`
 
-## Interactive Engine
+## 互動引擎
 
-### Architecture (`src/discli/interact_engine.py`)
+### 架構（`src/discli/interact_engine.py`）
 
-**Modals & Forms:**
-- `Modal` class — builds Discord modals with text inputs (short/paragraph), validation rules
-- Serve action: `modal_send {trigger_interaction_id, title, fields}`
-- Serve event: `modal_submit {custom_id, user_id, values}`
+**模態視窗與表單：**
 
-**Multi-Step Workflows:**
-- `Workflow` class — sequence of steps (message, select, modal, confirm), tracks user state per `(user_id, workflow_id)`
-- Supports conditional branching based on user input
-- Configurable per-step timeout
-- Serve action: `workflow_start {user_id, channel_id, workflow_definition}` / `workflow_cancel`
-- Serve events: `workflow_step_completed`, `workflow_finished`, `workflow_timeout`
+- `Modal` 類別：建立含短/長文字輸入、驗證規則的 Discord 模態視窗
+- Serve action：`modal_send {trigger_interaction_id, title, fields}`
+- Serve event：`modal_submit {custom_id, user_id, values}`
 
-**Persistent Dashboards:**
-- `Dashboard` class — auto-updating message with embeds + components
-- Pagination, role menus, live counters
-- State in memory with optional JSON file persistence
-- Serve action: `dashboard_create` / `dashboard_update` / `dashboard_delete`
-- Serve event: `dashboard_interaction`
+**多步驟工作流程：**
 
-**Interaction Router:**
-Central dispatcher for `on_interaction` events, routes by `custom_id` prefix:
-- `modal:` → modal handler
-- `wf:` → workflow handler
-- `dash:` → dashboard handler
-- `voice:` → voice engine
+- `Workflow` 類別：管理步驟序列（message/select/modal/confirm），以 `(user_id, workflow_id)` 追蹤使用者狀態
+- 支援依使用者輸入做條件分支
+- 可設定每步 timeout
+- Serve action：`workflow_start {user_id, channel_id, workflow_definition}`、`workflow_cancel`
+- Serve events：`workflow_step_completed`、`workflow_finished`、`workflow_timeout`
 
-### CLI Commands (`commands/interact.py`)
+**持久化儀表板：**
+
+- `Dashboard` 類別：搭配 embed + components 的自動更新訊息
+- 支援分頁、角色選單、即時計數
+- 記憶體儲存狀態，並可選擇 JSON 檔持久化
+- Serve action：`dashboard_create`、`dashboard_update`、`dashboard_delete`
+- Serve event：`dashboard_interaction`
+
+**互動路由：**
+
+核心 dispatch 依 `custom_id` 前綴分流：
+
+- `modal:` → 模態視窗 handler
+- `wf:` → 工作流程 handler
+- `dash:` → 儀表板 handler
+- `voice:` → 語音引擎
+
+### CLI 指令（`commands/interact.py`）
 
 - `discli interact modal <title> --field "Name:short:required" ...`
 - `discli interact workflow <definition.json>`
 - `discli interact dashboard create|update|delete|list`
 
-## Integration
+## 整合方式
 
-**Serve mode:** Both engines initialized lazily. Actions registered as thin handlers in serve.py's dispatch table. Events flow through existing JSONL emission system. Everything on the existing asyncio event loop.
+**Serve 模式：**
 
-**CLI:** Commands follow existing pattern (Click group -> async action -> `run_discord()`). Persistent commands (listen, converse) run until Ctrl+C or --duration.
+- 兩個引擎採延遲初始化
+- actions 以薄 handler 形式登錄到 `serve.py` 的 dispatch table
+- 事件走既有 JSONL emit pipeline
+- 全部在同一條 asyncio event loop 上運作
 
-**Security (security.py):**
-- New permission scopes: `voice`, `interact`
-- `readonly`: can view status but not connect/send
-- `chat`: gets `interact` but not `voice`
-- `full`: gets everything
-- `moderation`: gets `voice` (monitoring) + `interact`
-- All actions audit-logged
+**CLI：**
 
-**Error handling:**
-- Voice connection failures → clear error in JSONL/CLI
-- Provider failures → fallback to next provider if available, otherwise error event
-- Workflow timeouts → cleanup state + event
+- 指令維持既有流程（Click group → async action → `run_discord()`）
+- 長生命週期指令（listen、converse）會持續執行到 `Ctrl+C` 或 `--duration`
 
-## Dependency Groups (`pyproject.toml`)
+**安全性（`security.py`）：**
+
+- 新增權限 scope：`voice`、`interact`
+- `readonly`：可查詢狀態但不可連線/發聲
+- `chat`：可用 `interact`，不可用 `voice`
+- `full`：全部權限
+- `moderation`：包含 `voice`（監控）與 `interact`
+- 所有動作都會寫入稽核日誌
+
+**錯誤處理：**
+
+- 語音連線失敗：在 JSONL/CLI 回傳清楚錯誤
+- Provider 失敗：若有替代可回退，否則回傳錯誤事件
+- 工作流程逾時：清理狀態並送出事件
+
+## 依賴群組（`pyproject.toml`）
 
 ```toml
 [project.optional-dependencies]

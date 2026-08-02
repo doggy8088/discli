@@ -1,25 +1,25 @@
 ---
-title: Building Agents
-description: Build autonomous Discord agents that grow in capability
+title: 建構代理
+description: 建立可逐步擴充能力的 Discord 自動化代理
 ---
 
-This guide walks you through five levels of Discord agent complexity, from a 20-line keyword responder to a fully autonomous production agent. Each level builds on the previous one, and every example is complete, runnable code.
+本指南以五個階段逐步建立 Discord 代理，從約 20 行的關鍵字回應器，走到可直接上線的全自動化代理。每個階段建立在前一階段之上，所有範例皆為可執行完整程式。
 
-## The Five Levels
+## 五個階段
 
-| Level | Name | Lines | What It Does |
-|-------|------|-------|-------------|
-| 1 | Reactive Bot | ~20 | Responds to keywords |
-| 2 | Context-Aware | ~35 | Fetches conversation history before responding |
-| 3 | Proactive Agent | ~60 | Creates threads, streams responses, detects intent |
-| 4 | Multi-Action | ~90 | Orchestrates multiple Discord actions per event |
-| 5 | Full Autonomous | ~120 | Production-ready with safety, error handling, graceful degradation |
+| 階段 | 名稱 | 行數 | 功能 |
+|-------|------|------|------|
+| 1 | 反應型 Bot | 約 20 | 回應關鍵字 |
+| 2 | 情境感知 | 約 35 | 回應前先抓取對話歷史 |
+| 3 | 主動代理 | 約 60 | 建立討論串、串流回應、意圖偵測 |
+| 4 | 多動作代理 | 約 90 | 單一事件下協調多個 Discord 行為 |
+| 5 | 全自主代理 | 約 120 | 含安全、防錯、率先降級與上線品質設計 |
 
 ---
 
-## Level 1: Reactive Bot
+## 第一階段：反應型 Bot
 
-The simplest possible agent. It listens for messages that mention the bot and responds based on keyword matching. Uses `discli listen` for events and `discli message reply` for responses.
+最簡化的代理。它監聽提及機器人的訊息，並以關鍵字比對回應。事件使用 `discli listen` 取得，回覆則用 `discli message reply` 傳送。
 
 ```python
 import json
@@ -45,29 +45,29 @@ for line in proc.stdout:
         continue
     content = event["content"].lower()
     if "help" in content:
-        reply(event["channel_id"], event["message_id"], "Hi! How can I help?")
+        reply(event["channel_id"], event["message_id"], "你好，我能幫你什麼？")
     elif "pricing" in content:
-        reply(event["channel_id"], event["message_id"], "Check example.com/pricing")
+        reply(event["channel_id"], event["message_id"], "可參考 example.com/pricing")
     else:
-        reply(event["channel_id"], event["message_id"], "Thanks for reaching out!")
+        reply(event["channel_id"], event["message_id"], "已收到你的訊息，請稍等。")
 ```
 
-### What makes this work
+### 為什麼可行
 
-- `discli --json listen` streams JSONL events to stdout, one per line
-- Each event includes `mentions_bot`, `channel_id`, `message_id`, and `content`
-- `discli message reply` is a fire-and-forget CLI call -- no connection management
-- The `for line in proc.stdout` loop blocks until the next event arrives
+- `discli --json listen` 會將 JSONL 事件逐行輸出到 stdout
+- 每筆事件都包含 `mentions_bot`、`channel_id`、`message_id` 與 `content`
+- `discli message reply` 是一次性指令，不需管理連線生命週期
+- `for line in proc.stdout` 會在每次事件到達前阻塞
 
 <Callout type="warning">
-**What could go wrong:** Every `reply()` call spawns a new discli process, which starts a Python interpreter, authenticates a fresh HTTP client, sends the message, and exits. There is no Gateway handshake (see [Connection Model](/architecture/connection-model)), but process startup and a cold HTTP session still dominate the cost, and each reply pays it again. Fine for low-traffic bots, but it will not scale.
+**可能的風險：** 每次 `reply()` 都會啟動新的 discli 行程，依序啟動 Python 直譯器、驗證新的 HTTP 用戶端、傳送訊息並退出。此流程不需要 Gateway 交握，詳見[連線模型](/architecture/connection-model)，但行程啟動與初次建立 HTTP 連線仍是主要成本，而且每次回覆都會重複支付。低流量 bot 可接受，但無法因應高流量。
 </Callout>
 
 ---
 
-## Level 2: Context-Aware
+## 第二階段：情境感知
 
-The Level 1 bot responds to each message in isolation. A context-aware agent fetches recent conversation history before responding, so it understands what the user is actually asking about.
+第一階段每則訊息都獨立處理。情境感知代理會在回應前先抓最近的對話歷史，才能更準確理解使用者真正意圖。
 
 ```python
 import json
@@ -82,7 +82,7 @@ def reply(channel_id, message_id, text):
 
 
 def get_context(channel_id, limit=5):
-    """Fetch recent messages for conversation context."""
+    """抓取近期訊息作為對話上下文。"""
     result = subprocess.run(
         ["discli", "--json", "message", "list", channel_id, "--limit", str(limit)],
         capture_output=True,
@@ -94,17 +94,17 @@ def get_context(channel_id, limit=5):
 
 
 def build_response(event, context):
-    """Use conversation context to build a smarter response."""
+    """使用對話上下文生成更精準回應。"""
     content = event["content"].lower()
-    # Check if user already asked this question recently
+    # 檢查使用者是否最近重複提問
     recent_questions = [m["content"] for m in context if m["author_id"] == event["author_id"]]
     if any("help" in q.lower() for q in recent_questions[:3]):
-        return "Looks like you've asked before -- let me connect you with a human. Stand by!"
+        return "看起來你最近已詢問過，先幫你轉接真人處理，請稍候。"
     if "help" in content:
-        return "Hi! How can I help? I can answer questions about pricing, setup, and billing."
+        return "你好，我可以回答關於價格、安裝與帳務的問題。"
     if "pricing" in content:
-        return "Check example.com/pricing -- plans start at $10/mo."
-    return "Thanks for reaching out! Could you tell me more about what you need?"
+        return "可參考 example.com/pricing，方案起跳價格為每月 10 美元。"
+    return "收到你的訊息，能再補充一點你要的內容嗎？"
 
 
 proc = subprocess.Popen(
@@ -122,21 +122,21 @@ for line in proc.stdout:
     reply(event["channel_id"], event["message_id"], response)
 ```
 
-### What changed from Level 1
+### 與第一階段差異
 
-- Added `get_context()` to fetch the last 5 messages before responding
-- The bot now detects repeated questions and changes its behavior
-- Response logic has access to conversation history, not just the current message
+- 新增 `get_context()`，回應前抓取最近 5 筆訊息
+- Bot 可以識別重複詢問並調整回覆
+- 回覆邏輯可參照歷史內容，而不只看當前這則訊息
 
 <Callout type="warning">
-**What could go wrong:** Each response now requires two Discord connections -- one for `message list` and one for `message reply`. If the channel is busy, the context fetch adds noticeable latency. The bot also has no memory between restarts.
+**可能的風險：** 每次回應多了兩次 Discord 連線需求：一個是 `message list`，一個是 `message reply`。在高流量頻道中會增加延遲，且重啟後不保留上下文記憶。
 </Callout>
 
 ---
 
-## Level 3: Proactive Agent
+## 第三階段：主動代理
 
-This is where the architecture shifts. Instead of fire-and-forget CLI calls, Level 3 uses `discli serve` for a persistent bidirectional connection. The bot can stream responses token-by-token, create threads, and act without being explicitly mentioned.
+在這個階段，架構會改變。第三階段改用 `discli serve` 建立持久雙向連線，不再是一次性 CLI 呼叫。代理可逐字串流回應、建立討論串，也可主動處理訊息而非等待提及。
 
 ```python
 import json
@@ -146,7 +146,7 @@ import threading
 
 
 def start_serve():
-    """Start discli serve as a subprocess."""
+    """以 subprocess 啟動 discli serve。"""
     return subprocess.Popen(
         ["discli", "serve", "--events", "messages"],
         stdin=subprocess.PIPE,
@@ -155,14 +155,14 @@ def start_serve():
     )
 
 
-def send_action(proc, action):
-    """Send a JSONL action to discli serve via stdin."""
-    proc.stdin.write(json.dumps(action) + "\n")
+def send_action(proc, 動作):
+    """透過 stdin 將 JSONL 動作傳給 discli serve。"""
+    proc.stdin.write(json.dumps(動作) + "\n")
     proc.stdin.flush()
 
 
 def read_events(proc):
-    """Read JSONL events from discli serve stdout."""
+    """從 discli serve stdout 讀取 JSONL 事件。"""
     for line in proc.stdout:
         line = line.strip()
         if line:
@@ -170,7 +170,7 @@ def read_events(proc):
 
 
 def detect_intent(content):
-    """Simple intent detection without explicit commands."""
+    """不用明確指令的簡易意圖判斷。"""
     content = content.lower()
     if any(w in content for w in ["help", "issue", "problem", "broken", "error"]):
         return "support"
@@ -181,13 +181,13 @@ def detect_intent(content):
 
 proc = start_serve()
 
-# Wait for ready event
+# 等待就緒事件
 for event in read_events(proc):
     if event.get("event") == "ready":
-        print(f"Bot ready as {event['bot_name']}", file=sys.stderr)
+        print(f"機器人已就緒：{event['bot_name']}", file=sys.stderr)
         break
 
-# Main event loop
+    # 主要事件迴圈
 for event in read_events(proc):
     if event.get("event") != "message":
         continue
@@ -203,21 +203,21 @@ for event in read_events(proc):
     author = event["author"]
 
     if intent == "support":
-        # Create a support thread for the user
+        # 為使用者建立支援討論串
         send_action(proc, {
             "action": "thread_create",
             "channel_id": channel_id,
             "message_id": message_id,
-            "name": f"Support: {author}",
-            "content": f"Hi {author}! I've created this thread to help you. What's going on?",
+            "name": f"支援：{author}",
+            "content": f"{author}，我已建立討論串幫你處理，先簡述一下狀況。",
         })
 
     elif intent == "question":
-        # Stream a response token-by-token
+        # 分段式串流回應
         send_action(proc, {"action": "typing_start", "channel_id": channel_id})
-        response = "Great question! Let me walk you through this step by step..."
+        response = "好問題！我先逐步說明..."
 
-        # Start a stream
+        # 啟動串流
         send_action(proc, {
             "action": "stream_start",
             "channel_id": channel_id,
@@ -225,29 +225,29 @@ for event in read_events(proc):
             "req_id": "stream-1",
         })
 
-        # In a real agent, you'd stream from an LLM here.
-        # For this example, we send the whole response as one chunk.
-        # Wait for stream_start response to get stream_id,
-        # then send chunks. See the Streaming guide for details.
+        # 真正的代理會在這裡改接 LLM 串流輸出。
+        # 示範中會一次送出整段回應。
+        # 先等待 stream_start 回傳 stream_id，
+        # 再陸續發送內容分段。參考 Streaming 文件取得更多細節。
 ```
 
-### What changed from Level 2
+### 與第二階段差異
 
-- **Persistent connection**: `discli serve` maintains a single Discord WebSocket
-- **Bidirectional JSONL**: Send actions via stdin, receive events via stdout
-- **Thread creation**: Automatically creates support threads without being asked
-- **Streaming**: Can show responses being typed in real-time
-- **Intent detection**: Responds to patterns, not just direct mentions
+- **持久連線**：`discli serve` 只維持一條 Discord WebSocket
+- **雙向 JSONL**：透過 stdin 送入動作、從 stdout 接收事件
+- **建立討論串**：可自動建立支援討論串，不需明確提及
+- **串流回應**：可模擬即時輸入行為
+- **意圖偵測**：不只依賴提及，能以關鍵模式回應
 
 <Callout type="warning">
-**What could go wrong:** The `read_events` generator blocks the main thread. If you send an action that returns a response (like `stream_start`), you need to read from stdout to get the `stream_id` back. Without threading or async, this creates a deadlock risk. Level 4 addresses this.
+**可能的風險：** `read_events` 這個 generator 會阻塞主執行緒。若你發送會回傳結果的動作（如 `stream_start`），你必須讀取 stdout 取得 `stream_id`。若未使用 threading 或 async，容易進入死鎖；第四階段會處理此問題。
 </Callout>
 
 ---
 
-## Level 4: Multi-Action Agent
+## 第四階段：多動作代理
 
-A production agent often needs to perform multiple Discord actions in response to a single event. Level 4 uses threading to handle stdin/stdout independently and orchestrates complex workflows like onboarding new members.
+實際上線的代理常會在單一事件中執行多個 Discord 行為。第四階段加入 threading，分離 stdin/stdout 讀寫，並可協調更複雜流程，例如新成員接待。
 
 ```python
 import json
@@ -269,10 +269,10 @@ class DiscordAgent:
         )
         self.responses = Queue()
         self.events = Queue()
-        self.pending = {}  # req_id -> Queue
+        self.pending = {}  # req_id -> 佇列
         self._req_counter = 0
 
-        # Start stdout reader thread
+        # 啟動 stdout 讀取執行緒
         self._reader = threading.Thread(target=self._read_loop, daemon=True)
         self._reader.start()
 
@@ -289,7 +289,7 @@ class DiscordAgent:
                 self.events.put(data)
 
     def send(self, action, wait=False):
-        """Send an action. If wait=True, block until the response arrives."""
+        """傳送動作。若 wait=True，會等待回應到達。"""
         self._req_counter += 1
         req_id = f"req-{self._req_counter}"
         action["req_id"] = req_id
@@ -298,7 +298,7 @@ class DiscordAgent:
             q = Queue()
             self.pending[req_id] = q
 
-        self.proc.stdin.write(json.dumps(action) + "\n")
+        self.proc.stdin.write(json.dumps(動作) + "\n")
         self.proc.stdin.flush()
 
         if wait:
@@ -311,33 +311,33 @@ class DiscordAgent:
         return self.events.get()
 
 
-# Configuration
-WELCOME_CHANNEL_ID = "1234567890"  # #welcome channel
-MODS_CHANNEL_ID = "9876543210"     # #mod-log channel
-NEWCOMER_ROLE_ID = "1111111111"    # @Newcomer role
+# 設定
+WELCOME_CHANNEL_ID = "1234567890"  # #welcome 頻道
+MODS_CHANNEL_ID = "9876543210"     # #mod-log 頻道
+NEWCOMER_ROLE_ID = "1111111111"    # @新進成員 身分組
 
 
 def handle_member_join(agent, event):
-    """Full onboarding workflow for new members."""
+    """完成新成員入群的完整流程。"""
     member_id = event["member_id"]
     member_name = event["member"]
     server_id = event["server_id"]
 
-    # 1. Send a welcome DM
+    # 1. 送出歡迎 DM
     agent.send({
         "action": "dm_send",
         "user_id": member_id,
         "content": (
-            f"Welcome to the server, {member_name}! 👋\n\n"
-            "Here's how to get started:\n"
-            "1. Introduce yourself in #introductions\n"
-            "2. Pick your roles in #roles\n"
-            "3. Ask questions in #help\n\n"
-            "Have fun!"
+            f"歡迎加入伺服器，{member_name}！👋\n\n"
+            "可以照下面步驟開始：\n"
+            "1. 在 #introductions 自我介紹\n"
+            "2. 到 #roles 選擇身分組\n"
+            "3. 到 #help 發問\n\n"
+            "祝使用愉快！"
         ),
     })
 
-    # 2. Assign the Newcomer role
+    # 2. 指派 Newcomer 身分組
     agent.send({
         "action": "role_assign",
         "guild_id": server_id,
@@ -345,32 +345,32 @@ def handle_member_join(agent, event):
         "role_id": NEWCOMER_ROLE_ID,
     })
 
-    # 3. Create an introduction thread in #welcome
+    # 3. 在 #welcome 建立歡迎討論串
     result = agent.send({
         "action": "thread_create",
         "channel_id": WELCOME_CHANNEL_ID,
-        "name": f"Welcome {member_name}!",
-        "content": f"Hey everyone, {member_name} just joined! Say hi! 🎉",
+        "name": f"歡迎 {member_name}！",
+        "content": f"大家好，{member_name} 剛剛加入，歡迎！🎉",
     }, wait=True)
 
     thread_id = result.get("thread_id")
 
-    # 4. Notify moderators
+    # 4. 通知管理員
     agent.send({
         "action": "send",
         "channel_id": MODS_CHANNEL_ID,
         "content": (
-            f"📋 New member joined: **{member_name}** (ID: {member_id})\n"
-            f"Welcome thread: <#{thread_id}>" if thread_id else
-            f"📋 New member joined: **{member_name}** (ID: {member_id})"
+            f"📋 新成員加入：**{member_name}**（ID: {member_id}）\n"
+            f"歡迎討論串：<#{thread_id}>" if thread_id else
+            f"📋 新成員加入：**{member_name}**（ID: {member_id}）"
         ),
     })
 
-    print(f"[onboard] Completed onboarding for {member_name}", file=sys.stderr)
+    print(f"[onboard] 已完成 {member_name} 的入群流程", file=sys.stderr)
 
 
 def handle_message(agent, event):
-    """Handle incoming messages with multi-action responses."""
+    """處理來訊，並回傳多個動作。"""
     if event.get("is_bot"):
         return
     content = event["content"].lower()
@@ -381,7 +381,7 @@ def handle_message(agent, event):
         return
 
     if "status" in content:
-        # React to acknowledge, then send a multi-part status report
+        # 先加表情回應，再分段回報狀態
         agent.send({
             "action": "reaction_add",
             "channel_id": channel_id,
@@ -389,7 +389,7 @@ def handle_message(agent, event):
             "emoji": "⏳",
         })
 
-        # Gather data
+        # 取得資料
         servers = agent.send({"action": "server_list"}, wait=True)
         server_count = len(servers.get("servers", []))
 
@@ -397,10 +397,10 @@ def handle_message(agent, event):
             "action": "reply",
             "channel_id": channel_id,
             "message_id": message_id,
-            "content": f"All systems operational. Monitoring {server_count} server(s).",
+            "content": f"所有系統正常。正在監控 {server_count} 個伺服器。",
         })
 
-        # Replace the hourglass with a checkmark
+        # 將沙漏表情改為打勾
         agent.send({
             "action": "reaction_remove",
             "channel_id": channel_id,
@@ -415,14 +415,14 @@ def handle_message(agent, event):
         })
 
 
-# Main loop
+# 主迴圈
 agent = DiscordAgent()
 
-# Wait for ready
+# 等待就緒
 while True:
     event = agent.next_event()
     if event.get("event") == "ready":
-        print(f"Bot ready as {event['bot_name']}", file=sys.stderr)
+        print(f"機器人已就緒：{event['bot_name']}", file=sys.stderr)
         break
 
 while True:
@@ -434,22 +434,22 @@ while True:
         handle_message(agent, event)
 ```
 
-### What changed from Level 3
+### 與第三階段差異
 
-- **`DiscordAgent` class**: Encapsulates the serve subprocess with proper threading
-- **Request/response correlation**: Uses `req_id` to match responses to actions with `wait=True`
-- **Multi-action workflows**: `handle_member_join` performs 4 actions (DM, role assign, thread create, notification) for a single event
-- **Non-blocking sends**: Actions without `wait=True` fire-and-forget, keeping the event loop fast
+- **`DiscordAgent` 類別**：封裝 serve 子程序，並正確處理 threading
+- **請求/回應關聯**：用 `req_id` 將 `wait=True` 的回應對齊到原始請求
+- **多動作流程**：`handle_member_join` 對一位新成員同時執行四個動作（DM、指派角色、建立討論串、發通知）
+- **非阻塞送出**：未使用 `wait=True` 的動作直接丟出（即發即棄），可維持事件處理速度
 
 <Callout type="warning">
-**What could go wrong:** The `q.get(timeout=10)` in `send(wait=True)` can timeout if Discord is slow or rate-limited. DMs can fail if the user has DMs disabled. The hardcoded channel/role IDs break if the server configuration changes. Level 5 addresses all of these.
+**可能的風險：** `send(wait=True)` 中的 `q.get(timeout=10)` 可能因 Discord 回應慢或觸發速率限制而逾時；如果使用者關閉私訊，DM 也會失敗；硬編碼的頻道/角色 ID 在伺服器結構變動時會失效。第五階段會處理這些情況。
 </Callout>
 
 ---
 
-## Level 5: Full Autonomous Agent
+## 第五階段：全自主代理
 
-A production-ready agent with permission profiles for safety, structured error handling, rate limit awareness, audit logging, and graceful degradation when permissions are restricted.
+包含權限設定檔、安全邊界、錯誤處理、速率限制感知、稽核並支援權限受限下的優雅降級，適合上線使用。
 
 ```python
 import json
@@ -461,7 +461,7 @@ from queue import Queue, Empty
 
 
 class DiscordAgent:
-    """Production Discord agent with safety and error handling."""
+    """具備安全機制與錯誤處理的正式 Discord 代理。"""
 
     def __init__(self, profile="chat", slash_commands=None):
         cmd = [
@@ -495,7 +495,7 @@ class DiscordAgent:
                 try:
                     data = json.loads(line)
                 except json.JSONDecodeError:
-                    print(f"[warn] Invalid JSON from serve: {line[:100]}", file=sys.stderr)
+                    print(f"[warn] serve 回傳 JSON 格式錯誤：{line[:100]}", file=sys.stderr)
                     continue
                 req_id = data.get("req_id")
                 if req_id and req_id in self.pending:
@@ -503,11 +503,11 @@ class DiscordAgent:
                 else:
                     self.events.put(data)
         except Exception as e:
-            print(f"[fatal] Reader thread crashed: {e}", file=sys.stderr)
+            print(f"[fatal] 讀取執行緒發生錯誤：{e}", file=sys.stderr)
             self.events.put({"event": "error", "message": str(e)})
 
     def send(self, action, wait=False, timeout=15):
-        """Send an action with optional response waiting and error handling."""
+        """傳送動作，必要時等待回應並處理錯誤。"""
         with self._lock:
             self._req_counter += 1
             req_id = f"req-{self._req_counter}"
@@ -518,27 +518,27 @@ class DiscordAgent:
             self.pending[req_id] = q
 
         try:
-            self.proc.stdin.write(json.dumps(action) + "\n")
+            self.proc.stdin.write(json.dumps(動作) + "\n")
             self.proc.stdin.flush()
         except (BrokenPipeError, OSError) as e:
-            print(f"[fatal] Cannot write to serve process: {e}", file=sys.stderr)
-            return {"error": "serve process died"}
+            print(f"[fatal] 無法寫入 serve 行程：{e}", file=sys.stderr)
+            return {"error": "serve process 已中止"}
 
         if wait:
             try:
                 result = q.get(timeout=timeout)
             except Empty:
-                result = {"error": "timeout waiting for response"}
+                result = {"error": "等待回應逾時"}
             finally:
                 self.pending.pop(req_id, None)
             return result
         return {"ok": True}
 
     def safe_send(self, action, wait=False, fallback=None):
-        """Send an action, returning fallback on any error."""
+        """傳送動作，遇到錯誤則回傳 fallback。"""
         result = self.send(action, wait=wait)
         if "error" in result:
-            print(f"[warn] Action failed: {action.get('action')} -> {result['error']}", file=sys.stderr)
+            print(f"[warn] 動作失敗：{action.get('action')} -> {result['error']}", file=sys.stderr)
             return fallback if fallback is not None else result
         return result
 
@@ -557,7 +557,7 @@ class DiscordAgent:
 
 
 class SupportAgent:
-    """Autonomous support agent with safety boundaries."""
+    """具備安全邊界的全自主支援代理。"""
 
     def __init__(self, config):
         self.config = config
@@ -568,31 +568,31 @@ class SupportAgent:
         self.active_threads = {}  # user_id -> thread_id
 
     def run(self):
-        """Main event loop with error recovery."""
-        # Wait for ready
+        """含錯誤復原的主要事件迴圈。"""
+        # 等待 ready
         while True:
             event = self.agent.next_event(timeout=30)
             if event is None:
-                print("[fatal] Timed out waiting for ready event", file=sys.stderr)
+                print("[fatal] 等待 ready 逾時", file=sys.stderr)
                 return
             if event.get("event") == "ready":
-                print(f"[info] Bot ready as {event['bot_name']}", file=sys.stderr)
+                print(f"[info] 機器人已就緒：{event['bot_name']}", file=sys.stderr)
                 break
             if event.get("event") == "error":
-                print(f"[error] Startup error: {event.get('message')}", file=sys.stderr)
+                print(f"[error] 啟動錯誤：{event.get('message')}", file=sys.stderr)
 
-        # Process events
+        # 處理事件
         try:
             while True:
                 event = self.agent.next_event(timeout=60)
                 if event is None:
-                    continue  # heartbeat timeout, keep going
+                    continue  # 心跳逾時，繼續等待
                 try:
                     self._dispatch(event)
                 except Exception as e:
-                    print(f"[error] Event handler crashed: {e}", file=sys.stderr)
+                    print(f"[error] 事件處理器發生錯誤：{e}", file=sys.stderr)
         except KeyboardInterrupt:
-            print("[info] Shutting down...", file=sys.stderr)
+            print("[info] 正在關閉…", file=sys.stderr)
         finally:
             self.agent.shutdown()
 
@@ -619,21 +619,21 @@ class SupportAgent:
         user_id = event["author_id"]
         content = event["content"].lower()
 
-        # Show typing indicator while processing
+        # 處理中顯示輸入中
         self.agent.send({"action": "typing_start", "channel_id": channel_id})
 
         try:
-            # Check if user has an active support thread
+            # 檢查使用者是否已有進行中的支援討論串
             if user_id in self.active_threads:
                 self.agent.safe_send({
                     "action": "reply",
                     "channel_id": channel_id,
                     "message_id": message_id,
-                    "content": f"I'm already helping you in <#{self.active_threads[user_id]}>!",
+                    "content": f"你目前已有在處理中的討論串：<#{self.active_threads[user_id]}>。",
                 })
                 return
 
-            # Detect intent and respond
+            # 判斷意圖後回應
             if any(w in content for w in ["help", "issue", "problem", "bug"]):
                 self._create_support_thread(event)
             elif any(w in content for w in ["thanks", "solved", "fixed"]):
@@ -644,33 +644,33 @@ class SupportAgent:
                     "emoji": "💚",
                 })
             else:
-                self._stream_response(event, "How can I help? Mention an issue and I'll create a support thread.")
+                self._stream_response(event, "我可以怎麼幫你？提到問題後我可以幫你建立支援討論串。")
         finally:
             self.agent.send({"action": "typing_stop", "channel_id": channel_id})
 
     def _create_support_thread(self, event):
-        """Create a support thread with error handling."""
+        """建立支援討論串並處理錯誤。"""
         result = self.agent.safe_send({
             "action": "thread_create",
             "channel_id": event["channel_id"],
             "message_id": event["message_id"],
-            "name": f"Support: {event['author'][:50]}",
-            "content": f"Hi {event['author']}! I've created this thread to help you.\n\nCould you describe your issue in detail?",
+            "name": f"支援：{event['author'][:50]}",
+            "content": f"{event['author']}，我已建立這則討論串。\n\n請詳細描述你的問題。",
         }, wait=True, fallback=None)
 
         if result and result.get("thread_id"):
             self.active_threads[event["author_id"]] = result["thread_id"]
         else:
-            # Graceful degradation: reply in channel instead
+            # 降級處理：改以頻道回覆
             self.agent.safe_send({
                 "action": "reply",
                 "channel_id": event["channel_id"],
                 "message_id": event["message_id"],
-                "content": "I couldn't create a thread (I may not have permission). Could you describe your issue here?",
+                "content": "討論串建立失敗，可能缺少權限。請直接在本頻道補充問題。",
             })
 
     def _stream_response(self, event, text):
-        """Stream a response with proper cleanup."""
+        """進行串流回應並做完整清理。"""
         result = self.agent.send({
             "action": "stream_start",
             "channel_id": event["channel_id"],
@@ -678,7 +678,7 @@ class SupportAgent:
         }, wait=True)
 
         if "error" in result:
-            # Fallback to regular reply
+            # 回退為一般回覆
             self.agent.safe_send({
                 "action": "reply",
                 "channel_id": event["channel_id"],
@@ -689,7 +689,7 @@ class SupportAgent:
 
         stream_id = result["stream_id"]
 
-        # Send content as chunks (simulating LLM streaming)
+        # 以詞組分段傳送（模擬 LLM 串流）
         words = text.split()
         for i in range(0, len(words), 3):
             chunk = " ".join(words[i:i+3]) + " "
@@ -706,43 +706,43 @@ class SupportAgent:
         }, wait=True)
 
     def _on_member_join(self, event):
-        """Welcome new members with graceful degradation."""
+        """處理新成員加入，含降級策略。"""
         member_id = event["member_id"]
         member_name = event["member"]
 
-        # Try to send a welcome DM (may fail if DMs are disabled)
+        # 嘗試發送歡迎 DM（若 DM 關閉會失敗）
         self.agent.safe_send({
             "action": "dm_send",
             "user_id": member_id,
-            "content": f"Welcome, {member_name}! Check out #help if you have questions.",
+            "content": f"{member_name}，歡迎加入！有任何問題可到 #help 提問。",
         })
 
-        # Post in welcome channel if configured
+        # 若有設定歡迎頻道就同步公告
         welcome_channel = self.config.get("welcome_channel_id")
         if welcome_channel:
             self.agent.safe_send({
                 "action": "send",
                 "channel_id": welcome_channel,
-                "content": f"Welcome to the server, **{member_name}**!",
+                "content": f"歡迎 **{member_name}** 加入伺服器！",
             })
 
     def _on_reaction(self, event):
-        """Handle reaction-based interactions."""
-        # Example: close support thread when a mod reacts with checkmark
+        """處理回應事件。"""
+        # 例如：管理員按下勾號後關閉支援討論串
         if event.get("emoji") == "✅":
-            # Remove user from active threads if this message is in their thread
+            # 若訊息在使用者討論串中，移除該追蹤
             for user_id, thread_id in list(self.active_threads.items()):
                 if event.get("channel_id") == thread_id:
                     del self.active_threads[user_id]
                     self.agent.safe_send({
                         "action": "send",
                         "channel_id": thread_id,
-                        "content": "This support thread has been marked as resolved. Thanks!",
+                        "content": "此討論串已標示為已解決，感謝回報！",
                     })
                     break
 
     def _on_slash_command(self, event):
-        """Handle slash commands with interaction followup."""
+        """處理 slash command 與 followup 回覆。"""
         command = event.get("command")
         token = event.get("interaction_token")
 
@@ -753,77 +753,77 @@ class SupportAgent:
             self.agent.safe_send({
                 "action": "interaction_followup",
                 "interaction_token": token,
-                "content": f"Online. Monitoring {count} server(s), {active} active support thread(s).",
+                "content": f"線上中，監控 {count} 個伺服器，目前 {active} 個進行中支援討論串。",
             })
         else:
             self.agent.safe_send({
                 "action": "interaction_followup",
                 "interaction_token": token,
-                "content": f"Unknown command: {command}",
+                "content": f"未識別指令：{command}",
             })
 
     def _on_error(self, event):
-        print(f"[error] Discord error: {event.get('message')}", file=sys.stderr)
+        print(f"[error] Discord 錯誤：{event.get('message')}", file=sys.stderr)
 
 
 # ── Run ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     config = {
-        "profile": "chat",                       # Safe default: no destructive actions
-        "welcome_channel_id": "1234567890",       # Set to your #welcome channel
-        "slash_commands": "commands.json",         # Optional slash commands file
+        "profile": "chat",                       # 安全預設：避免破壞性動作
+        "welcome_channel_id": "1234567890",       # 指定 #welcome 頻道
+        "slash_commands": "commands.json",         # 選用 slash commands 檔
     }
     SupportAgent(config).run()
 ```
 
-### What changed from Level 4
+### 與第四階段差異
 
-- **Permission profile**: Runs with `chat` profile by default, preventing accidental destructive actions
-- **`safe_send()`**: Wraps every action in error handling with optional fallbacks
-- **Graceful degradation**: If thread creation fails (missing permissions), falls back to in-channel replies
-- **Structured dispatch**: Clean event routing with `_dispatch()` instead of if/elif chains
-- **Thread-safe**: Uses a lock for request counter, handles broken pipe on process death
-- **Timeout handling**: Every `wait=True` call has a timeout; no infinite hangs
-- **Audit awareness**: The `chat` profile ensures all actions are logged and restricted to safe operations
-- **Slash command support**: Handles `/status` with interaction followup
-- **Cleanup**: `shutdown()` closes stdin and waits for the process to exit
+- **權限設定檔**：預設使用 `chat`，可降低誤做破壞性行為風險
+- **`safe_send()`**：將每個動作都包入錯誤處理並提供 fallback
+- **優雅降級**：若討論串建立失敗（權限不足），改以頻道回覆補償
+- **結構化路由**：用 `_dispatch()` 做事件分派，不再依賴過長的 if/elif
+- **執行緒安全**：使用 lock 處理請求編號，並處理程序異常時的 broken pipe
+- **逾時處理**：所有 `wait=True` 呼叫皆有逾時，不會無限等待
+- **稽核意識**：`chat` 設定檔讓操作受控且完整紀錄
+- **Slash command 支援**：以 `interaction_followup` 回應 `/status`
+- **清理機制**：`shutdown()` 會關閉 stdin 並等待程序結束
 
 <Callout type="warning">
-**What could go wrong at this level:** Very little, by design. The remaining risks are: Discord API outages (mitigated by timeouts), bot token compromise (mitigate with environment variables, not hardcoded tokens), and logic bugs in intent detection (mitigate with logging and monitoring).
+**這個階段可能出錯的情況有限：** 主要剩下：Discord API 異常（透過逾時緩解）、機器人權杖外洩（以環境變數替代硬編碼 token）、意圖判斷邏輯缺陷（透過日誌與監控補強）。
 </Callout>
 
 ---
 
-## AI Serve Agent (`ai_serve_agent.py`)
+## AI Serve Agent（`ai_serve_agent.py`）
 
-Beyond the five levels above, discli ships with an example AI-powered agent that combines Claude (via the Anthropic Agent SDK) with `discli serve`. This is the recommended architecture for building intelligent Discord agents.
+在上述五個階段之外，discli 另外提供一個整合 Claude（透過 Anthropic Agent SDK）與 `discli serve` 的範例 AI 代理。這是建置智慧型 Discord 代理的建議架構。
 
-### Architecture
+### 架構
 
-The AI serve agent uses a two-layer approach:
+AI serve 代理採兩層設計：
 
-1. **Claude Agent SDK** provides the reasoning and decision-making layer
-2. **`discli serve`** provides the persistent Discord connection via JSONL
-3. **Bash tool calls** let Claude execute discli CLI commands for most operations (send messages, manage channels, list members, etc.)
-4. **Component blocks** let Claude declare rich UI elements inline
+1. **Claude Agent SDK** 負責推理與決策
+2. **`discli serve`** 透過 JSONL 提供持續性 Discord 連線
+3. **Bash 動作呼叫** 讓 Claude 透過 bash 執行大部分 discli CLI 指令（發訊息、管理頻道、列出成員等）
+4. **元件區塊** 讓 Claude 直接輸出豐富 UI 元件
 
-Claude reads events from `discli serve` stdout and decides how to respond. For standard actions, it runs CLI commands through Bash. For interactive UI elements like buttons, select menus, and modals, it uses fenced component blocks.
+Claude 從 `discli serve` 的 stdout 讀取事件並決定回應。一般行為走標準 CLI 指令；對互動元件（按鈕、選單、modals）則走元件區塊流程。
 
-### Component blocks
+### 元件區塊
 
-The agent uses a special fenced code block syntax to declare message components:
+代理使用特殊 fenced code block 宣告訊息元件：
 
 ````
 ```component
 {
   "channel_id": "444555666",
-  "content": "Choose an action:",
+  "content": "請選擇一個操作：",
   "components": [
     {
       "type": "action_row",
       "components": [
-        {"type": "button", "style": "primary", "label": "Approve", "custom_id": "approve"},
-        {"type": "button", "style": "danger", "label": "Reject", "custom_id": "reject"}
+        {"type": "button", "style": "primary", "label": "核可", "custom_id": "approve"},
+        {"type": "button", "style": "danger", "label": "退回", "custom_id": "reject"}
       ]
     }
   ]
@@ -831,53 +831,53 @@ The agent uses a special fenced code block syntax to declare message components:
 ```
 ````
 
-The agent framework parses these blocks and sends them as JSONL actions to `discli serve`.
+代理框架會解析這些區塊並轉成 JSONL 動作送到 `discli serve`。
 
-### Modal registry pattern
+### Modal 註冊模式
 
-Modals require a two-step flow: first you send the modal to the user (`modal_send`), then you handle their submission (`modal_submit` event). The agent maintains a modal registry that maps `custom_id` values to handler functions, so when a `modal_submit` event arrives, the agent knows which handler to invoke.
+Modal 需要兩段流程：先發送 `modal_send` 給使用者，然後處理 `modal_submit` 事件。代理維護 custom_id 對應的註冊表，當 `modal_submit` 來時即可對應到 handler。
 
-### Example test messages
+### 範例測試訊息
 
-Try these messages to exercise the agent's capabilities:
+可用以下範例訊息驗證能力：
 
-- `@bot send a poll about favorite languages` -- creates a poll with buttons
-- `@bot show me server info` -- runs `discli server info` via Bash
-- `@bot create a feedback form` -- opens a modal dialog
-- `@bot set up a welcome channel` -- orchestrates channel creation and permissions
+- `@bot 幫我針對最愛語言發起投票`：建立含按鈕的投票
+- `@bot 顯示伺服器資訊`：透過 Bash 執行 `discli server info`
+- `@bot 建立回饋表單`：開啟 modal 對話框
+- `@bot 設定歡迎頻道`：協調建立頻道並設定權限
 
-### Running the example
+### 執行範例
 
-See [`agents/ai_serve_agent.py`](/agents/ai_serve_agent.py) for the full implementation. The agent requires the `anthropic` Python package and a valid `ANTHROPIC_API_KEY` environment variable.
+完整實作請見 [`agents/ai_serve_agent.py`](/agents/ai_serve_agent.py)。此代理需安裝 `anthropic` 套件，並設定有效的 `ANTHROPIC_API_KEY` 環境變數。
 
 ---
 
-## Choosing Your Level
+## 選擇哪個階段
 
 <CardGroup cols={2}>
-<Card title="Levels 1-2" icon="terminal">
-**Best for:** Quick scripts, personal bots, prototyping. No persistent connection needed. Each action is a standalone CLI call.
+<Card title="第一階段到第二階段" icon="terminal">
+**適用情境：** 快速腳本、個人 bot、原型驗證。無需持久連線。每個動作為獨立 CLI 呼叫。
 </Card>
-<Card title="Levels 3-5" icon="robot">
-**Best for:** Production agents, real-time interactions, streaming responses. Uses `discli serve` for a single persistent connection.
+<Card title="第三階段到第五階段" icon="robot">
+**適用情境：** 上線級代理、即時互動、串流回應。透過 `discli serve` 維持單一持久連線。
 </Card>
 </CardGroup>
 
-## Architecture Decision: standalone CLI vs serve
+## 架構決策：獨立 CLI 與 serve 對照
 
-| Feature | Standalone CLI (Levels 1-2) | `discli serve` (Levels 3-5) |
+| 功能 | 獨立 CLI（第一到二階段） | `discli serve`（第三到五階段） |
 |---------|------------------------------|------------------------------|
-| Connection | One HTTP lifecycle per action | Single persistent Gateway connection |
-| Latency | HTTP request latency per action | Under 100ms per action |
-| Streaming | Not possible | Full support |
-| Threads | Can create (via CLI) | Can create and manage |
-| Typing indicator | Not practical | Full support |
-| Slash commands | Not supported | Full support |
-| Complexity | Minimal | Moderate |
+| 連線 | 每個動作一次 HTTP 生命週期 | 單一持久 Gateway 連線 |
+| 延遲 | 每次動作都含 HTTP 請求延遲 | 通常低於 100ms / 動作 |
+| 串流 | 不支援 | 全支援 |
+| 討論串 | 可建立（CLI） | 可建立並管理 |
+| 輸入提示 | 不實務 | 完整支援 |
+| 斜線指令 | 不支援 | 完整支援 |
+| 複雜度 | 最低 | 中等 |
 
-## Next Steps
+## 下一步
 
-- [Serve Mode](/guides/serve-mode) -- Deep dive into the bidirectional JSONL protocol
-- [Streaming Responses](/guides/streaming-responses) -- Real-time token-by-token output
-- [Slash Commands](/guides/slash-commands) -- Register and handle slash commands
-- [Security & Permissions](/guides/security-permissions) -- Lock down your agent
+- [Serve 模式](/guides/serve-mode) -- 深入了解雙向 JSONL 協定
+- [串流回應](/guides/streaming-responses) -- 即時分詞式輸出
+- [Slash 指令](/guides/slash-commands) -- 註冊與處理 slash 指令
+- [安全與權限](/guides/security-permissions) -- 對代理加上權限限制

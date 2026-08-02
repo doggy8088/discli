@@ -1,27 +1,27 @@
 ---
-title: AI Support Agent
-description: Build a Claude-powered support bot with full Discord control, interactive components, and streaming responses
+title: AI 支援機器人
+description: 建置具備完整 Discord 控制、互動元件、即時串流回應的 Claude 支援機器人
 ---
 
-# AI Support Agent
+# AI 支援機器人
 
-Build an all-in-one AI support agent that uses `discli serve` for full Discord control — interactive components, streaming responses, per-user conversation history, and slash commands.
+使用 `discli serve` 打造一套完整 AI 支援機器人，提供互動元件、即時串流回應、每位使用者對話歷史，以及斜線指令。
 
-## The problem
+## 問題背景
 
-Your Discord server has a growing community asking repetitive questions. You need a bot that can answer them 24/7 with accurate, context-aware responses -- without hardcoded replies or decision trees. You also want rich interactions: buttons for feedback, slash commands for common tasks, and streaming responses so users see the answer as it is generated.
+你的 Discord 伺服器越來越大，會不斷出現重複問題。你需要一台可以 24/7 回應，且能理解上下文、準確回答的機器人，而不是依賴硬編碼回應或固定決策樹。此外，你還要有更豐富的互動體驗：回饋按鈕、常用任務的斜線指令，以及讓使用者即時看到回答逐步產生的串流回應。
 
-## The solution
+## 解法
 
-Use `ai_serve_agent.py` — an all-in-one AI agent that combines the **Claude Agent SDK** with **discli serve** to provide:
+使用 `ai_serve_agent.py`，這是一套整合 **Claude Agent SDK** 與 **discli serve** 的整體式 AI 機器人，提供：
 
-1. **Full Discord control via CLI commands** — send, reply, edit, delete, react, manage threads, channels, roles, and more
-2. **Interactive components** — buttons, select menus, and modal forms via component blocks
-3. **Streaming responses** — users see the answer word-by-word as Claude generates it
-4. **Per-user conversation history** — each user gets their own context window so the agent remembers previous questions
-5. **Slash commands** — `/ask`, `/help`, `/summarize`, `/clear` registered automatically on startup
+1. **透過 CLI 指令取得完整 Discord 控制**：傳送、回覆、編輯、刪除、加反應、管理討論串、頻道、身分組等
+2. **互動元件**：用元件區塊提供按鈕、選單、與表單
+3. **即時串流回應**：使用者可看到 Claude 逐字輸出，不必等完整回覆
+4. **每位使用者對話歷史**：每位使用者都有自己的上下文視窗，機器人能記住先前問題
+5. **斜線指令**：啟動時自動註冊 `/ask`、`/help`、`/summarize`、`/clear`
 
-## Architecture
+## 架構
 
 ```
 Discord Server
@@ -31,127 +31,128 @@ discli serve  (persistent bidirectional JSONL connection)
     |
     v
 ai_serve_agent.py
-    ├── Routes events (messages, slash commands, component interactions)
-    ├── Maintains per-user conversation history
-    ├── Sends to Claude Agent SDK for reasoning
-    └── Writes actions to stdin (send, reply, stream, components, modals)
+    ├── 路由事件（訊息、斜線指令、元件互動）
+    ├── 維護每位使用者對話歷史
+    ├── 轉交 Claude Agent SDK 進行推理
+    └── 將操作寫入 stdin（send、reply、stream、components、modals）
     |
     v
-Discord Server (responses, embeds, buttons, modals)
+Discord Server（回覆、嵌入、按鈕、表單）
 ```
 
-## Full working code
+## 完整可執行範例
 
-The complete agent is available at `examples/ai_serve_agent.py`. Here is how to get started:
+完整範例程式位於 `examples/ai_serve_agent.py`，啟動方式如下：
 
-### Install dependencies
+### 安裝相依套件
 
 ```bash
 pip install discord-cli-agent claude-agent-sdk
 ```
 
-Make sure your bot token is configured:
+先設定機器人權杖：
 
 ```bash
 discli config set token YOUR_BOT_TOKEN
 ```
 
-### Run the agent
+### 啟動機器人
 
 ```bash
 python examples/ai_serve_agent.py
 ```
 
-The agent will connect to Discord, register slash commands, and start listening for events.
+機器人會連線到 Discord、註冊斜線指令，並開始監聽事件。
 
-## What users can do
+## 使用者可做什麼
 
-### Send messages
+### 送出訊息
 
-Users can mention the bot in any channel:
+使用者可在任意頻道提及機器人：
 
 ```
 @bot How do I reset my password?
-@bot What are the server rules?
-@bot Summarize the last 10 messages in this channel
+@bot 如何重設密碼？
+@bot 伺服器規範是什麼？
+@bot 幫我總結這個頻道最近的 10 則訊息
 ```
 
-The agent fetches conversation context, sends it to Claude, and streams the response back in real time.
+機器人會讀取對話上下文，送交 Claude 推理後即時串流回傳結果。
 
-### Use slash commands
+### 使用斜線指令
 
-| Command | Description |
+| 指令 | 說明 |
 |---------|-------------|
-| `/ask question:How do I...` | Ask the bot a question directly |
-| `/help` | Show available commands and capabilities |
-| `/summarize` | Summarize recent conversation in the current channel |
-| `/clear` | Clear your conversation history with the bot |
+| `/ask question:如何重設密碼？` | 直接向機器人提問 |
+| `/help` | 顯示可用指令與功能 |
+| `/summarize` | 摘要目前頻道最近的對話 |
+| `/clear` | 清除與機器人的對話歷史 |
 
-### Interact with components
+### 互動元件
 
-The agent can send buttons for feedback, select menus for choices, and modal forms for structured input. When a user clicks a button or submits a form, the agent receives the interaction and responds accordingly.
+機器人可在回覆中加入按鈕、選單，以及結構化輸入表單。當使用者點擊按鈕或送出表單時，機器人會接收互動事件並做對應回應。
 
-## Key features
+## 主要特色
 
-### Streaming responses
+### 即時串流回應
 
-When the agent generates a long answer, it streams the response so users see text appearing in real time rather than waiting for the full response:
+當機器人產生長回覆時，會採用串流方式回傳，讓使用者看到文字即時呈現，而非等待完整回覆一次送達：
 
 ```json
 {"action": "stream_start", "channel_id": "123", "reply_to": "456"}
-{"action": "stream_chunk", "stream_id": "abc", "content": "Here is "}
-{"action": "stream_chunk", "stream_id": "abc", "content": "the answer..."}
+{"action": "stream_chunk", "stream_id": "abc", "content": "這裡是 "}
+{"action": "stream_chunk", "stream_id": "abc", "content": "回答內容..."}
 {"action": "stream_end", "stream_id": "abc"}
 ```
 
-### Per-user conversation history
+### 每位使用者對話歷史
 
-Each user's questions and the agent's responses are stored in memory. This lets the agent handle follow-up questions naturally:
+每位使用者的問題與機器人回覆會存放在記憶體中，這讓機器人可自然地處理後續追問：
 
 ```
-User: What is discli?
-Bot:  discli is a Discord CLI for AI agents and humans...
-User: How do I install it?
-Bot:  You can install it with pip: pip install discord-cli-agent
+使用者：discli 是什麼？
+機器人：discli 是給 AI 代理和人類使用的 Discord CLI。
+使用者：我該如何安裝？
+機器人：你可以用 pip 安裝：pip install discord-cli-agent
 ```
 
-The `/clear` command resets a user's history.
+`/clear` 指令可清除該位使用者的對話歷史。
 
-### Interactive components
+### 互動元件整合
 
-The agent can send buttons, select menus, and modals as part of its responses. See the [Components & Modals](/guides/components-modals) guide for the full protocol reference.
+機器人可在回覆內加入按鈕、選單、表單。完整協定請參考 [元件與表單](/guides/components-modals) 指南。
 
-## Edge cases and pitfalls
+## 邊際案例與常見陷阱
 
 <Callout type="warning">
-  **Discord's 2000 character limit.** Streaming mode handles this automatically — `stream_end` splits content across multiple messages if it exceeds the limit.
+  **Discord 的 2000 字元上限。** 串流模式會自動處理；若內容超過上限，`stream_end` 會自動拆成多則訊息。
 </Callout>
 
 <Callout type="warning">
-  **Rate limits.** Discord rate-limits bots to roughly 5 messages per 5 seconds per channel. If your server is busy and the bot gets many mentions at once, responses will queue up. Consider adding a cooldown or debounce mechanism.
+  **速率限制。** Discord 大致將每個頻道每 5 秒限制為約 5 則訊息。若伺服器繁忙且同時間大量提及機器人，回應會排隊。建議加入冷卻時間或節流機制。
 </Callout>
 
 <Callout type="warning">
-  **Claude API costs.** Every @mention and slash command triggers a Claude API call. In a busy server, this can add up. Consider adding a per-user cooldown to prevent abuse.
+  **Claude API 成本。** 每次提及或每個斜線指令都會觸發 Claude API 請求。流量高時成本會累積，建議加入每位使用者冷卻時間以避免濫用。
 </Callout>
 
 <Callout type="warning">
-  **Error handling.** The example agent includes basic error handling, but in production you should add fallback messages, retry logic, and monitoring.
+  **錯誤處理。** 範例機器人只含基本錯誤處理。正式環境應補上備援訊息、重試邏輯與監控機制。
 </Callout>
 
-## Extending the agent
+## 擴充方向
 
 <CardGroup cols={2}>
-  <Card title="Components & Modals">
-    Add buttons, select menus, and modal forms to your agent's responses. See [Components & Modals](/guides/components-modals).
+  <Card title="元件與表單">
+    在回覆中加入按鈕、選單與表單。參考 [元件與表單](/guides/components-modals)。
   </Card>
-  <Card title="Memory and knowledge base">
-    Store past Q&A pairs in a database and include relevant ones in Claude's context. This lets the agent learn from previous answers without retraining.
+  <Card title="記憶體與知識庫">
+    將歷史問答存入資料庫，並將相關項目帶入 Claude 的上下文。這能讓機器人保有歷史能力，而無需重新訓練模型。
   </Card>
-  <Card title="Multi-model routing">
-    Use a smaller model (like Haiku) for simple questions and route complex ones to Opus. Check the question length or keyword patterns to decide.
+  <Card title="多模型路由">
+    簡單問題使用較小模型（例如 Haiku），複雜問題再路由到 Opus。可依問題長度或關鍵字規則判斷。
   </Card>
-  <Card title="Thread-based replies">
-    Instead of replying inline, create a thread for each support request to keep the channel clean. See [Thread-Based Support](/use-cases/thread-based-support).
+  <Card title="討論串式回覆">
+    不要直接在主頻道回覆，為每筆支援需求建立一條討論串以保持主頻道整潔。參考 [以討論串承接支援](/use-cases/thread-based-support)。
   </Card>
 </CardGroup>

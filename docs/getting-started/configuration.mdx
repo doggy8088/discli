@@ -1,37 +1,37 @@
 ---
-title: Configuration
-description: Configure your bot token and permission profiles
+title: 設定
+description: 設定機器人 Token 與權限設定檔
 ---
 
-# Configuration
+# 設定
 
-discli uses a layered configuration system for authentication and a profile-based system for access control. This page covers how to set up your bot token, manage configuration, and use permission profiles.
+discli 採用分層式設定架構管理驗證，並以權限設定檔控管可執行的指令。本頁說明如何設定機器人 Token、管理設定檔，以及使用權限設定檔。
 
-## Bot token
+## 機器人 Token
 
-Your Discord bot token is the only required configuration. discli resolves the token using the following priority order:
+Discord 機器人 Token 是唯一必要的設定。discli 會依下列優先順序解析 Token：
 
-| Priority | Method | Example |
+| 優先順序 | 方式 | 範例 |
 |----------|--------|---------|
-| 1 (highest) | `--token` flag | `discli --token YOUR_TOKEN server list` |
-| 2 | `DISCORD_BOT_TOKEN` environment variable | `export DISCORD_BOT_TOKEN=your_token` |
-| 3 (lowest) | Config file (`~/.discli/config.json`) | `discli config set token YOUR_TOKEN` |
+| 1（最高） | `--token` 旗標 | `discli --token YOUR_TOKEN server list` |
+| 2 | `DISCORD_BOT_TOKEN` 環境變數 | `export DISCORD_BOT_TOKEN=your_token` |
+| 3（最低） | 設定檔 (`~/.discli/config.json`) | `discli config set token YOUR_TOKEN` |
 
-This means a `--token` flag always wins, followed by the environment variable, followed by the saved config file. Use whichever method fits your workflow.
+`--token` 的優先權最高，其次是環境變數，最後才是已儲存的設定檔。請依你的作業流程選擇任一方式。
 
-### Option 1: Config file (recommended for local use)
+### 選項 1：設定檔（建議本機使用）
 
-Store the token persistently so you do not have to provide it every time:
+將 Token 持久化儲存，避免每次都重新輸入：
 
 ```bash
 discli config set token YOUR_BOT_TOKEN
 ```
 
 ```
-Set token.
+已設定 Token。
 ```
 
-This writes to `~/.discli/config.json`:
+這會寫入 `~/.discli/config.json`：
 
 ```json
 {
@@ -40,16 +40,16 @@ This writes to `~/.discli/config.json`:
 ```
 
 <Callout type="warning">
-  The config file stores your token in plain text. Make sure `~/.discli/config.json` has appropriate file permissions. On macOS/Linux, restrict access with:
+  設定檔會以純文字儲存 Token。請確認 `~/.discli/config.json` 的權限設為安全，macOS/Linux 可用：
 
   ```bash
   chmod 600 ~/.discli/config.json
   ```
 </Callout>
 
-### Option 2: Environment variable (recommended for CI/containers)
+### 選項 2：環境變數（建議用於 CI / 容器）
 
-Set the `DISCORD_BOT_TOKEN` environment variable:
+設定 `DISCORD_BOT_TOKEN` 環境變數：
 
 <Tabs>
   <Tab title="macOS / Linux">
@@ -57,7 +57,7 @@ Set the `DISCORD_BOT_TOKEN` environment variable:
     export DISCORD_BOT_TOKEN=your_token
     ```
 
-    Add this to your `~/.bashrc`, `~/.zshrc`, or shell profile to persist across sessions.
+    可將這行加入 `~/.bashrc`、`~/.zshrc` 或 shell 設定檔，讓設定跨工作階段保留。
   </Tab>
 
   <Tab title="Windows (PowerShell)">
@@ -65,7 +65,7 @@ Set the `DISCORD_BOT_TOKEN` environment variable:
     $env:DISCORD_BOT_TOKEN = "your_token"
     ```
 
-    To persist, set it as a system or user environment variable via Settings or:
+    若要永久生效，請在系統設定中將其設為系統或使用者環境變數，或使用：
 
     ```powershell
     [System.Environment]::SetEnvironmentVariable("DISCORD_BOT_TOKEN", "your_token", "User")
@@ -77,7 +77,7 @@ Set the `DISCORD_BOT_TOKEN` environment variable:
     docker run -e DISCORD_BOT_TOKEN=your_token my-agent
     ```
 
-    Or in GitHub Actions:
+    或於 GitHub Actions 中設定：
 
     ```yaml
     env:
@@ -86,21 +86,21 @@ Set the `DISCORD_BOT_TOKEN` environment variable:
   </Tab>
 </Tabs>
 
-### Option 3: Per-command flag
+### 選項 3：逐指令旗標
 
-Pass the token directly for one-off commands:
+單次執行時直接提供 Token：
 
 ```bash
 discli --token YOUR_BOT_TOKEN server list
 ```
 
 <Callout type="note">
-  The `--token` flag is placed **before** the subcommand, not after it. This is because it is a global option on the `discli` CLI group.
+  `--token` 旗標必須放在子指令**前面**，而不是後面，因為它是 `discli` 全域選項。
 </Callout>
 
-## Viewing current configuration
+## 檢視目前設定
 
-Check what configuration is currently set:
+查看目前已設定的內容：
 
 ```bash
 discli config show
@@ -110,7 +110,7 @@ discli config show
 token: your-bot-token
 ```
 
-The token value is truncated for security. For the full JSON representation:
+為防止外洩，Token 會截斷顯示。若要看完整 JSON 輸出：
 
 ```bash
 discli --json config show
@@ -122,84 +122,84 @@ discli --json config show
 }
 ```
 
-## Permission profiles
+## 權限設定檔
 
-Permission profiles control which commands your bot (or agent) is allowed to run. This is especially useful when giving an AI agent access to discli — you can restrict it to a safe subset of operations.
+權限設定檔會決定機器人（或代理）可執行哪些指令。這在讓 AI 代理使用 discli 時特別重要，可將其限制在安全的操作範圍內。
 
-### Available profiles
+### 可用設定檔
 
-| Profile | Description | Use case |
+| 設定檔 | 說明 | 適用情境 |
 |---------|-------------|----------|
-| **full** | Full access to all commands | Local development, trusted agents |
-| **chat** | Messages, reactions, threads, typing, DMs, listen, serve | Chatbot agents that should not moderate |
-| **readonly** | List, info, get, search, listen only | Monitoring, logging, read-only agents |
-| **moderation** | Full access including moderation | Moderation bots with kick/ban capability |
+| **full** | 全部指令都可使用 | 本機開發、可信任的代理 |
+| **chat** | 訊息、表情回應、討論串、輸入指示、DM、listen、serve | 不應有審核權限的聊天機器人 |
+| **readonly** | 僅能列出、查詢資訊、取得、搜尋、listen | 監控、日誌、只讀代理 |
+| **moderation** | 含審核權限的完整存取 | 需要 kick/ban 能力的審核機器人 |
 
-### Setting the active profile
+### 設定啟用中的設定檔
 
-There are three ways to set the permission profile, with the same priority pattern as tokens:
+權限設定檔有三種設定方式，優先順序與 Token 相同：
 
-**Persistently (saved to disk):**
+**持久化（寫入磁碟）：**
 
 ```bash
 discli permission set chat
 ```
 
 ```
-Permission profile set to: chat (Messages, reactions, threads, typing only)
+權限設定檔已設定為：chat（訊息、表情回應、討論串、輸入指示）
 ```
 
-This writes the active profile to `~/.discli/permissions.json`.
+這會將啟用的設定檔寫入 `~/.discli/permissions.json`。
 
-**Per-command (flag):**
+**逐指令（旗標）：**
 
 ```bash
 discli --profile readonly message list "#general"
 ```
 
-The `--profile` flag overrides the saved profile for that single invocation.
+`--profile` 旗標可在單次呼叫中覆寫已儲存的設定檔。
 
-**Via environment variable:**
+**透過環境變數：**
 
 ```bash
 export DISCLI_PROFILE=readonly
 ```
 
-This takes priority over the saved profile but is overridden by the `--profile` flag.
+此設定優先於已儲存的設定檔，但仍會被 `--profile` 旗標覆寫。
 
-### Viewing the active profile
+### 檢視啟用中的設定檔
 
 ```bash
 discli permission show
 ```
 
 ```
-Active profile: chat
-Description: Messages, reactions, threads, typing only
-Allowed: message, reaction, thread, typing, dm, listen, serve, config, server
-Denied: member kick, member ban, member unban, channel delete, role delete, role create, channel create
+啟用的設定檔：chat
+說明：訊息、表情回應、討論串、僅輸入動作
+允許：message, reaction, thread, typing, dm, listen, serve, config, server
+拒絕：member kick, member ban, member unban, channel delete, role delete, role create, channel create
 ```
 
-### Listing all profiles
+### 列出所有設定檔
 
 ```bash
 discli permission profiles
 ```
 
 ```
-  full: Full access to all commands
-  chat: Messages, reactions, threads, typing only
-  readonly: Read-only: list, info, get, search, listen
-  moderation: Full access including moderation
+  full: 全部指令都可使用
+  chat: 訊息、表情回應、討論串、僅輸入動作
+  readonly: 只讀：list、info、get、search、listen
+  moderation: 含審核權限的完整存取
 ```
 
 <Callout type="tip">
-  When building an AI agent, start with the `readonly` or `chat` profile and only escalate to `full` once you have tested the agent's behavior. This follows the principle of least privilege and prevents accidental destructive actions.
+  建立 AI 代理時，建議先用 `readonly` 或 `chat`，待行為穩定後再提升到 `full`。這符合最小權限原則，能避免誤操作造成破壞。
 </Callout>
 
-## Destructive action safeguards
+## 危險操作保護
 
-Certain commands are considered destructive and require confirmation before execution:
+某些指令屬於破壞性操作，執行前會要求確認：
 
 - `member kick`
 - `member ban`
@@ -208,38 +208,38 @@ Certain commands are considered destructive and require confirmation before exec
 - `message delete`
 - `role delete`
 
-When you run a destructive command, discli prompts for confirmation:
+執行這類指令時，discli 會跳出確認提示：
 
 ```
-⚠ Destructive action: member kick (user: Alice). Continue? [y/N]
+⚠ 危險操作：member kick（使用者：Alice）。是否繼續？[y/N]
 ```
 
-To skip the prompt (useful in scripts and automation), pass the `--yes` or `-y` flag:
+若要在腳本與自動化中略過提示，請加 `--yes` 或 `-y` 旗標：
 
 ```bash
 discli --yes member kick "My Server" @spammer
 ```
 
 <Callout type="warning">
-  Use `--yes` with caution, especially in automated pipelines. Combined with a restrictive permission profile, this gives you safe automation without accidental damage.
+  `--yes` 請慎用，尤其在自動化流程中。搭配嚴格的權限設定檔可降低誤操作風險。
 </Callout>
 
-## Audit log
+## 稽核日誌
 
-discli records every command execution to an audit log at `~/.discli/audit.log`. This is useful for tracking what actions an agent has taken.
+discli 會將每次指令執行寫入 `~/.discli/audit.log`。可用來追蹤代理實際執行了哪些操作。
 
 ```bash
-# View recent audit entries
+# 檢視最近的稽核紀錄
 discli audit show --limit 10
 
-# JSON output
+# JSON 輸出
 discli --json audit show --limit 5
 
-# Clear the log
+# 清除日誌
 discli audit clear
 ```
 
-## Configuration file reference
+## 設定檔參考
 
 ### `~/.discli/config.json`
 
@@ -258,29 +258,29 @@ discli audit clear
 }
 ```
 
-The `profiles` key can hold custom profile definitions, though the four built-in profiles cover most use cases.
+`profiles` 欄位可自訂更多設定檔，預設內建的四個設定檔已可覆蓋大多數需求。
 
 ### `~/.discli/audit.log`
 
-A newline-delimited JSON file where each line is an audit entry:
+每一列為一筆 JSON 物件的換行分隔檔，代表一筆稽核紀錄：
 
 ```json
 {"timestamp": "2026-03-15T10:32:00+00:00", "command": "message send", "args": {"channel": "general", "content": "Hello"}, "result": "ok", "user": ""}
 ```
 
-## Next steps
+## 後續步驟
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" href="/getting-started/quickstart">
-    Send your first message now that your token is configured.
+  <Card title="快速上手" href="/getting-started/quickstart">
+    Token 設定完成後，發送第一則訊息。
   </Card>
-  <Card title="Your First Bot" href="/getting-started/your-first-bot">
-    Build a working bot agent using discli serve.
+  <Card title="第一個機器人" href="/getting-started/your-first-bot">
+    使用 discli serve 建立可運作的機器人代理。
   </Card>
-  <Card title="Security & Permissions" href="/guides/security-permissions">
-    Deep dive into the security model, custom profiles, and audit logging.
+  <Card title="安全與權限" href="/guides/security-permissions">
+    深入了解安全模型、自訂權限設定檔與稽核日誌。
   </Card>
-  <Card title="CLI Commands Reference" href="/reference/cli-commands">
-    Full reference for every command, flag, and option.
+  <Card title="CLI 指令參考" href="/reference/cli-commands">
+    查詢全部指令、旗標與選項。
   </Card>
 </CardGroup>

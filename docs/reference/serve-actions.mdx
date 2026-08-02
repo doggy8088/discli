@@ -1,25 +1,25 @@
 ---
-title: Serve Actions
-description: Complete reference for all actions accepted via stdin in serve mode
+title: Serve 動作
+description: 透過 stdin 接受之所有動作的完整參考
 ---
 
-# Serve Actions
+# Serve 動作
 
-When running `discli serve`, you send JSON objects (one per line) to stdin. Every action must include an `"action"` field. An optional `"req_id"` field will be echoed back in the response for correlation.
+執行 `discli serve` 時，會將 JSON 物件（每行一筆）送入 stdin。每個動作都必須包含 `"action"` 欄位。回傳中可選的 `"req_id"` 欄位會回拋，以用於關聯。
 
-**General request format:**
+**一般請求格式：**
 
 ```json
 {"action": "<action_name>", "req_id": "optional-correlation-id", ...fields}
 ```
 
-**General response format:**
+**一般回應格式：**
 
 ```json
 {"event": "response", "status": "ok", "req_id": "1", ...result_fields}
 ```
 
-On error, the response contains an `"error"` field instead of `"ok"`:
+發生錯誤時，回應會改為使用 `"error"` 欄位，而非 `"ok"`：
 
 ```json
 {"event": "response", "error": "Channel not found: 999", "req_id": "1"}
@@ -27,173 +27,173 @@ On error, the response contains an `"error"` field instead of `"ok"`:
 
 ---
 
-## Messaging
+## 訊息操作
 
 ### send
 
-Send a message to a channel.
+發送訊息到一個頻道。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "send", "channel_id": "123456", "content": "Hello!", "req_id": "1"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "789", "req_id": "1"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Target channel ID |
-| `content` | no | string | Message text |
-| `embed` | no | object | Embed object (see [Embeds](#embeds-in-send--reply)) |
-| `components` | no | array | Message components (see [Components](#components-in-send--reply)) |
-| `files` | no | string[] | Local file paths to attach |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 目標頻道 ID |
+| `content` | 否 | 字串 | 訊息文字 |
+| `embed` | 否 | 物件 | 嵌入物件 |
+| `components` | 否 | 陣列 | 訊息元件 (參見 [send / reply 的元件](#send--reply-的元件)) |
+| `files` | 否 | 字串陣列 | 本機附加檔案路徑 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### reply
 
-Reply to a specific message.
+回覆指定訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "reply", "channel_id": "123456", "message_id": "111", "content": "Got it!", "req_id": "2"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "222", "req_id": "2"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to reply to |
-| `content` | no | string | Reply text |
-| `embed` | no | object | Embed object (see [Embeds](#embeds-in-send--reply)) |
-| `components` | no | array | Message components (see [Components](#components-in-send--reply)) |
-| `files` | no | string[] | Local file paths to attach |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要回覆的訊息 |
+| `content` | 否 | 字串 | 回覆文字 |
+| `embed` | 否 | 物件 | 嵌入物件 |
+| `components` | 否 | 陣列 | 訊息元件 (參見 [send / reply 的元件](#send--reply-的元件)) |
+| `files` | 否 | 字串陣列 | 本機附加檔案路徑 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### edit
 
-Edit an existing message (must be authored by the bot).
+編輯現有訊息（必須由機器人建立）。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "edit", "channel_id": "123456", "message_id": "789", "content": "Updated text", "req_id": "3"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "3"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to edit |
-| `content` | no | string | New message content |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要編輯的訊息 |
+| `content` | 否 | 字串 | 更新後訊息內容 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### delete
 
-Delete a message.
+刪除一則訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "delete", "channel_id": "123456", "message_id": "789", "req_id": "4"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "4"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to delete |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要刪除的訊息 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### message_pin
 
-Pin a message in a channel.
+將訊息釘選到頻道。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_pin", "channel_id": "123456", "message_id": "789", "req_id": "5"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "5"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to pin |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要釘選的訊息 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### message_unpin
 
-Unpin a message in a channel.
+取消釘選頻道中的訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_unpin", "channel_id": "123456", "message_id": "789", "req_id": "6"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "6"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to unpin |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要取消釘選的訊息 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### message_bulk_delete
 
-Delete multiple messages at once.
+一次刪除多則訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_bulk_delete", "channel_id": "123456", "message_ids": ["789", "790"], "req_id": "7"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "7"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the messages |
-| `message_ids` | yes | string[] | Message IDs to delete |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_ids` | 是 | 字串陣列 | 要刪除的訊息 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
-### Embeds in send / reply
+### send / reply 的 embed
 
-The `embed` field in `send` and `reply` accepts an object with the following structure:
+`send` 與 `reply` 的 `embed` 欄位可接受如下結構物件：
 
 ```json
 {
@@ -213,20 +213,20 @@ The `embed` field in `send` and `reply` accepts an object with the following str
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `title` | no | string | Embed title |
-| `description` | no | string | Embed description |
-| `color` | no | string | Hex color (e.g. `5865F2`) |
-| `footer` | no | string | Footer text |
-| `image` | no | string | Image URL |
-| `thumbnail` | no | string | Thumbnail URL |
-| `author` | no | object | Author with `name` and optional `icon_url` |
-| `fields` | no | array | List of `{"name", "value", "inline"}` objects |
+| `title` | 否 | 字串 | 嵌入標題 |
+| `description` | 否 | 字串 | 嵌入描述 |
+| `color` | 否 | 字串 | 色碼（例如 `5865F2`） |
+| `footer` | 否 | 字串 | 頁尾文字 |
+| `image` | 否 | 字串 | 圖片網址 |
+| `thumbnail` | 否 | 字串 | 縮圖網址 |
+| `author` | 否 | 物件 | 作者，含 `name` 與可選的 `icon_url` |
+| `fields` | 否 | 陣列 | `{"name", "value", "inline"}` 物件清單 |
 
-### Components in send / reply
+### send / reply 的元件
 
-The `components` field in `send` and `reply` accepts an array of action rows. Each action row is an array of component objects.
+`send` 與 `reply` 的 `components` 欄位可接受操作列陣列。每一列是元件物件陣列。
 
 ```json
 {
@@ -243,168 +243,168 @@ The `components` field in `send` and `reply` accepts an array of action rows. Ea
 }
 ```
 
-**Supported component types:**
+**支援的元件類型：**
 
-| Type | Fields | Description |
+| 類型 | 欄位 | 說明 |
 |------|--------|-------------|
-| `button` | `label`, `style`, `custom_id` | Button. Styles: `primary`, `secondary`, `success`, `danger` |
-| `select` | `custom_id`, `placeholder`, `options` | String select menu. Options: `[{"label", "value"}]` |
-| `user_select` | `custom_id`, `placeholder` | User select menu |
-| `role_select` | `custom_id`, `placeholder` | Role select menu |
-| `channel_select` | `custom_id`, `placeholder` | Channel select menu |
+| `button` | `label`, `style`, `custom_id` | 按鈕。 樣式： `primary`, `secondary`, `success`, `danger` |
+| `select` | `custom_id`, `placeholder`, `options` | 字串下拉式選單。 選項： `[{"label", "value"}]` |
+| `user_select` | `custom_id`, `placeholder` | 使用者下拉選單 |
+| `role_select` | `custom_id`, `placeholder` | 身分組下拉選單 |
+| `channel_select` | `custom_id`, `placeholder` | 頻道下拉選單 |
 
 ---
 
-## Streaming
+## 串流
 
-Streaming lets you send a response that updates in real-time (e.g., token-by-token LLM output). The flow is: `stream_start` to create a placeholder message, `stream_chunk` to append text, and `stream_end` to finalize. The message is flushed to Discord every 1.5 seconds during streaming.
+串流可發送可即時更新的回應（例如 LLM 逐詞輸出）。流程為：`stream_start` 先建立佔位訊息、`stream_chunk` 逐段加上文字、`stream_end` 完成，串流期間每 1.5 秒會更新至 Discord。
 
 ### stream_start
 
-Start a streaming message. Creates a placeholder message (`"..."`) in the channel.
+開始一則串流訊息。在頻道中先建立一則佔位訊息（`"..."`）。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "stream_start", "channel_id": "123456", "req_id": "10"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "stream_id": "a1b2c3d4", "message_id": "789", "req_id": "10"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel to send in |
-| `reply_to` | no | string | Message ID to reply to |
-| `interaction_token` | no | string | Interaction token to respond to a slash command |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 發送目標頻道 |
+| `reply_to` | 否 | 字串 | 回覆目標訊息 ID |
+| `interaction_token` | 否 | 字串 | 回覆 slash 指令的互動 token |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### stream_chunk
 
-Append text to an active stream. Content is buffered and flushed periodically.
+為進行中的串流追加文字。內容會先快取並定期推送。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "Hello ", "req_id": "11"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "11"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `stream_id` | yes | string | Stream ID from `stream_start` |
-| `content` | no | string | Text to append |
-| `req_id` | no | string | Correlation ID |
+| `stream_id` | 是 | 字串 | `stream_start` 回傳的串流 ID |
+| `content` | 否 | 字串 | 要追加的文字 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### stream_end
 
-Finalize a streaming message. Performs a final edit with the complete content. If the content exceeds 2000 characters, overflow is split into follow-up messages.
+完成串流訊息。會用完整內容做最後一次編輯；若超過 2000 字元，會拆成後續訊息補送。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "stream_end", "stream_id": "a1b2c3d4", "req_id": "12"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "789", "req_id": "12"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `stream_id` | yes | string | Stream ID from `stream_start` |
-| `req_id` | no | string | Correlation ID |
+| `stream_id` | 是 | 字串 | `stream_start` 回傳的串流 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Interactions
+## 互動
 
 ### interaction_followup
 
-Send a follow-up response to a deferred slash command interaction.
+對延後處理的 slash 互動送出後續回應。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "interaction_followup", "interaction_token": "uuid-token", "content": "Done!", "req_id": "20"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "20"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `interaction_token` | yes | string | Token from the `slash_command` event |
-| `content` | no | string | Follow-up message text |
-| `req_id` | no | string | Correlation ID |
+| `interaction_token` | 是 | 字串 | 來自 `slash_command` 事件的 token |
+| `content` | 否 | 字串 | 後續回應文字 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### interaction_respond
 
-Send an immediate response to an interaction. Use this instead of `interaction_followup` when the interaction has not been deferred.
+立即回應一筆互動。未延後處理時，請改用此項目而非 `interaction_followup`。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "interaction_respond", "interaction_token": "uuid-token", "content": "Done!", "ephemeral": true, "req_id": "21"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "21"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `interaction_token` | yes | string | Token from the interaction event |
-| `content` | no | string | Response message text |
-| `embed` | no | object | Embed object |
-| `components` | no | array | Message components |
-| `ephemeral` | no | boolean | Only visible to the invoking user (default: false) |
-| `req_id` | no | string | Correlation ID |
+| `interaction_token` | 是 | 字串 | 來自互動事件的 token |
+| `content` | 否 | 字串 | 回應訊息文字 |
+| `embed` | 否 | 物件 | 嵌入物件 |
+| `components` | 否 | 陣列 | 訊息元件 |
+| `ephemeral` | 否 | 布林 | 僅對觸發者可見（預設：false） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### interaction_edit
 
-Edit the original interaction response message.
+編輯原始互動回應訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "interaction_edit", "interaction_token": "uuid-token", "content": "Updated!", "req_id": "22"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "22"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `interaction_token` | yes | string | Token from the interaction event |
-| `content` | no | string | New message content |
-| `embed` | no | object | New embed object |
-| `components` | no | array | New message components |
-| `req_id` | no | string | Correlation ID |
+| `interaction_token` | 是 | 字串 | 來自互動事件的 token |
+| `content` | 否 | 字串 | 更新後訊息內容 |
+| `embed` | 否 | 物件 | 新的嵌入物件 |
+| `components` | 否 | 陣列 | 新的訊息元件 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### modal_send
 
-Open a modal form in response to an interaction.
+回應互動並開啟 modal 表單。
 
-**Request:**
+**請求：**
 
 ```json
 {
@@ -420,161 +420,161 @@ Open a modal form in response to an interaction.
 }
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "23"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `interaction_token` | yes | string | Token from the interaction event |
-| `custom_id` | yes | string | Unique identifier for the modal |
-| `title` | yes | string | Modal title |
-| `fields` | yes | array | List of text input fields |
-| `req_id` | no | string | Correlation ID |
+| `interaction_token` | 是 | 字串 | 來自互動事件的 token |
+| `custom_id` | 是 | 字串 | Modal 的唯一識別碼 |
+| `title` | 是 | 字串 | Modal 標題 |
+| `fields` | 是 | 陣列 | 文字輸入欄位清單 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
-**Field object:**
+**欄位物件：**
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `custom_id` | yes | string | Unique identifier for the field |
-| `label` | yes | string | Field label |
-| `style` | yes | string | `short` (single line) or `long` (paragraph) |
-| `required` | no | boolean | Whether the field is required (default: true) |
-| `placeholder` | no | string | Placeholder text |
-| `value` | no | string | Pre-filled value |
+| `custom_id` | 是 | 字串 | 欄位的唯一識別碼 |
+| `label` | 是 | 字串 | 欄位標籤 |
+| `style` | 是 | 字串 | `short`（單行）或 `long`（段落） |
+| `required` | 否 | 布林 | 欄位是否必填（預設：true） |
+| `placeholder` | 否 | 字串 | 預留位文字 |
+| `value` | 否 | 字串 | 預填值 |
 
 ---
 
-## Typing / Presence
+## 輸入提示與狀態
 
 ### typing_start
 
-Start showing a typing indicator in a channel. The indicator persists until `typing_stop` is sent or the bot sends a message.
+在頻道中啟動輸入指示符號。會持續顯示，直到送出 `typing_stop` 或 bot 發送訊息為止。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "typing_start", "channel_id": "123456", "req_id": "30"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "30"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### typing_stop
 
-Stop the typing indicator in a channel.
+停止在頻道中顯示輸入指示符號。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "typing_stop", "channel_id": "123456", "req_id": "31"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "31"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### presence
 
-Set the bot's online status and activity.
+設定機器人的線上狀態與活動。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "presence", "status": "dnd", "activity_type": "watching", "activity_text": "the logs", "req_id": "32"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "32"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `status` | no | string | `online`, `idle`, `dnd`, or `invisible` (default: `online`) |
-| `activity_type` | no | string | `playing`, `watching`, `listening`, or `competing` |
-| `activity_text` | no | string | Activity display text |
-| `req_id` | no | string | Correlation ID |
+| `status` | 否 | 字串 | `online`、`idle`、`dnd` 或 `invisible`（預設：`online`） |
+| `activity_type` | 否 | 字串 | `playing`、`watching`、`listening` 或 `competing` |
+| `activity_text` | 否 | 字串 | 顯示活動的文字 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Reactions
+## 反應
 
 ### reaction_add
 
-Add a reaction to a message.
+為訊息新增回應。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "reaction_add", "channel_id": "123456", "message_id": "789", "emoji": "thumbsup", "req_id": "40"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "40"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to react to |
-| `emoji` | yes | string | Emoji character or custom emoji string |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要反應的訊息 |
+| `emoji` | 是 | 字串 | Emoji 字元或自訂 emoji 字串 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### reaction_remove
 
-Remove the bot's reaction from a message.
+移除機器人對訊息的反應。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "reaction_remove", "channel_id": "123456", "message_id": "789", "emoji": "thumbsup", "req_id": "41"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "41"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message to remove reaction from |
-| `emoji` | yes | string | Emoji character or custom emoji string |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 要移除反應的訊息 |
+| `emoji` | 是 | 字串 | Emoji 字元或自訂 emoji 字串 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### reaction_users
 
-List users who reacted with a specific emoji.
+列出使用指定 emoji 反應的使用者。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "reaction_users", "channel_id": "123456", "message_id": "789", "emoji": "thumbsup", "limit": 100, "req_id": "42"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -587,77 +587,77 @@ List users who reacted with a specific emoji.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel containing the message |
-| `message_id` | yes | string | Message ID |
-| `emoji` | yes | string | Emoji character or custom emoji string |
-| `limit` | no | integer | Max users to return (default: 100) |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 訊息所在頻道 |
+| `message_id` | 是 | 字串 | 訊息 ID |
+| `emoji` | 是 | 字串 | Emoji 字元或自訂 emoji 字串 |
+| `limit` | 否 | 整數 | 回傳的最大使用者數（預設：100） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Threads
+## 討論串
 
 ### thread_create
 
-Create a new thread, optionally from an existing message.
+建立新討論串，可選擇從既有訊息建立。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_create", "channel_id": "123456", "name": "Discussion", "message_id": "789", "req_id": "50"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "thread_id": "999", "thread_name": "Discussion", "req_id": "50"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Parent channel ID |
-| `name` | yes | string | Thread name |
-| `message_id` | no | string | Message to create thread from (omit for standalone thread) |
-| `auto_archive_duration` | no | integer | Auto-archive after N minutes (default: 1440) |
-| `content` | no | string | Initial message to send in the thread |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 上層頻道 ID |
+| `name` | 是 | 字串 | 討論串名稱 |
+| `message_id` | 否 | 字串 | 建立討論串的訊息來源 (單獨討論串可省略此欄位) |
+| `auto_archive_duration` | 否 | 整數 | N 分鐘後自動封存（預設：1440） |
+| `content` | 否 | 字串 | 討論串初始訊息 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_send
 
-Send a message to an existing thread.
+向現有討論串發送訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_send", "thread_id": "999", "content": "Hello thread!", "req_id": "51"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "1000", "req_id": "51"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `thread_id` | yes | string | Thread ID |
-| `content` | no | string | Message text |
-| `files` | no | string[] | Local file paths to attach |
-| `req_id` | no | string | Correlation ID |
+| `thread_id` | 是 | 字串 | 討論串 ID |
+| `content` | 否 | 字串 | 訊息文字 |
+| `files` | 否 | 字串陣列 | 本機附加檔案路徑 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_list
 
-List active threads in a channel.
+列出頻道中的進行中討論串。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_list", "channel_id": "123456", "req_id": "52"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -670,107 +670,107 @@ List active threads in a channel.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_archive
 
-Archive a thread.
+封存討論串。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_archive", "thread_id": "999", "req_id": "53"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "53"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `thread_id` | yes | string | Thread ID |
-| `req_id` | no | string | Correlation ID |
+| `thread_id` | 是 | 字串 | 討論串 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_rename
 
-Rename a thread.
+重新命名討論串。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_rename", "thread_id": "999", "name": "New Name", "req_id": "54"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "54"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `thread_id` | yes | string | Thread ID |
-| `name` | yes | string | New thread name |
-| `req_id` | no | string | Correlation ID |
+| `thread_id` | 是 | 字串 | 討論串 ID |
+| `name` | 是 | 字串 | 新討論串名稱 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_add_member
 
-Add a member to a thread.
+新增成員至討論串。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_add_member", "thread_id": "999", "member_id": "111", "req_id": "55"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "55"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `thread_id` | yes | string | Thread ID |
-| `member_id` | yes | string | Member user ID |
-| `req_id` | no | string | Correlation ID |
+| `thread_id` | 是 | 字串 | 討論串 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### thread_remove_member
 
-Remove a member from a thread.
+從討論串移除成員。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "thread_remove_member", "thread_id": "999", "member_id": "111", "req_id": "56"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "56"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `thread_id` | yes | string | Thread ID |
-| `member_id` | yes | string | Member user ID |
-| `req_id` | no | string | Correlation ID |
+| `thread_id` | 是 | 字串 | 討論串 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Polls
+## 投票
 
 ### poll_send
 
-Create a poll in a channel.
+在頻道中建立投票。
 
-**Request:**
+**請求：**
 
 ```json
 {
@@ -784,7 +784,7 @@ Create a poll in a channel.
 }
 ```
 
-Answers can also be objects with emoji:
+答案也可使用 emoji 物件形式：
 
 ```json
 {
@@ -796,33 +796,33 @@ Answers can also be objects with emoji:
 }
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "789", "req_id": "60"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `question` | yes | string | Poll question |
-| `answers` | yes | array | List of answer strings or `&#123;"text": "...", "emoji": "..."&#125;` objects (min 2) |
-| `duration_hours` | no | integer | Duration in hours (default: 24) |
-| `multiple` | no | boolean | Allow multiple selections (default: false) |
-| `content` | no | string | Optional message text alongside the poll |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `question` | 是 | 字串 | 投票問題 |
+| `answers` | 是 | 陣列 | 答案字串陣列，或 `&#123;"text": "...", "emoji": "..."&#125;` 物件陣列（至少 2 個） |
+| `duration_hours` | 否 | 整數 | 持續時間（小時，預設：24） |
+| `multiple` | 否 | 布林 | 允許多選（預設：false） |
+| `content` | 否 | 字串 | 投票附帶的選填訊息文字 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### poll_results
 
-View the results of a poll.
+檢視投票結果。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "poll_results", "channel_id": "123456", "message_id": "789", "req_id": "62"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -838,49 +838,49 @@ View the results of a poll.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `message_id` | yes | string | Message ID of the poll |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `message_id` | 是 | 字串 | 投票訊息 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### poll_end
 
-End a poll early.
+提早結束投票。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "poll_end", "channel_id": "123456", "message_id": "789", "req_id": "63"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "63"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `message_id` | yes | string | Message ID of the poll |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `message_id` | 是 | 字串 | 投票訊息 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Channels
+## 頻道
 
 ### channel_list
 
-List channels across all servers or a specific server.
+列出全部伺服器或指定伺服器中的頻道。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "channel_list", "guild_id": "123456", "req_id": "70"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -893,45 +893,45 @@ List channels across all servers or a specific server.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | no | string | Server ID (omit for all servers) |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 否 | 字串 | 伺服器 ID（不填則列全部） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### channel_create
 
-Create a channel in a server.
+在伺服器中建立頻道。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "channel_create", "guild_id": "123456", "name": "new-channel", "type": "text", "req_id": "71"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "channel_id": "222", "name": "new-channel", "req_id": "71"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `name` | yes | string | Channel name |
-| `type` | no | string | `text`, `voice`, `category`, or `forum` (default: `text`) |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `name` | 是 | 字串 | 頻道名稱 |
+| `type` | 否 | 字串 | `text`、`voice`、`category` 或 `forum`（預設：`text`） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### channel_info
 
-Get details about a channel.
+取得頻道的詳細資訊。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "channel_info", "channel_id": "123456", "req_id": "72"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -948,100 +948,100 @@ Get details about a channel.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### channel_edit
 
-Edit channel settings.
+編輯頻道設定。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "channel_edit", "channel_id": "123456", "name": "new-name", "topic": "New topic", "slowmode": 5, "nsfw": false, "req_id": "73"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "73"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `name` | no | string | New channel name |
-| `topic` | no | string | New channel topic |
-| `slowmode` | no | integer | Slowmode delay in seconds (0 to disable) |
-| `nsfw` | no | boolean | NSFW setting |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `name` | 否 | 字串 | 新頻道名稱 |
+| `topic` | 否 | 字串 | 新頻道主題 |
+| `slowmode` | 否 | 整數 | 慢速模式秒數（0 表示停用） |
+| `nsfw` | 否 | 布林 | NSFW 設定 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### channel_set_permissions
 
-Set permission overwrites for a channel.
+設定頻道權限覆寫。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "channel_set_permissions", "channel_id": "123456", "target_id": "222", "target_type": "role", "allow": "send_messages,read_messages", "deny": "manage_messages", "req_id": "74"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "74"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `target_id` | yes | string | Role or member ID |
-| `target_type` | no | string | `role` or `member` (default: `role`) |
-| `allow` | no | string | Comma-separated permissions to allow |
-| `deny` | no | string | Comma-separated permissions to deny |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `target_id` | 是 | 字串 | 身分組或成員 ID |
+| `target_type` | 否 | 字串 | `role` 或 `member` (default: `role`) |
+| `allow` | 否 | 字串 | 允許的權限（逗號分隔） |
+| `deny` | 否 | 字串 | 拒絕的權限（逗號分隔） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### forum_post
 
-Create a forum post in a forum channel.
+在論壇頻道建立討論串。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "forum_post", "channel_id": "123456", "title": "My Post", "content": "Post body", "req_id": "75"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "thread_id": "999", "req_id": "75"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Forum channel ID |
-| `title` | yes | string | Post title |
-| `content` | yes | string | Post body content |
-| `files` | no | string[] | Local file paths to attach |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 論壇頻道 ID |
+| `title` | 是 | 字串 | 貼文標題 |
+| `content` | 是 | 字串 | 貼文本文 |
+| `files` | 否 | 字串陣列 | 本機附加檔案路徑 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Members
+## 成員
 
 ### member_list
 
-List members of a server.
+列出伺服器成員。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "member_list", "guild_id": "123456", "limit": 50, "req_id": "80"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1054,23 +1054,23 @@ List members of a server.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `limit` | no | integer | Max members to return (default: 50) |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `limit` | 否 | 整數 | 回傳成員數上限（預設：50） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### member_info
 
-Get details about a specific member.
+取得指定成員的詳細資訊。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "member_info", "guild_id": "123456", "member_id": "111", "req_id": "81"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1086,51 +1086,51 @@ Get details about a specific member.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `member_id` | yes | string | Member user ID |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### member_timeout
 
-Timeout a member, preventing them from sending messages or joining voice.
+對成員進行超時處理，阻止其發言或加入語音頻道。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "member_timeout", "guild_id": "123456", "member_id": "111", "duration": 300, "reason": "Spamming", "req_id": "82"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "82"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `member_id` | yes | string | Member user ID |
-| `duration` | yes | integer | Timeout duration in seconds (0 to remove timeout) |
-| `reason` | no | string | Reason for timeout |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `duration` | 是 | 整數 | 超時秒數（0 表示取消超時） |
+| `reason` | 否 | 字串 | 超時原因 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Roles
+## 身分組
 
 ### role_list
 
-List roles in a server. Per-role `members` counts are `null` by default because computing them iterates the entire member list (slow and rate-limit-prone on large servers, requires the privileged Server Members intent). Send `"with_member_counts": true` to compute them; if the bot lacks the Server Members intent the counts come back as `null` (unavailable) instead of `0`.
+列出伺服器身分組。各身分組的 `members` 計數預設為 `null`，因為計算時必須逐一取得完整成員清單；在大型伺服器上速度較慢、容易觸發速率限制，且需要 Server Members 特權 intent。若要計算，請傳送 `"with_member_counts": true`；若機器人沒有 Server Members intent，計數會回傳 `null`，表示無法取得，而不是錯誤顯示為 `0`。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "role_list", "guild_id": "123456", "with_member_counts": true, "req_id": "90"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1143,83 +1143,83 @@ List roles in a server. Per-role `members` counts are `null` by default because 
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `with_member_counts` | no | boolean | Compute per-role member counts. Default `false` (counts returned as `null`) |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `with_member_counts` | 否 | 布林值 | 計算各身分組的成員數；預設為 `false`，計數回傳 `null` |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### role_assign
 
-Assign a role to a member.
+將身分組指派給成員。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "role_assign", "guild_id": "123456", "member_id": "111", "role_id": "222", "req_id": "91"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "member": "alice", "role": "Admin", "req_id": "91"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `member_id` | yes | string | Member user ID |
-| `role_id` | yes | string | Role ID to assign |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `role_id` | 是 | 字串 | 要指派的身分組 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### role_remove
 
-Remove a role from a member.
+移除成員的身分組。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "role_remove", "guild_id": "123456", "member_id": "111", "role_id": "222", "req_id": "92"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "member": "alice", "role": "Admin", "req_id": "92"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `member_id` | yes | string | Member user ID |
-| `role_id` | yes | string | Role ID to remove |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `member_id` | 是 | 字串 | 成員使用者 ID |
+| `role_id` | 是 | 字串 | 要移除的身分組 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### role_edit
 
-Edit a role's settings.
+編輯身分組設定。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "role_edit", "guild_id": "123456", "role_id": "222", "name": "Moderator", "color": "00ff00", "hoist": true, "mentionable": false, "req_id": "93"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "93"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `role_id` | yes | string | Role ID |
-| `name` | no | string | New role name |
-| `color` | no | string | Hex color (e.g. `00ff00`) |
-| `hoist` | no | boolean | Display role separately in sidebar |
-| `mentionable` | no | boolean | Whether the role can be @-mentioned |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `role_id` | 是 | 字串 | 角色 ID |
+| `name` | 否 | 字串 | 新身分組名稱 |
+| `color` | 否 | 字串 | 十六進位顏色（例如 `00ff00`） |
+| `hoist` | 否 | 布林 | 在側邊欄中分開顯示身分組 |
+| `mentionable` | 否 | 布林 | 身分組是否可被 @ 提及 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
@@ -1227,41 +1227,41 @@ Edit a role's settings.
 
 ### dm_send
 
-Send a direct message to a user.
+傳送私人訊息給使用者。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "dm_send", "user_id": "111", "content": "Hello!", "req_id": "100"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "message_id": "222", "recipient": "alice", "req_id": "100"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `user_id` | yes | string | Recipient user ID |
-| `content` | no | string | Message text |
-| `req_id` | no | string | Correlation ID |
+| `user_id` | 是 | 字串 | 收件人使用者 ID |
+| `content` | 否 | 字串 | 訊息文字 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Queries
+## 查詢
 
 ### message_list
 
-List recent messages in a channel.
+列出頻道中的近期訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_list", "channel_id": "123456", "limit": 20, "req_id": "110"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1281,23 +1281,23 @@ List recent messages in a channel.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `limit` | no | integer | Max messages (default: 20) |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `limit` | 否 | 整數 | 最大訊息數（預設：20） |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### message_get
 
-Fetch a single message by ID.
+依 ID 取得單則訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_get", "channel_id": "123456", "message_id": "789", "req_id": "111"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1315,23 +1315,23 @@ Fetch a single message by ID.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `message_id` | yes | string | Message ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `message_id` | 是 | 字串 | 訊息 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### message_search
 
-Search messages in a channel by content.
+依內容搜尋頻道訊息。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "message_search", "channel_id": "123456", "query": "hello", "limit": 100, "author": "alice", "req_id": "112"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1344,29 +1344,29 @@ Search messages in a channel by content.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `query` | no | string | Case-insensitive search string |
-| `limit` | no | integer | Messages to scan (default: 100) |
-| `author` | no | string | Filter by author name |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `query` | 否 | 字串 | 不分大小寫的搜尋字串 |
+| `limit` | 否 | 整數 | 要掃描的訊息數（預設：100） |
+| `author` | 否 | 字串 | 依作者名稱過濾 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Server
+## 伺服器
 
 ### server_list
 
-List all servers the bot is in.
+列出 bot 所在的所有伺服器。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "server_list", "req_id": "120"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1379,21 +1379,21 @@ List all servers the bot is in.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `req_id` | no | string | Correlation ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### server_info
 
-Get details about a specific server.
+取得指定伺服器的詳細資訊。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "server_info", "guild_id": "123456", "req_id": "121"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1410,10 +1410,10 @@ Get details about a specific server.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
@@ -1421,15 +1421,15 @@ Get details about a specific server.
 
 ### webhook_list
 
-List webhooks for a channel.
+列出指定頻道的 webhook。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "webhook_list", "channel_id": "123456", "req_id": "130"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1442,70 +1442,70 @@ List webhooks for a channel.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### webhook_create
 
-Create a webhook for a channel.
+建立指定頻道的 webhook。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "webhook_create", "channel_id": "123456", "name": "My Hook", "req_id": "131"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "webhook_id": "555", "name": "My Hook", "req_id": "131"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `name` | yes | string | Webhook name |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `name` | 是 | 字串 | Webhook 名稱 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### webhook_delete
 
-Delete a webhook.
+刪除 webhook。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "webhook_delete", "channel_id": "123456", "webhook_id": "555", "req_id": "132"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "req_id": "132"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Channel ID |
-| `webhook_id` | yes | string | Webhook ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 頻道 ID |
+| `webhook_id` | 是 | 字串 | Webhook ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Events
+## 事件
 
 ### event_list
 
-List scheduled events for a server.
+列出伺服器的排程活動。
 
-**Request:**
+**請求：**
 
 ```json
 {"action": "event_list", "guild_id": "123456", "req_id": "140"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {
@@ -1518,16 +1518,16 @@ List scheduled events for a server.
 }
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### event_create
 
-Create a scheduled event.
+建立排程活動。
 
-**Request:**
+**請求：**
 
 ```json
 {
@@ -1542,45 +1542,45 @@ Create a scheduled event.
 }
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "event_id": "777", "req_id": "141"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `guild_id` | yes | string | Server ID |
-| `name` | yes | string | Event name |
-| `start_time` | yes | string | Start time (ISO 8601) |
-| `end_time` | no | string | End time (ISO 8601) |
-| `description` | no | string | Event description |
-| `channel_id` | no | string | Voice/stage channel ID |
-| `location` | no | string | External location |
-| `req_id` | no | string | Correlation ID |
+| `guild_id` | 是 | 字串 | 伺服器 ID |
+| `name` | 是 | 字串 | 活動名稱 |
+| `start_time` | 是 | 字串 | 開始時間（ISO 8601） |
+| `end_time` | 否 | 字串 | 結束時間（ISO 8601） |
+| `description` | 否 | 字串 | 活動描述 |
+| `channel_id` | 否 | 字串 | 語音/舞台頻道 ID |
+| `location` | 否 | 字串 | 外部地點 |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ---
 
-## Voice
+## 語音
 
-All voice actions require the `voice` extra. Most accept either `channel_id` or `guild_id` for routing — when only `channel_id` is given, the guild owning that voice channel is resolved automatically. See the [Voice guide](/guides/voice) for the user-facing tutorial.
+所有語音相關動作都需要 `voice` 可選功能。大多數可用 `channel_id` 或 `guild_id` 進行路由；若只提供 `channel_id`，會自動解析該語音頻道所屬伺服器。前台使用流程請參考 [語音指南](/guides/voice)。
 
 ### voice_connect
 
-Join a server voice channel.
+加入伺服器語音頻道。
 
 ```json
 {"action": "voice_connect", "channel_id": "1016638171854938152", "req_id": "1"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` | yes | string | Voice channel ID |
-| `req_id` | no | string | Correlation ID |
+| `channel_id` | 是 | 字串 | 語音頻道 ID |
+| `req_id` | 否 | 字串 | 關聯識別碼 |
 
 ### voice_disconnect
 
-Leave the active voice channel.
+離開目前語音頻道。
 
 ```json
 {"action": "voice_disconnect", "guild_id": "767327865100304394"}
@@ -1588,7 +1588,7 @@ Leave the active voice channel.
 
 ### voice_move
 
-Move the bot to a different voice channel in the same guild.
+將機器人移動到同一伺服器的其他語音頻道。
 
 ```json
 {"action": "voice_move", "channel_id": "1016638171854938152"}
@@ -1596,36 +1596,36 @@ Move the bot to a different voice channel in the same guild.
 
 ### voice_speak
 
-Synthesise text via TTS and play it.
+透過 TTS 合成文字並播放。
 
 ```json
 {"action": "voice_speak", "channel_id": "1016638171854938152", "text": "joining the call now", "voice": "alloy", "speed": 1.0, "tts": "openai"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` or `guild_id` | yes | string | Voice channel or guild ID |
-| `text` | yes | string | Text to synthesise |
-| `voice` | no | string | TTS voice ID (provider-specific) |
-| `speed` | no | number | Speech rate multiplier (default `1.0`) |
-| `tts` | no | string | Override TTS provider (`elevenlabs`, `openai`, `deepgram`) |
+| `channel_id` 或 `guild_id` | 是 | 字串 | 語音頻道 ID 或伺服器 ID |
+| `text` | 是 | 字串 | 要合成的文字 |
+| `voice` | 否 | 字串 | TTS 聲音 ID（依提供者而定） |
+| `speed` | 否 | 數字 | 語速倍率 (預設 `1.0`) |
+| `tts` | 否 | 字串 | 覆寫 TTS 提供者（`elevenlabs`、`openai`、`deepgram`） |
 
 ### voice_play
 
-Play an audio file or URL via ffmpeg.
+透過 ffmpeg 播放音訊檔案或網址。
 
 ```json
 {"action": "voice_play", "channel_id": "1016638171854938152", "source": "https://example.com/intro.mp3"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` or `guild_id` | yes | string | Voice channel or guild ID |
-| `source` | yes | string | File path or HTTP(S) URL |
+| `channel_id` 或 `guild_id` | 是 | 字串 | 語音頻道 ID 或伺服器 ID |
+| `source` | 是 | 字串 | 檔案路徑或 HTTP(S) 網址 |
 
 ### voice_stop / voice_pause / voice_resume
 
-Control current playback.
+控制目前播放行為。
 
 ```json
 {"action": "voice_stop", "guild_id": "767327865100304394"}
@@ -1635,20 +1635,20 @@ Control current playback.
 
 ### voice_listen_start
 
-Begin streaming incoming audio to STT. Emits `voice_speech_detected` events.
+開始將輸入音訊串流至 STT，並輸出 `voice_speech_detected` 事件。
 
 ```json
 {"action": "voice_listen_start", "channel_id": "1016638171854938152", "stt": "deepgram"}
 ```
 
-| Field | Required | Type | Description |
+| 欄位 | 必填 | 型別 | 說明 |
 |-------|----------|------|-------------|
-| `channel_id` or `guild_id` | yes | string | Voice channel or guild ID |
-| `stt` | no | string | Override STT provider (`deepgram`, `openai`) |
+| `channel_id` 或 `guild_id` | 是 | 字串 | 語音頻道 ID 或伺服器 ID |
+| `stt` | 否 | 字串 | 覆寫 STT 提供者（`deepgram`、`openai`） |
 
 ### voice_listen_stop
 
-Stop the listener for this guild.
+停止此伺服器的語音監聽。
 
 ```json
 {"action": "voice_listen_stop", "guild_id": "767327865100304394"}
@@ -1656,13 +1656,13 @@ Stop the listener for this guild.
 
 ### voice_status
 
-List active voice connections.
+列出目前啟用的語音連線。
 
 ```json
 {"action": "voice_status"}
 ```
 
-**Response:**
+**回應：**
 
 ```json
 {"event": "response", "ok": true, "connections": [{"guild_id": 767327865100304394, "channel_id": 1016638171854938152, "is_playing": false, "is_listening": true}]}
@@ -1670,7 +1670,7 @@ List active voice connections.
 
 ### voice_set_config
 
-Update voice engine config (provider defaults, VAD thresholds, playback volume) without reconnecting.
+更新語音引擎設定（供應者預設值、VAD 閥值、播放音量），無需重連。
 
 ```json
 {"action": "voice_set_config", "config": {"tts_provider": "openai", "playback_volume": 0.7}}

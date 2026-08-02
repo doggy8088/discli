@@ -1,144 +1,144 @@
 ---
-title: Scripting & Automation
-description: Automate Discord with bash scripts, cron jobs, and CI pipelines
+title: 腳本與自動化
+description: 用 Bash、排程任務與 CI/CD pipeline 自動化 Discord 操作
 ---
 
-discli is a standard Unix CLI. It reads tokens from environment variables, outputs structured JSON, and exits with meaningful codes. This makes it a natural fit for shell scripts, cron jobs, and CI/CD pipelines.
+discli 是標準 Unix CLI，會從環境變數讀取 token、輸出結構化 JSON，並以有意義的退出碼結束。這使它很適合放進 shell 腳本、cron 任務與 CI/CD pipeline。
 
-## Bash One-Liners
+## Bash 單行指令
 
-Quick operations you can run directly from your terminal or paste into a script.
+可直接在終端機或腳本中執行的快速操作：
 
 <CodeGroup>
 
-```bash Send a message
-discli message send "#general" "Hello from the terminal!"
+```bash 發送訊息
+discli message send "#general" "從終端機發送訊息到 Discord"
 ```
 
-```bash List channel names as plain text
+```bash 以純文字輸出頻道名稱
 discli --json channel list --server "My Server" | jq -r '.[].name'
 ```
 
-```bash Count members in a server
+```bash 統計伺服器成員數
 discli --json member list "My Server" --limit 1000 | jq 'length'
 ```
 
-```bash Find messages from a specific user today
+```bash 找某位使用者今日訊息
 discli --json message search "#general" "" --author "alice#1234" --after "$(date -u +%Y-%m-%d)" | jq 'length'
 ```
 
-```bash Export channel history to CSV
+```bash 匯出頻道歷史到 CSV
 discli --json message history "#general" --days 7 | jq -r '.[] | [.timestamp, .author, .content] | @csv' > history.csv
 ```
 
-```bash Add a reaction to the latest message
+```bash 為最新訊息加反應
 LATEST=$(discli --json message list "#general" --limit 1 | jq -r '.[0].id')
 discli reaction add "#general" "$LATEST" "👍"
 ```
 
 </CodeGroup>
 
-## Channel Logging Script
+## 頻道紀錄腳本
 
-Record all messages from a channel to a file, with automatic rotation.
+將某個頻道所有訊息記錄到檔案並自動輪替。
 
 ```bash channel-logger.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
-CHANNEL="${1:?Usage: $0 <channel> [log_dir]}"
+CHANNEL="${1:?用法：$0 <channel> [log_dir]}"
 LOG_DIR="${2:-./logs}"
 mkdir -p "$LOG_DIR"
 
 LOG_FILE="$LOG_DIR/$(date -u +%Y-%m-%d).jsonl"
 
-echo "Logging $CHANNEL to $LOG_FILE (Ctrl+C to stop)" >&2
+echo "正在記錄 $CHANNEL 到 $LOG_FILE（按 Ctrl+C 可停止）" >&2
 
 discli --json listen --channel "$CHANNEL" --events messages >> "$LOG_FILE"
 ```
 
-Usage:
+使用方式：
 
 ```bash
-# Log #support to ./logs/
+# 將 #support 記到 ./logs/
 ./channel-logger.sh "#support"
 
-# Log to a custom directory
+# 指定輸出目錄
 ./channel-logger.sh "#support" /var/log/discord
 
-# Run in background
+# 背景執行
 nohup ./channel-logger.sh "#support" /var/log/discord &
 ```
 
 <Callout type="tip">
-The log file rotates daily by date. Each line is a complete JSON object, so you can process it with `jq`, import it into a database, or pipe it to a log aggregator.
+日誌會依日期輪替，每一行都是完整 JSON，能直接交給 `jq`、匯入資料庫或導入日誌匯流服務。
 </Callout>
 
-### Analyzing Logged Data
+### 分析已記錄資料
 
 ```bash
-# Messages per author today
+# 今日每位作者訊息數
 cat logs/$(date -u +%Y-%m-%d).jsonl | jq -r '.author' | sort | uniq -c | sort -rn
 
-# Find messages containing "error"
+# 找含有「error」的訊息
 cat logs/*.jsonl | jq -r 'select(.content | test("error"; "i")) | "\(.timestamp) \(.author): \(.content)"'
 
-# Count messages per hour
+# 每小時訊息數
 cat logs/$(date -u +%Y-%m-%d).jsonl | jq -r '.timestamp[:13]' | sort | uniq -c
 ```
 
-## Reaction-Based Polls
+## 以反應建立投票
 
-Create a simple poll by posting a message and adding reaction options.
+可先發一則訊息，再加上反應選項：
 
 ```bash reaction-poll.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
-CHANNEL="${1:?Usage: $0 <channel> <question> <emoji1> <emoji2> [emoji3...]}"
+CHANNEL="${1:?用法：$0 <channel> <question> <emoji1> <emoji2> [emoji3...]}"
 QUESTION="${2:?}"
 shift 2
 EMOJIS=("$@")
 
 if [ ${#EMOJIS[@]} -lt 2 ]; then
-    echo "Need at least 2 emoji options" >&2
+    echo "至少需要 2 個表情選項" >&2
     exit 1
 fi
 
-# Build the poll message
-MESSAGE="📊 **Poll:** $QUESTION\n\n"
+# 建立投票訊息
+MESSAGE="📊 **投票：** $QUESTION\n\n"
 for emoji in "${EMOJIS[@]}"; do
-    MESSAGE+="$emoji — React to vote\n"
+    MESSAGE+="$emoji — 點擊後可投票\n"
 done
 
-# Send the message and capture the ID
+# 發送訊息並取得 ID
 MSG_ID=$(discli --json message send "$CHANNEL" "$(echo -e "$MESSAGE")" | jq -r '.id')
 
 if [ -z "$MSG_ID" ] || [ "$MSG_ID" = "null" ]; then
-    echo "Failed to send poll message" >&2
+    echo "無法發送投票訊息" >&2
     exit 1
 fi
 
-# Add reaction options
+# 新增投票表情
 for emoji in "${EMOJIS[@]}"; do
     discli reaction add "$CHANNEL" "$MSG_ID" "$emoji"
-    sleep 0.5  # Avoid rate limits
+    sleep 0.5  # 避免速率限制
 done
 
-echo "Poll created! Message ID: $MSG_ID"
+echo "投票已建立，訊息 ID：$MSG_ID"
 ```
 
-Usage:
+用法：
 
 ```bash
-./reaction-poll.sh "#general" "Best programming language?" "🐍" "🦀" "🟨"
+./reaction-poll.sh "#general" "你最推薦的程式語言是？" "🐍" "🦀" "🟨"
 ```
 
-## Cron Job Examples
+## Cron 任務範例
 
-Schedule Discord operations to run on a timer.
+排程執行 Discord 自動化流程。
 
-### Daily Channel Summary
+### 每日頻道摘要
 
 ```bash daily-summary.sh
 #!/usr/bin/env bash
@@ -147,62 +147,62 @@ set -euo pipefail
 CHANNEL="#daily-summary"
 SOURCE="#general"
 
-# Get yesterday's message count
+# 取得昨日訊息數
 YESTERDAY=$(date -u -d "yesterday" +%Y-%m-%d 2>/dev/null || date -u -v-1d +%Y-%m-%d)
 COUNT=$(discli --json message history "$SOURCE" --days 1 | jq 'length')
 
-# Get top authors
+# 取得前五名活躍作者
 TOP_AUTHORS=$(discli --json message history "$SOURCE" --days 1 \
   | jq -r '[group_by(.author) | .[] | {author: .[0].author, count: length}] | sort_by(-.count) | .[:5] | .[] | "  \(.author): \(.count) messages"')
 
-discli message send "$CHANNEL" "📊 **Daily Summary for #general** ($YESTERDAY)
+discli message send "$CHANNEL" "📊 **#general 每日摘要**（$YESTERDAY）
 
-Messages: $COUNT
-Top contributors:
+訊息數：$COUNT
+主要貢獻者：
 $TOP_AUTHORS"
 ```
 
-Crontab entry (run at 9 AM UTC daily):
+Crontab 設定（每日 09:00 UTC）：
 
 ```
 0 9 * * * /path/to/daily-summary.sh
 ```
 
-### Scheduled Announcements
+### 排程公告
 
 ```bash
-# Every Monday at 9 AM: team standup reminder
-0 9 * * 1 discli message send "#engineering" "🔔 Time for standup! What did you work on last week?"
+# 每週一 09:00：晨會提醒
+0 9 * * 1 discli message send "#engineering" "🔔 早安，開始晨會！上週你們都在做什麼？"
 
-# First of every month: billing reminder
-0 10 1 * * discli message send "#billing" "📅 Monthly billing cycle starts today. Check your dashboards."
+# 每月 1 號 10:00：帳務提醒
+0 10 1 * * discli message send "#billing" "📅 本月帳務週期今天開始，請檢查儀表板。"
 
-# Every hour during business hours: status check
-0 9-17 * * 1-5 discli --json server list | jq -r '.[].name' | while read server; do echo "$(date): $server online"; done >> /var/log/discord-status.log
+# 週一到週五 09:00–17:00 每小時：狀態檢查
+0 9-17 * * 1-5 discli --json server list | jq -r '.[].name' | while read server; do echo "$(date): $server 線上"; done >> /var/log/discord-status.log
 ```
 
 <Callout type="warning">
-Cron jobs run with a minimal environment. Make sure `discli` is in the PATH or use the full path. Set `DISCORD_BOT_TOKEN` in the crontab or use `~/.discli/config.json` for token resolution.
+cron 的環境較為精簡。請確認 `discli` 在 PATH 中，或直接用絕對路徑；在 crontab 要設 `DISCORD_BOT_TOKEN`，或改用 `~/.discli/config.json` 解析 token。
 </Callout>
 
-### Cron Environment Setup
+### Cron 環境設定
 
 ```bash
-# Option 1: Set token in crontab
+# 方式 1：在 crontab 設 token
 DISCORD_BOT_TOKEN=your-token-here
 0 9 * * * /path/to/daily-summary.sh
 
-# Option 2: Source a token file
+# 方式 2：載入 token 檔
 0 9 * * * . /path/to/.env && /path/to/daily-summary.sh
 
-# Option 3: Use config.json (no env needed)
-# Ensure ~/.discli/config.json has {"token": "your-token"}
-0 9 * * * /usr/local/bin/discli message send "#general" "Good morning!"
+# 方式 3：用 config.json（不需環境變數）
+# 確認 ~/.discli/config.json 含 {"token": "your-token"}
+0 9 * * * /usr/local/bin/discli message send "#general" "早安，大家！"
 ```
 
-## GitHub Actions: Deploy Notifications
+## GitHub 動作：部署通知
 
-Send Discord notifications from your CI/CD pipeline.
+在 CI/CD pipeline 內發送部署通知。
 
 ```yaml .github/workflows/deploy.yml
 name: Deploy and Notify
@@ -219,8 +219,8 @@ jobs:
 
       - name: Deploy
         run: |
-          # Your deployment steps here
-          echo "Deploying..."
+          # 在此加入你的部署步驟
+          echo "部署中..."
 
       - name: Install discli
         run: pip install discord-cli-agent
@@ -233,27 +233,27 @@ jobs:
           COMMIT_AUTHOR=$(git log -1 --pretty=%an)
           COMMIT_SHA=$(git log -1 --pretty=%h)
 
-          discli message send "#deploys" "🚀 **Deployed to production**
+          discli message send "#deploys" "🚀 **已部署至正式環境**
 
-          Commit: \`$COMMIT_SHA\` — $COMMIT_MSG
-          Author: $COMMIT_AUTHOR
-          Branch: ${{ github.ref_name }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          提交：\`$COMMIT_SHA\` — $COMMIT_MSG
+          作者：$COMMIT_AUTHOR
+          分支：${{ github.ref_name }}
+          執行：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 ```
 
-### Deployment Status with Embeds
+### 以 embed 發送部署狀態
 
 ```yaml
       - name: Notify Discord (with embed)
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          discli message send "#deploys" "Deployment complete" \
-            --embed-title "v$(cat VERSION) deployed" \
-            --embed-desc "All checks passed. [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          discli message send "#deploys" "部署完成" \
+            --embed-title "v$(cat VERSION) 已部署" \
+            --embed-desc "所有檢查都通過。[查看執行](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
 ```
 
-### Notify on Failure
+### 失敗通知
 
 ```yaml
       - name: Notify failure
@@ -261,34 +261,34 @@ jobs:
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          discli message send "#deploys" "❌ **Deployment failed**
+          discli message send "#deploys" "❌ **部署失敗**
 
-          Branch: ${{ github.ref_name }}
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          Please investigate."
+          分支：${{ github.ref_name }}
+          執行：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          請盡快排查。"
 ```
 
-## JSON + jq Patterns
+## JSON 與 jq 實作模式
 
-### Message Analytics
+### 訊息分析
 
 ```bash
-# Messages per day over the last week
+# 最近一週每日訊息數
 discli --json message history "#general" --days 7 \
   | jq 'group_by(.timestamp[:10]) | map({date: .[0].timestamp[:10], count: length})'
 
-# Average message length
+# 平均訊息長度
 discli --json message list "#general" --limit 100 \
   | jq '[.[].content | length] | add / length'
 
-# Most used words (top 20)
+# 常用字詞（前 20）
 discli --json message list "#general" --limit 500 \
   | jq -r '.[].content' \
   | tr '[:upper:]' '[:lower:]' | tr -cs '[:alpha:]' '\n' \
   | sort | uniq -c | sort -rn | head -20
 ```
 
-### Server Health Check
+### 伺服器健康檢查
 
 ```bash health-check.sh
 #!/usr/bin/env bash
@@ -296,71 +296,71 @@ set -euo pipefail
 
 STATUS_CHANNEL="#bot-status"
 
-# Check if bot can connect and list servers
+# 檢查機器人是否能連線並取得伺服器列表
 SERVERS=$(discli --json server list 2>&1) || {
-    echo "CRITICAL: Cannot connect to Discord" >&2
+    echo "重大異常：無法連線到 Discord" >&2
     exit 1
 }
 
 SERVER_COUNT=$(echo "$SERVERS" | jq 'length')
 TOTAL_MEMBERS=$(echo "$SERVERS" | jq '[.[].member_count] | add')
 
-discli message send "$STATUS_CHANNEL" "✅ **Health Check Passed**
-Servers: $SERVER_COUNT
-Total members: $TOTAL_MEMBERS
-Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+discli message send "$STATUS_CHANNEL" "✅ **健康檢查通過**
+伺服器總數：$SERVER_COUNT
+總成員數：$TOTAL_MEMBERS
+時間戳記：$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 ```
 
-### Bulk Operations
+### 批次操作
 
 ```bash
-# Send a message to all text channels in a server
+# 對指定伺服器所有文字頻道發訊息
 discli --json channel list --server "My Server" \
   | jq -r '.[] | select(.type == "text") | .id' \
   | while read channel_id; do
-      discli message send "$channel_id" "Important announcement: Server maintenance tonight at 2 AM UTC"
-      sleep 1  # Rate limit friendly
+      discli message send "$channel_id" "重要公告：今夜 2:00 UTC 進行伺服器維護"
+      sleep 1  # 避免速率限制
     done
 
-# Export all channels' recent history
+# 匯出所有文字頻道近期歷史
 discli --json channel list --server "My Server" \
   | jq -r '.[] | select(.type == "text") | "\(.id) \(.name)"' \
   | while read channel_id channel_name; do
-      echo "Exporting #$channel_name..." >&2
+      echo "正在匯出 #$channel_name..." >&2
       discli --json message list "$channel_id" --limit 100 > "export-${channel_name}.json"
       sleep 2
     done
 ```
 
-## Error Handling in Scripts
+## 腳本中的錯誤處理
 
-### Exit Codes
+### 退出碼
 
-discli exits with `0` on success and non-zero on failure. Use standard bash error handling:
+discli 成功為 `0`，失敗為非 0。可用標準 Bash 錯誤控制：
 
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail  # Exit on error, undefined vars, pipe failures
+set -euo pipefail  # 遇到錯誤、未定義變數或管線失敗就退出
 
-# Method 1: set -e (script exits on first error)
-discli message send "#general" "Hello"
+# 方法 1：set -e（第一個錯誤直接退出）
+discli message send "#general" "你好"
 
-# Method 2: Explicit error checking
-if ! discli message send "#general" "Hello" 2>/dev/null; then
-    echo "Failed to send message" >&2
-    # Fallback or alert
+# 方法 2：明確檢查錯誤
+if ! discli message send "#general" "你好" 2>/dev/null; then
+    echo "訊息發送失敗" >&2
+    # 可加上備援或警示
 fi
 
-# Method 3: Capture output and check
-OUTPUT=$(discli --json message send "#general" "Hello" 2>&1) || {
-    echo "Send failed: $OUTPUT" >&2
+# 方法 3：接收輸出後檢查
+OUTPUT=$(discli --json message send "#general" "你好" 2>&1) || {
+    echo "發送失敗：$OUTPUT" >&2
     exit 1
 }
-MSG_ID=$(echo "$OUTPUT" | jq -r '.id')
-echo "Sent message $MSG_ID"
+    MSG_ID=$(echo "$OUTPUT" | jq -r '.id')
+echo "已發送訊息 $MSG_ID"
 ```
 
-### Retry Logic
+### 重試邏輯
 
 ```bash retry-send.sh
 #!/usr/bin/env bash
@@ -375,94 +375,94 @@ send_with_retry() {
         if discli message send "$channel" "$message" 2>/dev/null; then
             return 0
         fi
-        echo "Attempt $attempt/$max_attempts failed. Retrying in ${attempt}s..." >&2
+        echo "第 $attempt/$max_attempts 次嘗試失敗，將於 ${attempt} 秒後重試…" >&2
         sleep "$attempt"
         attempt=$((attempt + 1))
     done
 
-    echo "Failed after $max_attempts attempts" >&2
+    echo "已重試 $max_attempts 次仍然失敗" >&2
     return 1
 }
 
-# Usage
-send_with_retry "#deploys" "Deployment complete" 3
+# 用法
+send_with_retry "#deploys" "部署完成" 3
 ```
 
-### Token Validation
+### Token 驗證
 
 ```bash
-# Quick check that the token works
+# 快速驗證 token 是否有效
 if ! discli server list >/dev/null 2>&1; then
-    echo "ERROR: Discord token is invalid or bot is not in any servers" >&2
-    echo "Set DISCORD_BOT_TOKEN or configure via: discli config set token YOUR_TOKEN" >&2
+    echo "錯誤：Discord token 無效，或機器人尚未加入任何伺服器" >&2
+    echo "請設定 DISCORD_BOT_TOKEN，或用 discli config set token YOUR_TOKEN 設定" >&2
     exit 1
 fi
 ```
 
-## Combining with Other Tools
+## 與其他工具結合
 
-### Pipe webhook data to Discord
+### 將 webhook 資料轉發到 Discord
 
 ```bash
-# Forward a GitHub webhook payload to Discord
+# 轉發 GitHub webhook 負載
 curl -s "https://api.github.com/repos/owner/repo/releases/latest" \
-  | jq -r '"New release: \(.tag_name) — \(.html_url)"' \
+  | jq -r '"新版本發布：\(.tag_name) — \(.html_url)"' \
   | xargs -I{} discli message send "#releases" "{}"
 ```
 
-### Monitor a log file
+### 監控日誌檔
 
 ```bash
-# Watch a log file and forward errors to Discord
+# 監控日誌並轉發錯誤到 Discord
 tail -F /var/log/app/error.log | while read line; do
-    discli message send "#alerts" "🚨 Error: $line"
-    sleep 1  # Rate limit
+    discli message send "#alerts" "🚨 錯誤：$line"
+    sleep 1  # 避免速率限制
 done
 ```
 
-### Database query results to Discord
+### 資料庫查詢結果推播
 
 ```bash
-# Send query results as a formatted message
+# 將查詢結果以格式化訊息發送
 RESULT=$(psql -t -c "SELECT count(*) FROM users WHERE created_at > now() - interval '1 day'")
-discli message send "#metrics" "📊 New users today: **$RESULT**"
+discli message send "#metrics" "📊 今日新增使用者：**$RESULT**"
 ```
 
-## Security in Scripts
+## 腳本安全性
 
 <Callout type="danger">
-Never hardcode tokens in scripts. Use environment variables, secret managers, or `~/.discli/config.json`.
+請勿在腳本內硬編碼 token。應使用環境變數、密鑰管理服務，或 `~/.discli/config.json`。
 </Callout>
 
 ```bash
-# Bad: token in script
-discli --token "mfa.abc123..." message send "#general" "Hello"
+# 不建議：token 寫在腳本內
+discli --token "mfa.abc123..." message send "#general" "你好"
 
-# Good: environment variable
+# 建議：使用環境變數
 export DISCORD_BOT_TOKEN="$VAULT_TOKEN"
-discli message send "#general" "Hello"
+discli message send "#general" "你好"
 
-# Good: config file (set once)
+# 建議：用 config 檔（一次設定）
 discli config set token "$VAULT_TOKEN"
-discli message send "#general" "Hello"
+discli message send "#general" "你好"
 ```
 
-For CI/CD, always use encrypted secrets:
+CI/CD 請一律使用加密機密：
 
 ```yaml
 env:
   DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
 ```
 
-For automated scripts, use the minimum required permission profile:
+自動化腳本請使用最小必要的權限設定檔：
 
 ```bash
-# CI notification only needs to send messages
-discli --profile chat message send "#deploys" "Deployed"
+# CI 通知只需發送訊息
+discli --profile chat message send "#deploys" "已部署"
 ```
 
-## Next Steps
+## 後續步驟
 
-- [CLI Usage](/guides/cli-usage) -- Full command reference with examples
-- [Security & Permissions](/guides/security-permissions) -- Lock down your automation
-- [Building Agents](/guides/building-agents) -- Go beyond scripts with persistent agents
+- [CLI 使用](/guides/cli-usage) -- 完整命令參考與範例
+- [安全與權限](/guides/security-permissions) -- 集中管理自動化腳本權限
+- [建構代理](/guides/building-agents) -- 從腳本升級到持久化代理

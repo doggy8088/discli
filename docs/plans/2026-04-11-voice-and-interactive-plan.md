@@ -1,25 +1,25 @@
-# Voice & Interactive Features Implementation Plan
+# 語音及互動功能實施計劃
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **對於克勞德：** 所需的子技能：使用超能力：執行計劃來逐個任務地實施該計劃。
 
-**Goal:** Add full-duplex voice (TTS/STT), audio playback, and rich interactive components (modals, workflows, dashboards) to discli — both CLI commands and serve mode.
+**目標：** 將全雙工語音 (TTS/STT)、音訊播放和豐富的互動組件（模式、工作流程、儀表板）新增至 discli - CLI 指令和服務模式。
 
-**Architecture:** Layered engines (`voice_engine.py`, `interact_engine.py`) that manage async state. CLI commands and serve.py both delegate to these engines. Provider protocols allow swapping TTS/STT backends.
+**架構：** 分層引擎（`voice_engine.py`、`interact_engine.py`）負責管理非同步狀態。CLI 指令與 `serve.py` 都會委派給這些引擎，並透過提供者協定切換 TTS/STT 實作。
 
-**Tech Stack:** discord.py, discord-ext-voice-recv, silero-vad, PyNaCl, audioop-lts, ElevenLabs SDK, Deepgram SDK, Click
+**技術堆疊：**discord.py、discord-ext-voice-recv、silero-vad、PyNaCl、audioop-lts、ElevenLabs SDK、Deepgram SDK、Click
 
-**Design doc:** `docs/plans/2026-04-11-voice-and-interactive-design.md`
+**設計文件：** `docs/plans/2026-04-11-voice-and-interactive-design.md`
 
 ---
 
-### Task 1: Update Dependencies in pyproject.toml
+### 任務 1：更新 pyproject.toml 中的依賴項
 
-**Files:**
-- Modify: `pyproject.toml`
+**文件：**
+- 修改： `pyproject.toml`
 
-**Step 1: Add optional dependency groups**
+**第 1 步：新增可選依賴項群組**
 
-In `pyproject.toml`, replace the existing `[project.optional-dependencies]` section:
+在 `pyproject.toml`，將既有 `[project.optional-dependencies]` 區段整段替換為：
 
 ```toml
 [project.optional-dependencies]
@@ -42,12 +42,12 @@ dev = [
 ]
 ```
 
-**Step 2: Verify install works**
+**第 2 步：驗證安裝是否有效**
 
-Run: `pip install -e ".[dev]"`
-Expected: installs cleanly (voice extras are optional)
+執行： `pip install -e ".[dev]"`
+預期：安裝乾淨（語音附加功能是可選的）
 
-**Step 3: Commit**
+**第 3 步：承諾**
 
 ```bash
 git add pyproject.toml
@@ -56,15 +56,15 @@ git commit -m "chore: add voice and interactive optional dependency groups"
 
 ---
 
-### Task 2: TTS Provider Protocol and ElevenLabs Implementation
+### 任務 2：TTS 提供者協議和 ElevenLabs 實施
 
-**Files:**
-- Create: `src/discli/tts.py`
-- Create: `tests/test_tts.py`
+**文件：**
+- 建立： `src/discli/tts.py`
+- 建立： `tests/test_tts.py`
 
-**Step 1: Write the failing test**
+**第 1 步：寫出失敗的測試**
 
-Create `tests/test_tts.py`:
+建立 `tests/test_tts.py`：
 
 ```python
 import pytest
@@ -94,14 +94,14 @@ def test_get_tts_provider_elevenlabs_missing_key():
             os.environ["ELEVENLABS_API_KEY"] = old
 ```
 
-**Step 2: Run test to verify it fails**
+**第 2 步：執行測試以驗證是否失敗**
 
-Run: `pytest tests/test_tts.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'discli.tts'`
+執行： `pytest tests/test_tts.py -v`
+預期：失敗 — `ModuleNotFoundError: No module named 'discli.tts'`
 
-**Step 3: Write the TTS module**
+**第3步：編寫TTS模組**
 
-Create `src/discli/tts.py`:
+建立 `src/discli/tts.py`：
 
 ```python
 """TTS provider protocol and implementations."""
@@ -222,12 +222,12 @@ def get_tts_provider(name: str) -> TTSProvider:
     return factory()
 ```
 
-**Step 4: Run tests**
+**第 4 步：執行測試**
 
-Run: `pytest tests/test_tts.py -v`
-Expected: 3 PASS
+執行： `pytest tests/test_tts.py -v`
+預期：3 透過
 
-**Step 5: Commit**
+**第 5 步：承諾**
 
 ```bash
 git add src/discli/tts.py tests/test_tts.py
@@ -236,15 +236,15 @@ git commit -m "feat: add TTS provider protocol with ElevenLabs and OpenAI implem
 
 ---
 
-### Task 3: STT Provider Protocol and Deepgram Implementation
+### 任務 3：STT 提供者協定和 Deepgram 實現
 
-**Files:**
-- Create: `src/discli/stt.py`
-- Create: `tests/test_stt.py`
+**文件：**
+- 建立： `src/discli/stt.py`
+- 建立： `tests/test_stt.py`
 
-**Step 1: Write the failing test**
+**第 1 步：寫出失敗的測試**
 
-Create `tests/test_stt.py`:
+建立 `tests/test_stt.py`：
 
 ```python
 import pytest
@@ -280,14 +280,14 @@ def test_get_stt_provider_deepgram_missing_key():
             os.environ["DEEPGRAM_API_KEY"] = old
 ```
 
-**Step 2: Run test to verify it fails**
+**第 2 步：執行測試以驗證是否失敗**
 
-Run: `pytest tests/test_stt.py -v`
-Expected: FAIL
+執行： `pytest tests/test_stt.py -v`
+預期：失敗
 
-**Step 3: Write the STT module**
+**第3步：編寫STT模組**
 
-Create `src/discli/stt.py`:
+建立 `src/discli/stt.py`：
 
 ```python
 """STT provider protocol and implementations."""
@@ -452,12 +452,12 @@ def get_stt_provider(name: str) -> STTProvider:
     return factory()
 ```
 
-**Step 4: Run tests**
+**第 4 步：執行測試**
 
-Run: `pytest tests/test_stt.py -v`
-Expected: 4 PASS
+執行： `pytest tests/test_stt.py -v`
+預期：4 及格
 
-**Step 5: Commit**
+**第 5 步：承諾**
 
 ```bash
 git add src/discli/stt.py tests/test_stt.py
@@ -466,15 +466,15 @@ git commit -m "feat: add STT provider protocol with Deepgram and OpenAI Whisper 
 
 ---
 
-### Task 4: Voice Engine Core
+### 任務 4：語音引擎核心
 
-**Files:**
-- Create: `src/discli/voice_engine.py`
-- Create: `tests/test_voice_engine.py`
+**文件：**
+- 建立： `src/discli/voice_engine.py`
+- 建立： `tests/test_voice_engine.py`
 
-**Step 1: Write the failing test**
+**第 1 步：寫出失敗的測試**
 
-Create `tests/test_voice_engine.py`:
+建立 `tests/test_voice_engine.py`：
 
 ```python
 import pytest
@@ -510,14 +510,14 @@ def test_voice_engine_update_config():
     assert engine.config["stt_provider"] == "deepgram"
 ```
 
-**Step 2: Run test to verify it fails**
+**第 2 步：執行測試以驗證是否失敗**
 
-Run: `pytest tests/test_voice_engine.py -v`
-Expected: FAIL
+執行： `pytest tests/test_voice_engine.py -v`
+預期：失敗
 
-**Step 3: Write the voice engine**
+**第三步：編寫語音引擎**
 
-Create `src/discli/voice_engine.py`:
+建立 `src/discli/voice_engine.py`：
 
 ```python
 """Voice engine — manages voice connections, audio playback, and listening."""
@@ -879,12 +879,12 @@ class VoiceEngine:
             await self._stt.close()
 ```
 
-**Step 4: Run tests**
+**第 4 步：執行測試**
 
-Run: `pytest tests/test_voice_engine.py -v`
-Expected: 4 PASS
+執行： `pytest tests/test_voice_engine.py -v`
+預期：4 及格
 
-**Step 5: Commit**
+**第 5 步：承諾**
 
 ```bash
 git add src/discli/voice_engine.py tests/test_voice_engine.py
@@ -893,15 +893,15 @@ git commit -m "feat: add VoiceEngine with AudioPlayer, AudioListener, and connec
 
 ---
 
-### Task 5: Interactive Engine — Interaction Router, Workflows, and Dashboards
+### 任務 5：互動引擎 - 互動路由器、工作流程和儀表板
 
-**Files:**
-- Create: `src/discli/interact_engine.py`
-- Create: `tests/test_interact_engine.py`
+**文件：**
+- 建立： `src/discli/interact_engine.py`
+- 建立： `tests/test_interact_engine.py`
 
-**Step 1: Write the failing test**
+**第 1 步：寫出失敗的測試**
 
-Create `tests/test_interact_engine.py`:
+建立 `tests/test_interact_engine.py`：
 
 ```python
 import pytest
@@ -965,14 +965,14 @@ def test_interaction_router_prefix_routing():
     assert engine.route_custom_id("unknown:thing") is None
 ```
 
-**Step 2: Run test to verify it fails**
+**第 2 步：執行測試以驗證是否失敗**
 
-Run: `pytest tests/test_interact_engine.py -v`
-Expected: FAIL
+執行： `pytest tests/test_interact_engine.py -v`
+預期：失敗
 
-**Step 3: Write the interact engine**
+**第3步：寫出互動引擎**
 
-Create `src/discli/interact_engine.py`:
+建立 `src/discli/interact_engine.py`：
 
 ```python
 """Interactive engine — modals, workflows, and dashboards."""
@@ -1472,12 +1472,12 @@ class InteractEngine:
         self.dashboards.clear()
 ```
 
-**Step 4: Run tests**
+**第 4 步：執行測試**
 
-Run: `pytest tests/test_interact_engine.py -v`
-Expected: 4 PASS
+執行： `pytest tests/test_interact_engine.py -v`
+預期：4 及格
 
-**Step 5: Commit**
+**第 5 步：承諾**
 
 ```bash
 git add src/discli/interact_engine.py tests/test_interact_engine.py
@@ -1486,15 +1486,15 @@ git commit -m "feat: add InteractEngine with workflows, dashboards, and interact
 
 ---
 
-### Task 6: Voice CLI Commands
+### 任務 6：語音 CLI 指令
 
-**Files:**
-- Create: `src/discli/commands/voice.py`
-- Modify: `src/discli/cli.py` (register voice group)
+**文件：**
+- 建立： `src/discli/commands/voice.py`
+- 修改： `src/discli/cli.py`（註冊 voice 命令群組）
 
-**Step 1: Write the voice command module**
+**第一步：編寫語音命令模組**
 
-Create `src/discli/commands/voice.py`:
+建立 `src/discli/commands/voice.py`：
 
 ```python
 """Voice commands — join, leave, speak, play, listen, converse."""
@@ -1843,24 +1843,24 @@ def voice_status(ctx):
     run_discord(ctx, action)
 ```
 
-**Step 2: Register voice group in cli.py**
+**第 2 步：在 cli.py 註冊語音組**
 
-Add import and registration to `src/discli/cli.py`:
+加入 import 並註冊至 `src/discli/cli.py`:
 
 ```python
-# Add after existing imports:
+# 在既有 import 之後加入：
 from discli.commands.voice import voice_group
 
-# Add after existing main.add_command() calls:
+# 在既有 main.add_command() 呼叫之後加入：
 main.add_command(voice_group)
 ```
 
-**Step 3: Run existing tests to verify no regressions**
+**步驟 3：執行現有測試以驗證沒有回歸**
 
-Run: `pytest tests/ -v`
-Expected: all existing tests PASS
+執行： `pytest tests/ -v`
+預期：所有現有測試均通過
 
-**Step 4: Commit**
+**第 4 步：承諾**
 
 ```bash
 git add src/discli/commands/voice.py src/discli/cli.py
@@ -1869,15 +1869,15 @@ git commit -m "feat: add voice CLI commands (join, leave, speak, play, stop, pau
 
 ---
 
-### Task 7: Interactive CLI Commands
+### 任務 7：互動式 CLI 指令
 
-**Files:**
-- Create: `src/discli/commands/interact.py`
-- Modify: `src/discli/cli.py` (register interact group)
+**文件：**
+- 建立： `src/discli/commands/interact.py`
+- 修改： `src/discli/cli.py`（註冊 interact 命令群組）
 
-**Step 1: Write the interact command module**
+**第一步：編寫互動命令模組**
 
-Create `src/discli/commands/interact.py`:
+建立 `src/discli/commands/interact.py`：
 
 ```python
 """Interactive commands — modals, workflows, dashboards."""
@@ -2063,21 +2063,21 @@ def dashboard_delete(ctx, dashboard_id, channel):
     run_discord(ctx, action)
 ```
 
-**Step 2: Register interact group in cli.py**
+**步驟2：在cli.py中註冊交互組**
 
-Add to `src/discli/cli.py`:
+加入 `src/discli/cli.py`:
 
 ```python
 from discli.commands.interact import interact_group
 main.add_command(interact_group)
 ```
 
-**Step 3: Run all tests**
+**第 3 步：執行所有測試**
 
-Run: `pytest tests/ -v`
-Expected: all PASS
+執行： `pytest tests/ -v`
+預期：全部透過
 
-**Step 4: Commit**
+**第 4 步：承諾**
 
 ```bash
 git add src/discli/commands/interact.py src/discli/cli.py
@@ -2086,14 +2086,14 @@ git commit -m "feat: add interactive CLI commands (modal, workflow, dashboard)"
 
 ---
 
-### Task 8: Serve Mode Integration — Voice Actions
+### 任務 8：服務模式整合 — 語音操作
 
-**Files:**
-- Modify: `src/discli/commands/serve.py`
+**文件：**
+- 修改： `src/discli/commands/serve.py`
 
-**Step 1: Add voice engine initialization and actions to serve.py**
+**步驟 1：將語音引擎初始化和操作加入 serve.py**
 
-At the top of the `serve_cmd` function (after existing state variables around line 59), add:
+在 `serve_cmd` 函式頂部（位於既有 state 變數區段之後，約第 59 行）加入：
 
 ```python
     # Voice engine (lazy init)
@@ -2110,7 +2110,7 @@ At the top of the `serve_cmd` function (after existing state variables around li
         return voice_engine
 ```
 
-Add these action handlers (before the `_actions` dict):
+在 `_actions` 字典前加入這些 action handler：
 
 ```python
     async def _action_voice_connect(cmd: dict) -> dict:
@@ -2194,7 +2194,7 @@ Add these action handlers (before the `_actions` dict):
         return {"ok": True, "config": engine.config}
 ```
 
-Add to the `_actions` dict:
+加入 `_actions` 字典：
 
 ```python
         # Voice
@@ -2212,12 +2212,12 @@ Add to the `_actions` dict:
         "voice_set_config": _action_voice_set_config,
 ```
 
-**Step 2: Run all tests**
+**第 2 步：執行所有測試**
 
-Run: `pytest tests/ -v`
-Expected: all PASS
+執行： `pytest tests/ -v`
+預期：全部透過
 
-**Step 3: Commit**
+**第 3 步：承諾**
 
 ```bash
 git add src/discli/commands/serve.py
@@ -2226,14 +2226,14 @@ git commit -m "feat: add voice actions to serve mode (connect, speak, play, list
 
 ---
 
-### Task 9: Serve Mode Integration — Interactive Actions
+### 任務 9：服務模式整合 — 互動操作
 
-**Files:**
-- Modify: `src/discli/commands/serve.py`
+**文件：**
+- 修改： `src/discli/commands/serve.py`
 
-**Step 1: Add interact engine initialization and actions**
+**第 1 步：新增互動引擎初始化和操作**
 
-After the voice engine lazy init, add:
+在語音引擎惰性初始化後，新增：
 
 ```python
     # Interactive engine (lazy init)
@@ -2248,7 +2248,7 @@ After the voice engine lazy init, add:
         return interact_engine
 ```
 
-Add these action handlers:
+新增這些操作處理程序：
 
 ```python
     async def _action_workflow_start(cmd: dict) -> dict:
@@ -2337,7 +2337,7 @@ Add these action handlers:
         return {"ok": True}
 ```
 
-Add to the `_actions` dict:
+加入 `_actions` 字典：
 
 ```python
         # Workflows & Dashboards
@@ -2348,9 +2348,9 @@ Add to the `_actions` dict:
         "dashboard_delete": _action_dashboard_delete,
 ```
 
-**Step 2: Update the `on_interaction` handler to route to interact engine**
+**步驟 2：更新 `on_interaction` 互動處理器，將 workflow 與 dashboard 路由到互動引擎**
 
-In the existing `on_interaction` handler (around line 398), add routing for workflow and dashboard interactions after the existing modal_submit handling:
+在既有 `on_interaction` 互動處理器（位於第 398 行）中，在既有 `modal_submit` 處理之後加入 workflow 與 dashboard 的路由邏輯：
 
 ```python
         # Route prefixed interactions to interact engine
@@ -2366,12 +2366,12 @@ In the existing `on_interaction` handler (around line 398), add routing for work
                 return
 ```
 
-**Step 3: Run all tests**
+**第 3 步：執行所有測試**
 
-Run: `pytest tests/ -v`
-Expected: all PASS
+執行： `pytest tests/ -v`
+預期：全部透過
 
-**Step 4: Commit**
+**第 4 步：承諾**
 
 ```bash
 git add src/discli/commands/serve.py
@@ -2380,15 +2380,15 @@ git commit -m "feat: add interactive actions to serve mode (workflows, dashboard
 
 ---
 
-### Task 10: Update Security Profiles
+### 任務 10：更新安全性設定檔
 
-**Files:**
-- Modify: `src/discli/security.py`
-- Create: `tests/test_security_voice.py`
+**文件：**
+- 修改： `src/discli/security.py`
+- 建立： `tests/test_security_voice.py`
 
-**Step 1: Write the failing test**
+**第 1 步：寫出失敗的測試**
 
-Create `tests/test_security_voice.py`:
+建立 `tests/test_security_voice.py`：
 
 ```python
 from discli.security import is_command_allowed
@@ -2426,14 +2426,14 @@ def test_moderation_allows_interact():
     assert is_command_allowed("interact workflow start", profile_override="moderation")
 ```
 
-**Step 2: Run test to verify it fails**
+**第 2 步：執行測試以驗證是否失敗**
 
-Run: `pytest tests/test_security_voice.py -v`
-Expected: some FAIL (readonly doesn't have voice status allowed, chat doesn't have interact)
+執行： `pytest tests/test_security_voice.py -v`
+預期：有些失敗（只讀不允許語音狀態，聊天沒有互動）
 
-**Step 3: Update security.py profiles**
+**步驟 3：更新 security.py 設定檔**
 
-In `src/discli/security.py`, update `DEFAULT_PROFILES`:
+在 `src/discli/security.py` 中更新 `DEFAULT_PROFILES`：
 
 ```python
 DEFAULT_PROFILES = {
@@ -2460,17 +2460,17 @@ DEFAULT_PROFILES = {
 }
 ```
 
-**Step 4: Run tests**
+**第 4 步：執行測試**
 
-Run: `pytest tests/test_security_voice.py -v`
-Expected: 8 PASS
+執行： `pytest tests/test_security_voice.py -v`
+預計：8 通過
 
-**Step 5: Run all tests**
+**第 5 步：執行所有測試**
 
-Run: `pytest tests/ -v`
-Expected: all PASS
+執行： `pytest tests/ -v`
+預期：全部透過
 
-**Step 6: Commit**
+**第 6 步：承諾**
 
 ```bash
 git add src/discli/security.py tests/test_security_voice.py
@@ -2479,17 +2479,17 @@ git commit -m "feat: update permission profiles with voice and interact scopes"
 
 ---
 
-### Task 11: Update Documentation
+### 任務 11：更新文件
 
-**Files:**
-- Modify: `agents/discord-agent.md` (if it exists — add voice and interact command reference)
-- Modify: `CLAUDE.md` (add voice/interact to architecture notes)
+**文件：**
+- 修改： `agents/discord-agent.md`（若檔案存在，加入 voice/interact 指令參考）
+- 修改： `CLAUDE.md`（將 voice/interact 加到架構說明）
 
-**Step 1: Update CLAUDE.md**
+**第 1 步：更新 CLAUDE.md**
 
-Add voice and interact to the key modules section and commands list.
+將語音和互動添加到關鍵模組部分和命令清單中。
 
-**Step 2: Commit**
+**第 2 步：承諾**
 
 ```bash
 git add CLAUDE.md agents/discord-agent.md
@@ -2498,37 +2498,37 @@ git commit -m "docs: add voice and interactive features to documentation"
 
 ---
 
-### Task 12: Version Bump and Final Verification
+### 任務 12：版本更新與最終驗證
 
-**Files:**
-- Modify: `pyproject.toml` (version bump to 0.8.0)
+**文件：**
+- 修改： `pyproject.toml`（升級版本到 0.8.0）
 
-**Step 1: Bump version**
+**第1步：凹凸版**
 
-Change `version = "0.7.0"` to `version = "0.8.0"` in `pyproject.toml`.
+將 `pyproject.toml` 中的 `version = "0.7.0"` 改為 `version = "0.8.0"`。
 
-**Step 2: Run full test suite**
+**第 2 步：運行完整的測試套件**
 
-Run: `pytest tests/ -v`
-Expected: all PASS
+執行： `pytest tests/ -v`
+預期：全部透過
 
-**Step 3: Verify install**
+**第 3 步：驗證安裝**
 
-Run: `pip install -e ".[dev]"`
-Expected: clean install
+執行： `pip install -e ".[dev]"`
+預期：全新安裝
 
-**Step 4: Verify CLI help includes new commands**
+**步驟 4：驗證 CLI 幫助包括新命令**
 
-Run: `discli --help`
-Expected: voice and interact groups listed
+執行： `discli --help`
+預期：列出語音和互動組
 
-Run: `discli voice --help`
-Expected: join, leave, speak, play, stop, pause, resume, listen, status
+執行： `discli voice --help`
+預期：加入、離開、說話、播放、停止、暫停、恢復、聆聽、狀態
 
-Run: `discli interact --help`
-Expected: modal, workflow, dashboard
+執行： `discli interact --help`
+預期：模式、工作流程、儀表板
 
-**Step 5: Commit**
+**第 5 步：承諾**
 
 ```bash
 git add pyproject.toml

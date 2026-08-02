@@ -1,23 +1,23 @@
 ---
-title: Token Resolution
-description: How discli finds and uses your Discord bot token
+title: Token 解析
+description: discli 如何找到並使用你的 Discord 機器人 token
 ---
 
-# Token Resolution
+# Token 解析
 
-discli needs a Discord bot token to authenticate with the Discord API. The token is resolved through a three-level priority chain, giving you flexibility across different environments.
+discli 需要 Discord 機器人 token 才能進行 API 驗證。Token 會依照三層優先順序解析，提供不同環境下的彈性。
 
-## Resolution chain
+## 解析順序
 
 ```mermaid
 flowchart TD
-    A[discli invoked] --> B{--token flag\nprovided?}
-    B -- Yes --> C[Use flag value]
-    B -- No --> D{DISCORD_BOT_TOKEN\nenv var set?}
-    D -- Yes --> E[Use env var value]
-    D -- No --> F{~/.discli/config.json\nhas token?}
-    F -- Yes --> G[Use config value]
-    F -- No --> H[Error: No token\nprovided]
+    A[啟動 discli] --> B{有提供 --token 旗標？}
+    B -- 是 --> C[使用旗標值]
+    B -- 否 --> D{已設定 DISCORD_BOT_TOKEN？}
+    D -- 是 --> E[使用環境變數值]
+    D -- 否 --> F{~/.discli/config.json\n有 token？}
+    F -- 是 --> G[使用設定檔值]
+    F -- 否 --> H[錯誤：未提供 token]
 
     style C fill:#059669,color:#fff
     style E fill:#059669,color:#fff
@@ -25,25 +25,25 @@ flowchart TD
     style H fill:#dc2626,color:#fff
 ```
 
-### Priority order
+### 優先順序
 
-| Priority | Source | Example |
+| 優先順序 | 來源 | 範例 |
 |---|---|---|
-| 1 (highest) | `--token` CLI flag | `discli --token Bot_ABC123 message send ...` |
-| 2 | `DISCORD_BOT_TOKEN` environment variable | `export DISCORD_BOT_TOKEN=Bot_ABC123` |
-| 3 (lowest) | `~/.discli/config.json` file | `&#123;"token": "Bot_ABC123"&#125;` |
+| 1（最高） | `--token` CLI 旗標 | `discli --token Bot_ABC123 message send ...` |
+| 2 | `DISCORD_BOT_TOKEN` 環境變數 | `export DISCORD_BOT_TOKEN=Bot_ABC123` |
+| 3（最低） | `~/.discli/config.json` 檔案 | `{"token": "Bot_ABC123"}` |
 
-The first source that provides a non-empty value wins. If none of the three sources has a token, discli exits with an error:
+第一個有非空值的來源會被採用。若三個來源皆未提供 token，discli 會直接結束並輸出錯誤：
 
 ```
-Error: No token provided. Use --token, set DISCORD_BOT_TOKEN, or run: discli config set token YOUR_TOKEN
+錯誤：未提供 token。請使用 --token、設定 DISCORD_BOT_TOKEN，或執行：discli config set token YOUR_TOKEN
 ```
 
-## How it works
+## 運作原理
 
-Token resolution happens in two stages within `cli.py` and `client.py`:
+Token 解析在 `cli.py` 與 `client.py` 中分兩階段完成：
 
-**Stage 1 -- CLI entry (`cli.py`):** Click's `@click.option("--token", envvar="DISCORD_BOT_TOKEN")` handles the first two levels. If `--token` is passed, Click uses that value. If not, Click checks the `DISCORD_BOT_TOKEN` environment variable. If neither is set, the token is `None` and discli falls back to loading from the config file.
+**第一階段（CLI 進入）(`cli.py`)：** Click 的 `@click.option("--token", envvar="DISCORD_BOT_TOKEN")` 同時處理前兩層。若有傳入 `--token`，Click 使用該值；若未傳入，則改取 `DISCORD_BOT_TOKEN`。若都未設定，值為 `None`，discli 會改由設定檔載入。
 
 ```python
 # cli.py — main group
@@ -55,7 +55,7 @@ def main(ctx, token, ...):
     ctx.obj["token"] = token
 ```
 
-**Stage 2 -- Client (`client.py`):** Before running the Discord action, `resolve_token()` verifies that a token was found. If `ctx.obj["token"]` is still `None`, it raises an error.
+**第二階段（Client）(`client.py`)：** 在執行 Discord 行為前，`resolve_token()` 會確認 token 已存在。若 `ctx.obj["token"]` 仍為 `None`，就拋出錯誤。
 
 ```python
 # client.py
@@ -65,12 +65,12 @@ def resolve_token(token: str | None, config: dict) -> str:
     config_token = config.get("token")
     if config_token:
         return config_token
-    raise click.ClickException("No token provided. ...")
+    raise click.ClickException("未提供 token。")
 ```
 
-## Config file format
+## 設定檔格式
 
-The config file is stored at `~/.discli/config.json`:
+設定檔位於 `~/.discli/config.json`：
 
 ```json
 {
@@ -78,43 +78,43 @@ The config file is stored at `~/.discli/config.json`:
 }
 ```
 
-Manage it with the `config` command:
+透過 `config` 指令管理：
 
 ```bash
-# Set your token
+# 設定 token
 discli config set token YOUR_BOT_TOKEN
 
-# View current config
+# 查看目前設定
 discli config show
 ```
 
-The file is created automatically by `discli config set`. The `~/.discli/` directory is also created if it does not exist.
+檔案由 `discli config set` 自動建立；若 `~/.discli/` 目錄不存在也會一併建立。
 
 <Callout type="warning">
-  The config file stores the token in plain text. Ensure `~/.discli/config.json` has appropriate file permissions. On shared systems, consider using the environment variable approach instead.
+  設定檔會將 token 以純文字儲存。請確認 `~/.discli/config.json` 權限設置得當。共用主機環境建議改用環境變數方案。
 </Callout>
 
-## Why this order
+## 為何使用此順序
 
-The three-level priority is designed for different usage patterns:
+這個三層順序是為了對應不同使用情境設計：
 
 <Tabs>
-  <Tab title="Local development">
-    **Config file** is the most convenient for day-to-day use. Set it once and forget:
+  <Tab title="本機開發">
+    **設定檔** 適合日常使用，先寫入一次後可直接沿用：
 
     ```bash
     discli config set token YOUR_BOT_TOKEN
-    # Now every command works without extra flags
+    # 接著所有指令都可直接使用，不需額外旗標
     discli message send "#general" "Hello"
     ```
 
-    The token persists across terminal sessions, reboots, and shell changes.
+    Token 會跨終端工作階段、重開機與 shell 切換持續保留。
   </Tab>
-  <Tab title="CI / Automation">
-    **Environment variable** is the standard for CI pipelines and Docker containers. It avoids writing secrets to disk:
+  <Tab title="CI / 自動化">
+    **環境變數** 是 CI 流程與 Docker 的標準做法，可避免將機密寫到磁碟：
 
     ```yaml
-    # GitHub Actions example
+    # GitHub Actions 範例
     env:
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
     steps:
@@ -122,55 +122,55 @@ The three-level priority is designed for different usage patterns:
     ```
 
     ```bash
-    # Docker example
+    # Docker 範例
     docker run -e DISCORD_BOT_TOKEN=... discli message send "#alerts" "Container started"
     ```
   </Tab>
-  <Tab title="One-off testing">
-    **CLI flag** overrides everything, useful when testing with a different bot or token:
+  <Tab title="臨時測試">
+    **CLI 旗標** 會覆寫其他來源，適合在測試不同 bot/token 時使用：
 
     ```bash
-    # Test with a staging bot
+    # 使用 staging 機器人測試
     discli --token Bot_STAGING_TOKEN message send "#test" "Staging check"
 
-    # Your default config token is unaffected
+    # 預設設定檔的 token 不受影響
     discli message send "#general" "Still uses config token"
     ```
   </Tab>
 </Tabs>
 
-## Token security
+## Token 保護
 
-discli takes several measures to protect your token:
+discli 對 token 採用以下保護措施：
 
-| Measure | Details |
+| 措施 | 說明 |
 |---|---|
-| **Never logged** | Tokens are never written to the audit log. The `args` field in audit entries contains command arguments but the token is resolved separately and excluded. |
-| **Never in output** | The `--json` output and plain-text output never include the token. |
-| **Not in error messages** | If authentication fails, discli reports "Invalid bot token" without echoing the token value. |
-| **Env var over disk** | The environment variable approach (priority 2) avoids persisting the token to the filesystem entirely. |
+| **不會紀錄** | token 不會寫入稽核紀錄。`args` 只保留指令參數，token 是分開解析且排除在外。 |
+| **不輸出至終端結果** | `--json` 與文字輸出都不會包含 token。 |
+| **錯誤訊息不回填 token** | 驗證失敗時只回報 `Invalid bot token`，不回顯 token 本身。 |
+| **優先環境變數** | 第二優先等級使用環境變數，可避免 token 落地到檔案系統。 |
 
 <Callout type="note">
-  The token prefix `Bot ` is part of Discord's authentication header format. Some users store the full `"Bot YOUR_TOKEN"` string, while others store just the token portion. discli passes whatever value it receives directly to discord.py, which handles the header formatting.
+  `Bot ` 前綴是 Discord 驗證標頭格式的一部分。部分使用者會存整段 `Bot YOUR_TOKEN`，也有直接存 token 本體。discli 會直接將收到的值傳給 discord.py，由它負責標頭格式化。
 </Callout>
 
-## Troubleshooting
+## 疑難排解
 
-| Problem | Solution |
+| 問題 | 處理方式 |
 |---|---|
-| "No token provided" | Set a token via any of the three methods described above. |
-| "Invalid bot token" | Verify your token in the [Discord Developer Portal](https://discord.com/developers/applications). Regenerate it if needed. |
-| Config file not found | Run `discli config set token YOUR_TOKEN` to create it. |
-| Env var not picked up | Ensure the variable is exported (`export DISCORD_BOT_TOKEN=...`), not just assigned. |
-| Flag ignored | The `--token` flag must come **before** the subcommand: `discli --token X message send`, not `discli message send --token X`. |
+| `No token provided` | 以三種方式任一設定 token。 |
+| `Invalid bot token` | 到 [Discord 開發者平台](https://discord.com/developers/applications) 驗證 token，必要時重建。 |
+| 找不到設定檔 | 執行 `discli config set token YOUR_TOKEN` 建立。 |
+| 環境變數未生效 | 確認有 `export DISCORD_BOT_TOKEN=...`，不是只做賦值。 |
+| 旗標未生效 | `--token` 必須放在子指令前：`discli --token X message send`，而非 `discli message send --token X`。 |
 
-## Next steps
+## 後續步驟
 
 <CardGroup cols={2}>
-  <Card title="Security Model" href="/architecture/security-model">
-    Permission profiles, audit logging, and rate limiting.
+  <Card title="安全模型" href="/architecture/security-model">
+    權限設定檔、稽核紀錄與速率限制。
   </Card>
-  <Card title="Configuration" href="/getting-started/configuration">
-    Full configuration guide including all config options.
+  <Card title="組態設定" href="/getting-started/configuration">
+    含全部設定項目的完整設定指南。
   </Card>
 </CardGroup>

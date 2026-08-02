@@ -1,124 +1,124 @@
 ---
-title: Security & Permissions
-description: Control what your agent can do with permission profiles and audit logging
+title: 安全性與權限
+description: 透過權限設定檔與稽核紀錄控制代理可執行的操作
 ---
 
-When you give an AI agent access to Discord, you are giving it the ability to send messages, kick members, delete channels, and more. Permission profiles and audit logging let you set boundaries and maintain accountability.
+給 AI 代理 Discord 存取權意味著它可以發訊息、踢成員、刪除頻道等。權限設定檔與稽核紀錄可讓你設下邊界並保有可追溯性。
 
-## Why This Matters
+## 為何重要
 
-Consider an autonomous agent that:
+想像一個自主代理：
 
-- Misinterprets a message and kicks a member instead of sending a warning
-- Gets caught in a loop and floods a channel with messages
-- Receives a prompt injection through a user message and executes unintended actions
+- 解讀錯誤訊息後，原本該警告成員卻誤踢人
+- 進入迴圈後狂發訊息
+- 透過提示注入執行不該有的操作
 
-Permission profiles prevent these scenarios by restricting which commands the agent can execute, regardless of what it tries to do.
+權限設定檔會限制代理實際可執行的指令，不受訊息內容誤導的影響。
 
-## Permission Profiles
+## 權限設定檔
 
-discli ships with four built-in profiles:
+discli 內建四種設定檔：
 
 <Tabs>
 <Tab title="full">
-**Full access to all commands.** No restrictions.
+**完全開放所有指令。** 沒有限制。
 
 ```
-Allowed: *
-Denied: (none)
+允許：*
+拒絕：無
 ```
 
-Use for: trusted scripts running in controlled environments, admin bots operated by humans.
+適用：受控環境中的信任腳本、由人員操作的管理機器人。
 </Tab>
 <Tab title="chat">
-**Messages, reactions, threads, typing, DMs, listening, and server info.** Cannot kick, ban, delete channels, or manage roles destructively.
+**訊息、反應、討論串、輸入指示、DM、監聽與伺服器資訊。** 不可踢出、封鎖、刪除頻道、破壞性角色管理。
 
 ```
-Allowed: message, reaction, thread, typing, dm, listen, serve, config, server
-Denied: member kick, member ban, member unban, channel delete, role delete, role create, channel create
+允許：message、reaction、thread、typing、dm、listen、serve、config、server
+拒絕：member kick、member ban、member unban、channel delete、role delete、role create、channel create
 ```
 
-Use for: AI support agents, chatbots, conversational bots. This is the recommended default for autonomous agents.
+適用：AI 支援代理、聊天機器人、對話型機器人。建議做為自主代理的預設值。
 </Tab>
 <Tab title="readonly">
-**Read-only operations only.** Can list, search, and inspect, but cannot send messages or modify anything.
+**只讀操作。** 可列表、搜尋、查看，但不能傳送或修改訊息。
 
 ```
-Allowed: message list, message get, message search, message history,
-         channel list, channel info, server list, server info,
-         role list, member list, member info, reaction list,
-         thread list, listen, config show
-Denied: * (everything else)
+允許：message list、message get、message search、message history、
+         channel list、channel info、server list、server info、
+         role list、member list、member info、reaction list、
+         thread list、listen、config show
+拒絕：*（其他全部）
 ```
 
-Use for: monitoring, analytics, dashboards, log exporters.
+適用：監控、分析、儀表板、日誌匯出。
 </Tab>
 <Tab title="moderation">
-**Full access including moderation.** Same as `full` but semantically indicates a moderation role.
+**完整權限含仲裁。** 與 `full` 相同，但語意上代表仲裁角色。
 
 ```
-Allowed: *
-Denied: (none)
+允許：*
+拒絕：無
 ```
 
-Use for: moderation bots that need kick/ban/role management. Consider pairing with `--triggered-by` for user permission verification.
+適用：需要踢出、封鎖、角色管理的仲裁機器人。建議搭配 `--triggered-by` 做使用者權限驗證。
 </Tab>
 </Tabs>
 
-## Setting Permission Profiles
+## 設定權限設定檔
 
-There are three ways to set the active profile, in order of precedence:
+有三種方式可設定目前啟用的設定檔，以下為優先序由高到低：
 
-### 1. Per-invocation flag (highest priority)
+### 1. 指令層級旗標（優先權最高）
 
 ```bash
 discli --profile chat message send "#general" "Hello"
 discli --profile readonly serve --events messages
 ```
 
-### 2. Environment variable
+### 2. 環境變數
 
 ```bash
 export DISCLI_PROFILE=chat
 discli serve --events messages
 ```
 
-### 3. Persistent configuration
+### 3. 持久化設定
 
 ```bash
-# Set the default profile
+# 設定預設設定檔
 discli permission set chat
 
-# Check current profile
+# 檢查目前設定檔
 discli permission show
 
-# List all profiles
+# 列出所有設定檔
 discli permission profiles
 ```
 
-The profile is stored in `~/.discli/permissions.json`.
+設定檔儲存在 `~/.discli/permissions.json`。
 
 <Callout type="tip">
-For autonomous agents, set the profile via the `--profile` flag in your subprocess call. This way the restriction is explicit in your code and cannot be changed by environment or config file changes.
+對於自主代理，建議在子程序啟動時用 `--profile` 明確傳入。這樣限制會寫在程式邏輯中，不受環境變數或 config 變更影響。
 </Callout>
 
-## How Profiles Work
+## 權限判斷流程
 
-When a command runs, discli checks:
+discli 在執行命令時會做三步判斷：
 
-1. Is the command in the `denied` list? If yes, block it.
-2. Is the command in the `allowed` list? If yes, allow it.
-3. Otherwise, block it.
+1. 指令是否在 `denied` 清單？若是則直接阻擋
+2. 指令是否在 `allowed` 清單？若是則通過
+3. 否則阻擋
 
-The check uses prefix matching: if `message` is in the allowed list, then `message send`, `message list`, `message delete`, and all other `message` subcommands are allowed.
+採前綴比對：若允許 `message`，則 `message send`、`message list`、`message delete`、其他所有 `message` 子指令都會被允許。
 
-The special pattern `*` means "everything":
+萬用字元 `*` 代表：
 
-- `"allowed": ["*"]` -- allow all commands
-- `"denied": ["*"]` -- deny all commands (then only explicitly allowed commands work)
+- `"allowed": ["*"]`：允許全部
+- `"denied": ["*"]`：全部拒絕，僅允許明確放行的項目
 
 ```python
-# In your agent code, set the profile when launching serve
+# 在 agent 程式中，以 --profile 啟動 serve
 proc = subprocess.Popen(
     ["discli", "--profile", "chat", "serve", "--events", "messages"],
     stdin=subprocess.PIPE,
@@ -127,50 +127,51 @@ proc = subprocess.Popen(
 )
 ```
 
-If the agent tries to execute a denied command:
+若代理嘗試執行被拒絕指令：
 
 ```
-Error: Command 'member kick' is denied by your permission profile.
+錯誤：權限設定檔不允許執行「member kick」指令。
 ```
 
-In serve mode, the error comes back as a response event:
+serve 模式會回傳錯誤事件：
 
 ```json
 {"event": "error", "message": "Command 'serve' is denied by your permission profile."}
+{"event": "error", "message": "權限設定檔不允許執行「serve」指令。"}
 ```
 
-## The `--triggered-by` Flag
+## `--triggered-by` 旗標
 
-For moderation actions, the `--triggered-by` flag verifies that the Discord user who triggered the action actually has the required Discord permission:
+對仲裁相關操作，`--triggered-by` 會驗證真正觸發動作的 Discord 使用者是否有需要的權限：
 
 ```bash
 discli member kick "My Server" "@spammer" --reason "Spam" --triggered-by 9876543210
 ```
 
-This checks:
+檢查順序：
 
-1. Is user `9876543210` a member of the server?
-2. Does the user have `kick_members` permission?
-3. Is the user the server owner or has Administrator?
+1. `9876543210` 是否是該伺服器成員？
+2. 是否有 `kick_members` 權限？
+3. 是否是伺服器擁有者或有管理員權限？
 
-If the check fails, the action is blocked and an audit log entry is created.
+若檢查失敗，動作會阻擋且寫入稽核紀錄。
 
 <Callout type="warning">
-The `--triggered-by` flag is available on `member kick`, `member ban`, and `member unban`. It is your responsibility to pass the correct user ID from the event that triggered the action. An agent could theoretically pass its own ID or a fake ID, so this is a defense-in-depth measure, not a hard security boundary.
+`--triggered-by` 僅支援 `member kick`、`member ban`、`member unban`。你必須在事件中傳入正確的使用者 ID；代理理論上可能傳入自己或假 ID，因此這屬於「加深防線」而非絕對邊界。
 </Callout>
 
-### Permission mapping
+### 權限對應表
 
-| Action | Required Discord Permission |
+| 行為 | 需要的 Discord 權限 |
 |--------|---------------------------|
 | `member kick` | `kick_members` |
 | `member ban` / `member unban` | `ban_members` |
 
-Server owners and users with Administrator permission always pass the check.
+伺服器擁有者與擁有管理員權限的使用者一定通過檢查。
 
-## Destructive Action Confirmation
+## 高風險操作確認
 
-Certain commands require confirmation before executing:
+某些指令需在執行前確認：
 
 - `member kick`
 - `member ban`
@@ -183,25 +184,25 @@ Certain commands require confirmation before executing:
 - `webhook delete`
 - `event delete`
 
-In interactive mode, discli prompts:
+互動模式下 discli 會提示：
 
 ```
-⚠ Destructive action: member kick (alice from My Server). Continue? [y/N]
+⚠ 高風險操作：member kick（alice 來自 My Server）。要繼續嗎？[y/N]
 ```
 
-To skip the prompt in scripts and automation:
+在腳本/自動化情境可加旗標略過確認：
 
 ```bash
 discli --yes member kick "My Server" "@spammer" --reason "Spam"
 ```
 
 <Callout type="danger">
-Never use `--yes` in an autonomous agent without also using a restricted permission profile. The combination of `--yes` and `--profile full` means the agent can perform any destructive action without any safety check.
+不要在自主代理中無條件使用 `--yes`，除非已搭配嚴格限制的權限設定檔。`--yes` 與 `--profile full` 結合時，會讓代理可無安全檢查地執行任何高風險動作。
 </Callout>
 
-## Audit Logging
+## 稽核紀錄
 
-Every destructive action is logged to `~/.discli/audit.log` as JSONL:
+每次高風險操作都會以 JSONL 寫入 `~/.discli/audit.log`：
 
 ```json
 {
@@ -213,70 +214,70 @@ Every destructive action is logged to `~/.discli/audit.log` as JSONL:
 }
 ```
 
-### Viewing the audit log
+### 查看稽核紀錄
 
 ```bash
-# Show last 20 entries
+# 顯示最近 20 筆
 discli audit show
 
-# Show last 50 entries
+# 顯示最近 50 筆
 discli audit show --limit 50
 
-# JSON output for processing
+# JSON 輸出
 discli --json audit show --limit 100
 
-# Pipe to jq for analysis
+# 匯入 jq 分析
 discli --json audit show --limit 1000 | jq 'group_by(.command) | map({command: .[0].command, count: length})'
 ```
 
-### Clearing the audit log
+### 清空稽核紀錄
 
 ```bash
 discli audit clear
 ```
 
-### What gets logged
+### 會被記錄的項目
 
-| Action | Logged? |
+| 行為 | 會記錄嗎 |
 |--------|---------|
-| `member kick` | Yes |
-| `member ban` | Yes |
-| `member unban` | Yes |
-| `member timeout` | Yes |
-| `channel delete` | Yes |
-| `message delete` | Yes |
-| `message bulk-delete` | Yes |
-| `role delete` | Yes |
-| `webhook delete` | Yes |
-| `event delete` | Yes |
-| `message send` | No |
-| `message list` | No |
-| Permission check failures | Yes |
+| `member kick` | 是 |
+| `member ban` | 是 |
+| `member unban` | 是 |
+| `member timeout` | 是 |
+| `channel delete` | 是 |
+| `message delete` | 是 |
+| `message bulk-delete` | 是 |
+| `role delete` | 是 |
+| `webhook delete` | 是 |
+| `event delete` | 是 |
+| `message send` | 否 |
+| `message list` | 否 |
+| 權限檢查失敗 | 是 |
 
-## Rate Limiting
+## 速率限制
 
-discli applies rate limiting to destructive actions: **5 calls per 5 seconds**. If you exceed this, the CLI pauses and prints a warning:
+高風險行為（破壞性操作）被限制為 **5 次/5 秒**。超過上限時 CLI 會暫停並輸出警告：
 
 ```
-Rate limited. Waiting 3.2s...
+速率已超過上限。等待 3.2 秒…
 ```
 
-This prevents runaway agents from mass-deleting messages, kicking all members, or flooding the API. The rate limiter is global across all commands in a single process.
+這可避免代理失控時大量刪文、批次踢人或泛濫 API。速率限制為單一程序內全域。
 
 <Callout type="note">
-The rate limiter applies to destructive CLI commands (`kick`, `ban`, `delete`). Serve mode actions bypass the CLI-level rate limiter but are still subject to Discord's own API rate limits. If you hit Discord's limits, the action will fail with an HTTP error.
+速率限制套用在高風險 CLI 指令（`kick`、`ban`、`delete`）。serve 模式的動作會略過 CLI 這層，但仍受 Discord API 的速率限制；若超限，會回傳 HTTP 錯誤。
 </Callout>
 
-## Custom Permission Profiles
+## 客製權限設定檔
 
-You can define custom profiles in `~/.discli/permissions.json`:
+可在 `~/.discli/permissions.json` 新增自訂設定檔：
 
 ```json
 {
   "active_profile": "support-agent",
   "profiles": {
     "support-agent": {
-      "description": "Can chat and create threads, but not manage members or channels",
+        "description": "可進行訊息互動與建立討論串，但不能管理成員或頻道",
       "allowed": [
         "message send",
         "message reply",
@@ -305,70 +306,70 @@ You can define custom profiles in `~/.discli/permissions.json`:
 }
 ```
 
-The `"denied": ["*"]` line means "deny everything not explicitly allowed." This is the safest approach for custom profiles.
+`"denied": ["*"]` 代表「未明確列入允許者皆禁止」。這是客製設定檔最安全的做法之一。
 
 <Callout type="tip">
-Start with the most restrictive profile that works, then add permissions as needed. It is much easier to add a missing permission than to recover from an agent that deleted a channel it should not have.
+建議從最嚴格版本開始，逐步放開權限。補齊缺漏的權限通常比因誤刪頻道後追補後置修復簡單得多。
 </Callout>
 
-## Recommended Configurations
+## 建議組態
 
 <CardGroup cols={2}>
-<Card title="AI Chatbot">
+<Card title="AI 聊天機器人">
 ```bash
 discli --profile chat serve \
   --events messages
 ```
-Can send messages, create threads, add reactions. Cannot kick, ban, or delete anything.
+可傳訊息、建立討論串、加反應，但不能踢人、封鎖或刪除。
 </Card>
 
-<Card title="Monitoring Dashboard">
+<Card title="監控儀表板">
 ```bash
 discli --profile readonly serve \
   --events messages,members
 ```
-Can list and search. Cannot send, modify, or delete anything.
+可查詢與搜尋，不可傳送、修改或刪除任何資源。
 </Card>
 
-<Card title="Moderation Bot">
+<Card title="仲裁機器人">
 ```bash
 discli --profile moderation serve \
   --events messages,members
 ```
-Full access. Use `--triggered-by` to verify the human moderator's permissions.
+完整存取權，建議搭配 `--triggered-by` 驗證真人仲裁者權限。
 </Card>
 
-<Card title="CI Notifier">
+<Card title="CI 通知器">
 ```bash
 discli --profile chat \
   message send "#deploys" "v2.1.0 deployed"
 ```
-Send-only. Does not need listen, serve, or member operations.
+只需發訊息，通常不需 `listen`、`serve` 或成員操作。
 </Card>
 </CardGroup>
 
-## Security Checklist
+## 安全檢查清單
 
 <Steps>
-<Step title="Use environment variables for tokens">
-Never hardcode tokens. Use `DISCORD_BOT_TOKEN` or `~/.discli/config.json`.
+<Step title="Token 使用環境變數">
+不建議硬編碼 token，請改用 `DISCORD_BOT_TOKEN` 或 `~/.discli/config.json`。
 </Step>
-<Step title="Set a permission profile">
-Default is `full`. Change it to `chat` or `readonly` for autonomous agents.
+<Step title="設定權限檔">
+預設為 `full`。自主代理請改為 `chat` 或 `readonly`。
 </Step>
-<Step title="Pass --triggered-by for moderation">
-When your agent kicks or bans on behalf of a user, verify their Discord permissions.
+<Step title="仲裁時傳遞 --triggered-by">
+代理代替使用者踢人或封鎖時，請先驗證該使用者在 Discord 的權限。
 </Step>
-<Step title="Review audit logs regularly">
-Check `discli audit show` to ensure your agent is acting as expected.
+<Step title="定期查稽核紀錄">
+定期查 `discli audit show`，確認代理行為符合預期。
 </Step>
-<Step title="Test with readonly first">
-Start with `--profile readonly` while developing, then upgrade to `chat` when ready.
+<Step title="先用 readonly 開發">
+開發時先跑 `--profile readonly`，確認流程後再升到 `chat`。
 </Step>
 </Steps>
 
-## Next Steps
+## 下一步
 
-- [Building Agents](/guides/building-agents) -- See Level 5 for a production agent with full safety
-- [Serve Mode](/guides/serve-mode) -- Protocol reference for all actions
-- [Scripting & Automation](/guides/scripting-automation) -- Secure automation patterns
+- [建構代理](/guides/building-agents) -- 參考第五階段的生產級安全實作
+- [Serve 模式](/guides/serve-mode) -- 所有動作的協定對照
+- [指令稿與自動化](/guides/scripting-automation) -- 安全腳本化模式

@@ -1,24 +1,24 @@
 ---
-title: CLI Commands
-description: Complete reference for all discli commands and options
+title: CLI 指令
+description: discli 全部指令與選項的完整參考
 ---
 
-# CLI Commands
+# CLI 指令
 
-Complete reference for every `discli` command, subcommand, argument, and option.
+涵蓋每個 `discli` 指令、子指令、參數與選項的完整參考。
 
-## Global Options
+## 全域選項
 
-These options apply to all commands and must appear before the subcommand.
+這些選項套用於所有指令，且必須在子指令前出現。
 
-| Option | Env Var | Description |
+| 選項 | 環境變數 | 說明 |
 |--------|---------|-------------|
-| `--token TEXT` | `DISCORD_BOT_TOKEN` | Discord bot token |
-| `--json` | | Output as JSON |
-| `--yes`, `-y` | | Skip confirmation prompts for destructive actions |
-| `--profile CHOICE` | `DISCLI_PROFILE` | Override permission profile (`full`, `chat`, `readonly`, `moderation`) |
-| `--version`, `-V` | | Print the installed discli version and exit |
-| `--help` | | Show help and exit |
+| `--token TEXT` | `DISCORD_BOT_TOKEN` | Discord 機器人權杖 |
+| `--json` | | 以 JSON 格式輸出 |
+| `--yes`, `-y` | | 略過破壞性操作的確認提示 |
+| `--profile CHOICE` | `DISCLI_PROFILE` | 覆蓋權限設定檔（`full`、`chat`、`readonly`、`moderation`） |
+| `--version`, `-V` | | 顯示已安裝的 discli 版本並結束 |
+| `--help` | | 顯示說明並結束 |
 
 ```bash
 discli --version
@@ -29,692 +29,692 @@ discli --version
 
 ## message
 
-Send, list, edit, and delete messages.
+傳送、列出、編輯與刪除訊息。
 
 ### message send
 
-Send a message to a channel.
+傳送訊息到一個頻道。
 
 ```
 discli message send <channel> <text> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `TEXT` | yes | Message content |
-| `--embed-title TEXT` | no | Embed title |
-| `--embed-desc TEXT` | no | Embed description |
-| `--embed-color HEX` | no | Embed color (e.g. `5865F2`) |
-| `--embed-footer TEXT` | no | Embed footer text |
-| `--embed-image URL` | no | Embed image URL |
-| `--embed-thumbnail URL` | no | Embed thumbnail URL |
-| `--embed-author TEXT` | no | Embed author name |
-| `--embed-field TEXT` | no | Embed field (repeatable, format `Name::Value::Inline`) |
-| `--file PATH` | no | File to attach (repeatable) |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `TEXT` | 是 | 訊息內容 |
+| `--embed-title TEXT` | 否 | 嵌入標題 |
+| `--embed-desc TEXT` | 否 | 嵌入描述 |
+| `--embed-color HEX` | 否 | 嵌入顏色（例如 `5865F2`） |
+| `--embed-footer TEXT` | 否 | 嵌入頁尾文字 |
+| `--embed-image URL` | 否 | 嵌入圖片網址 |
+| `--embed-thumbnail URL` | 否 | 嵌入縮圖網址 |
+| `--embed-author TEXT` | 否 | 嵌入作者名稱 |
+| `--embed-field TEXT` | 否 | 嵌入欄位（可重複，格式為 `Name::Value::Inline`） |
+| `--file PATH` | 否 | 附加檔案（可重複） |
 
 ### message list
 
-List recent messages in a channel.
+列出最近訊息。
 
 ```
 discli message list <channel> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `--limit N` | no | 10 | Number of messages to fetch |
-| `--before DATE` | no | | Before date (YYYY-MM-DD or ISO) |
-| `--after DATE` | no | | After date (YYYY-MM-DD or ISO) |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `--limit N` | 否 | 10 | 要抓取的訊息數 |
+| `--before DATE` | 否 | | 早於日期（YYYY-MM-DD 或 ISO） |
+| `--after DATE` | 否 | | 晚於日期（YYYY-MM-DD 或 ISO） |
 
 ### message history
 
-Fetch deep message history from a channel.
+抓取頻道的歷史訊息。
 
 ```
 discli message history <channel> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `--days N` | no | | Fetch messages from last N days |
-| `--hours N` | no | | Fetch messages from last N hours |
-| `--limit N` | no | unlimited | Max messages to fetch |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `--days N` | 否 | | 抓取最近 N 天訊息 |
+| `--hours N` | 否 | | 抓取最近 N 小時訊息 |
+| `--limit N` | 否 | 不限制 | 最大抓取訊息數 |
 
 ### message get
 
-Fetch a single message by ID.
+依 ID 取得單則訊息。
 
 ```
 discli message get <channel> <message_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
 
 ### message edit
 
-Edit a message.
+編輯一則訊息。
 
 ```
 discli message edit <channel> <message_id> <new_text>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
-| `NEW_TEXT` | yes | Replacement content |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
+| `NEW_TEXT` | 是 | 取代後的內容 |
 
 ### message delete
 
-Delete a message. Requires confirmation (use `--yes` to skip).
+刪除一則訊息。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli message delete <channel> <message_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
 
 ### message bulk-delete
 
-Delete multiple messages at once. Requires confirmation (use `--yes` to skip).
+一次刪除多則訊息。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli message bulk-delete <channel> <id1> <id2> ...
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `ID1 ID2 ...` | yes | Message snowflake IDs to delete |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `ID1 ID2 ...` | 是 | 要刪除的訊息 ID 清單 |
 
 ### message reply
 
-Reply to a specific message.
+回覆指定訊息。
 
 ```
 discli message reply <channel> <message_id> <text> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message to reply to |
-| `TEXT` | yes | Reply content |
-| `--file PATH` | no | File to attach (repeatable) |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 要回覆的訊息 |
+| `TEXT` | 是 | 回覆內容 |
+| `--file PATH` | 否 | 附加檔案（可重複） |
 
 ### message search
 
-Search messages in a channel by content.
+依訊息內容搜尋。
 
 ```
 discli message search <channel> <query> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `QUERY` | yes | | Search string (case-insensitive) |
-| `--limit N` | no | 100 | Number of messages to scan |
-| `--author TEXT` | no | | Filter by author name |
-| `--before DATE` | no | | Before date (YYYY-MM-DD or ISO) |
-| `--after DATE` | no | | After date (YYYY-MM-DD or ISO) |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `QUERY` | 是 | | 搜尋字串（不分大小寫） |
+| `--limit N` | 否 | 100 | 要掃描的訊息數 |
+| `--author TEXT` | 否 | | 依作者名稱過濾 |
+| `--before DATE` | 否 | | 早於日期（YYYY-MM-DD 或 ISO） |
+| `--after DATE` | 否 | | 晚於日期（YYYY-MM-DD 或 ISO） |
 
 ---
 
 ## dm
 
-Send and read direct messages.
+傳送與讀取私人訊息。
 
 ### dm send
 
-Send a direct message to a user.
+傳送私人訊息給使用者。
 
 ```
 discli dm send <user> <text> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `USER` | yes | User ID or username |
-| `TEXT` | yes | Message content |
-| `--file PATH` | no | File to attach (repeatable) |
+| `USER` | 是 | 使用者 ID 或使用者名稱 |
+| `TEXT` | 是 | 訊息內容 |
+| `--file PATH` | 否 | 附加檔案（可重複） |
 
 ### dm list
 
-List recent DMs with a user.
+列出與指定使用者最近的私訊。
 
 ```
 discli dm list <user> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `USER` | yes | | User ID or username |
-| `--limit N` | no | 10 | Number of messages to fetch |
+| `USER` | 是 | | 使用者 ID 或使用者名稱 |
+| `--limit N` | 否 | 10 | 要抓取的訊息數 |
 
 ---
 
 ## reaction
 
-Add, remove, and list reactions.
+加入、移除與列出回應。
 
 ### reaction add
 
-Add a reaction to a message.
+為訊息新增回應。
 
 ```
 discli reaction add <channel> <message_id> <emoji>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
-| `EMOJI` | yes | Emoji character or custom emoji string |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
+| `EMOJI` | 是 | Emoji 字元或自訂 emoji 字串 |
 
 ### reaction remove
 
-Remove a reaction from a message.
+移除訊息中的回應。
 
 ```
 discli reaction remove <channel> <message_id> <emoji>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
-| `EMOJI` | yes | Emoji character or custom emoji string |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
+| `EMOJI` | 是 | Emoji 字元或自訂 emoji 字串 |
 
 ### reaction list
 
-List reactions on a message.
+列出訊息上的回應。
 
 ```
 discli reaction list <channel> <message_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 訊息雪花 ID |
 
 ### reaction users
 
-List users who reacted with a specific emoji.
+列出使用特定 emoji 回應的使用者。
 
 ```
 discli reaction users <channel> <message_id> <emoji> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `MESSAGE_ID` | yes | | Message snowflake ID |
-| `EMOJI` | yes | | Emoji character or custom emoji string |
-| `--limit N` | no | 100 | Max users to list |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | | 訊息雪花 ID |
+| `EMOJI` | 是 | | Emoji 字元或自訂 emoji 字串 |
+| `--limit N` | 否 | 100 | 要列出的使用者上限 |
 
 ---
 
 ## channel
 
-List, create, delete, and inspect channels.
+列出、建立、刪除與檢視頻道。
 
 ### channel list
 
-List channels in a server.
+列出伺服器中的頻道。
 
 ```
 discli channel list [OPTIONS]
 ```
 
-| Option | Required | Description |
+| 選項 | 必填 | 說明 |
 |--------|----------|-------------|
-| `--server TEXT` | no | Server name or ID (lists all servers if omitted) |
+| `--server TEXT` | 否 | 伺服器名稱或 ID （未提供時列出全部伺服器） |
 
 ### channel create
 
-Create a channel in a server.
+在伺服器中建立頻道。
 
 ```
 discli channel create <server> <name> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `SERVER` | yes | | Server name or ID |
-| `NAME` | yes | | Channel name |
-| `--type CHOICE` | no | `text` | Channel type: `text`, `voice`, `category`, or `forum` |
-| `--topic TEXT` | no | | Channel topic |
+| `SERVER` | 是 | | 伺服器名稱或 ID |
+| `NAME` | 是 | | 頻道名稱 |
+| `--type CHOICE` | 否 | `text` | 頻道型別：`text`、`voice`、`category`或`forum` |
+| `--topic TEXT` | 否 | | 頻道主題 |
 
 ### channel delete
 
-Delete a channel. Requires confirmation (use `--yes` to skip).
+刪除頻道。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli channel delete <channel>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
 
 ### channel info
 
-Show channel details.
+顯示頻道詳細資料。
 
 ```
 discli channel info <channel>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
 
 ### channel edit
 
-Edit channel settings.
+編輯頻道設定。
 
 ```
 discli channel edit <channel> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `--name TEXT` | no | New channel name |
-| `--topic TEXT` | no | New channel topic |
-| `--slowmode N` | no | Slowmode delay in seconds (0 to disable) |
-| `--nsfw` / `--no-nsfw` | no | Toggle NSFW setting |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `--name TEXT` | 否 | 新頻道名稱 |
+| `--topic TEXT` | 否 | 新頻道主題 |
+| `--slowmode N` | 否 | 慢速模式秒數（0 表示停用） |
+| `--nsfw` / `--no-nsfw` | 否 | 切換 NSFW 設定 |
 
 ### channel forum-post
 
-Create a forum post in a forum channel.
+在論壇頻道建立討論串。
 
 ```
 discli channel forum-post <channel> <title> <content> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `CHANNEL` | yes | Forum channel name or ID |
-| `TITLE` | yes | Post title |
-| `CONTENT` | yes | Post body content |
-| `--file PATH` | no | File to attach (repeatable) |
+| `CHANNEL` | 是 | 論壇頻道名稱或 ID |
+| `TITLE` | 是 | 貼文標題 |
+| `CONTENT` | 是 | 貼文內容 |
+| `--file PATH` | 否 | 附加檔案（可重複） |
 
 ### channel set-permissions
 
-Set permission overwrites for a channel.
+設定頻道權限覆寫。
 
 ```
 discli channel set-permissions <channel> <target> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `TARGET` | yes | Role or member name/ID |
-| `--allow TEXT` | no | Comma-separated permissions to allow |
-| `--deny TEXT` | no | Comma-separated permissions to deny |
-| `--target-type CHOICE` | no | Target type: `role` or `member` (default: `role`) |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `TARGET` | 是 | 身分組或成員名稱/ID |
+| `--allow TEXT` | 否 | 可授權的權限（以半形逗號分隔） |
+| `--deny TEXT` | 否 | 要封鎖的權限（以半形逗號分隔） |
+| `--target-type CHOICE` | 否 | 目標型別：`role` 或 `member`（預設 `role`） |
 
 ---
 
 ## thread
 
-Create, list, and send messages in threads.
+建立、列出並在討論串中發送訊息。
 
 ### thread create
 
-Create a thread from a message.
+從一則訊息建立討論串。
 
 ```
 discli thread create <channel> <message_id> <name>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Parent channel name or ID |
-| `MESSAGE_ID` | yes | Message to create thread from |
-| `NAME` | yes | Thread name |
+| `CHANNEL` | 是 | 來源頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 作為來源的訊息 ID |
+| `NAME` | 是 | 討論串名稱 |
 
 ### thread list
 
-List active threads in a channel.
+列出頻道中的進行中討論串。
 
 ```
 discli thread list <channel>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
 
 ### thread send
 
-Send a message to a thread.
+向討論串發送訊息。
 
 ```
 discli thread send <thread> <text> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
-| `TEXT` | yes | Message content |
-| `--file PATH` | no | File to attach (repeatable) |
+| `THREAD` | 是 | 討論串名稱或 ID |
+| `TEXT` | 是 | 訊息內容 |
+| `--file PATH` | 否 | 附加檔案（可重複） |
 
 ### thread archive
 
-Archive a thread.
+封存討論串。
 
 ```
 discli thread archive <thread>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
+| `THREAD` | 是 | 討論串名稱或 ID |
 
 ### thread unarchive
 
-Unarchive a thread.
+解除封存討論串。
 
 ```
 discli thread unarchive <thread>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
+| `THREAD` | 是 | 討論串名稱或 ID |
 
 ### thread rename
 
-Rename a thread.
+重新命名討論串。
 
 ```
 discli thread rename <thread> <new_name>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
-| `NEW_NAME` | yes | New thread name |
+| `THREAD` | 是 | 討論串名稱或 ID |
+| `NEW_NAME` | 是 | 新討論串名稱 |
 
 ### thread add-member
 
-Add a member to a thread.
+新增成員到討論串。
 
 ```
 discli thread add-member <thread> <member_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
-| `MEMBER_ID` | yes | Member user ID |
+| `THREAD` | 是 | 討論串名稱或 ID |
+| `MEMBER_ID` | 是 | 成員使用者 ID |
 
 ### thread remove-member
 
-Remove a member from a thread.
+將成員從討論串移除。
 
 ```
 discli thread remove-member <thread> <member_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `THREAD` | yes | Thread name or ID |
-| `MEMBER_ID` | yes | Member user ID |
+| `THREAD` | 是 | 討論串名稱或 ID |
+| `MEMBER_ID` | 是 | 成員使用者 ID |
 
 ---
 
 ## server
 
-List and inspect servers.
+列出並檢視伺服器。
 
 ### server list
 
-List servers the bot is in.
+列出機器人所在的伺服器。
 
 ```
 discli server list
 ```
 
-No arguments or options.
+無參數或選項。
 
 ### server info
 
-Show server details.
+顯示伺服器詳細資料。
 
 ```
 discli server info <server>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
 
 ---
 
 ## role
 
-Manage server roles.
+管理伺服器身分組。
 
 ### role list
 
-List roles in a server. Per-role member counts are omitted by default (reported as `unavailable`) because computing them iterates the entire member list, which is slow and rate-limit-prone on large servers and requires the privileged Server Members intent. Pass `--with-member-counts` to compute them.
+列出伺服器身分組。預設不計算各身分組的成員數，並顯示為 `unavailable`，因為計算時必須逐一取得完整成員清單；在大型伺服器上速度較慢、容易觸發速率限制，且需要 Server Members 特權 intent。若要計算，請加上 `--with-member-counts`。
 
 ```
 discli role list <server> [OPTIONS]
 ```
 
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
 
-| Option | Required | Description |
+|----------|----------|-------------|
+| `SERVER` | 是 | 伺服器名稱或 ID |
+
+| 選項 | 必填 | 說明 |
 |--------|----------|-------------|
-| `--with-member-counts` | no | Compute per-role member counts. Off by default (Recommended) |
+| `--with-member-counts` | 否 | 計算各身分組的成員數；預設關閉 |
 
 ### role create
 
-Create a role.
+建立身分組。
 
 ```
 discli role create <server> <name> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `NAME` | yes | Role name |
-| `--color HEX` | no | Hex color (e.g. `ff0000`) |
-| `--permissions INT` | no | Permission integer |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `NAME` | 是 | 身分組名稱 |
+| `--color HEX` | 否 | 色碼（例如 `ff0000`） |
+| `--permissions INT` | 否 | 權限位元值 |
 
 ### role delete
 
-Delete a role. Requires confirmation (use `--yes` to skip).
+刪除身分組。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli role delete <server> <role>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `ROLE` | yes | Role name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `ROLE` | 是 | 身分組名稱或 ID |
 
 ### role assign
 
-Assign a role to a member.
+將身分組指派給成員。
 
 ```
 discli role assign <server> <member> <role>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
-| `ROLE` | yes | Role name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
+| `ROLE` | 是 | 身分組名稱或 ID |
 
 ### role remove
 
-Remove a role from a member.
+移除成員的身分組。
 
 ```
 discli role remove <server> <member> <role>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
-| `ROLE` | yes | Role name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
+| `ROLE` | 是 | 身分組名稱或 ID |
 
 ### role edit
 
-Edit a role's settings.
+編輯身分組設定。
 
 ```
 discli role edit <server> <role> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `ROLE` | yes | Role name or ID |
-| `--name TEXT` | no | New role name |
-| `--color HEX` | no | Hex color (e.g. `ff0000`) |
-| `--hoist` / `--no-hoist` | no | Toggle displaying role separately in sidebar |
-| `--mentionable` / `--no-mentionable` | no | Toggle whether role can be @-mentioned |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `ROLE` | 是 | 身分組名稱或 ID |
+| `--name TEXT` | 否 | 新身分組名稱 |
+| `--color HEX` | 否 | 色碼（例如 `ff0000`） |
+| `--hoist` / `--no-hoist` | 否 | 是否在側邊欄個別顯示身分組 |
+| `--mentionable` / `--no-mentionable` | 否 | 是否可被 @ 提及 |
 
 ---
 
 ## member
 
-List, inspect, kick, ban, and unban members.
+列出、檢視、踢出、封鎖與解除封鎖成員。
 
 ### member list
 
-List members of a server.
+列出伺服器成員。
 
 ```
 discli member list <server> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `SERVER` | yes | | Server name or ID |
-| `--limit N` | no | 50 | Max members to list |
+| `SERVER` | 是 | | 伺服器名稱或 ID |
+| `--limit N` | 否 | 50 | 要列出的成員上限 |
 
 ### member info
 
-Show member details.
+顯示成員詳細資料。
 
 ```
 discli member info <server> <member>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
 
 ### member kick
 
-Kick a member from the server. Requires confirmation (use `--yes` to skip).
+從伺服器踢除成員。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli member kick <server> <member> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
-| `--reason TEXT` | no | Reason for kick |
-| `--triggered-by TEXT` | no | User ID who triggered this action (for permission check) |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
+| `--reason TEXT` | 否 | 踢出原因 |
+| `--triggered-by TEXT` | 否 | 觸發此操作的使用者 ID（供權限檢查） |
 
 ### member ban
 
-Ban a member from the server. Requires confirmation (use `--yes` to skip).
+封鎖伺服器成員。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli member ban <server> <member> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
-| `--reason TEXT` | no | Reason for ban |
-| `--triggered-by TEXT` | no | User ID who triggered this action (for permission check) |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
+| `--reason TEXT` | 否 | 封鎖原因 |
+| `--triggered-by TEXT` | 否 | 觸發此操作的使用者 ID（供權限檢查） |
 
 ### member unban
 
-Unban a member from the server. Requires confirmation (use `--yes` to skip).
+解除伺服器成員封鎖。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli member unban <server> <member> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID (username or user ID) |
-| `--triggered-by TEXT` | no | User ID who triggered this action (for permission check) |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID（使用者名稱或使用者 ID） |
+| `--triggered-by TEXT` | 否 | 觸發此操作的使用者 ID（供權限檢查） |
 
 ### member timeout
 
-Timeout a member, preventing them from sending messages or joining voice. Requires confirmation (use `--yes` to skip).
+對成員進行超時，防止其發送訊息或加入語音。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli member timeout <server> <member> <duration> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `MEMBER` | yes | Member name or ID |
-| `DURATION` | yes | Timeout duration in seconds (0 to remove timeout) |
-| `--reason TEXT` | no | Reason for timeout |
-| `--triggered-by TEXT` | no | User ID who triggered this action (for permission check) |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `MEMBER` | 是 | 成員名稱或 ID |
+| `DURATION` | 是 | 超時秒數（0 表示取消超時） |
+| `--reason TEXT` | 否 | 超時原因 |
+| `--triggered-by TEXT` | 否 | 觸發此操作的使用者 ID（供權限檢查） |
 
 ---
 
 ## poll
 
-Create and manage polls.
+建立與管理投票。
 
 ### poll create
 
-Create a poll in a channel.
+在頻道建立投票。
 
 ```
 discli poll create <channel> <question> <answers...> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `QUESTION` | yes | | Poll question |
-| `ANSWERS` | yes | | Two or more poll options (space-separated) |
-| `--duration N` | no | 24 | Poll duration in hours |
-| `--multiple` | no | false | Allow multiple selections |
-| `--emoji`, `-e` | no | | Emoji for each answer (in order, repeatable) |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `QUESTION` | 是 | | 投票問題 |
+| `ANSWERS` | 是 | | 兩個以上投票選項（以空白分隔） |
+| `--duration N` | 否 | 24 | 投票持續時間（小時） |
+| `--multiple` | 否 | false | 允許多選 |
+| `--emoji`, `-e` | 否 | | 每個答案對應的 emoji（依序，可重複） |
 
-Example:
+範例：
 
 ```
 discli poll create #general "Favorite AI?" Claude Gemini ChatGPT
@@ -724,200 +724,200 @@ discli poll create #general "Vote!" Yes No --multiple -e ok -e x
 
 ### poll results
 
-View results of a poll.
+檢視投票結果。
 
 ```
 discli poll results <channel> <message_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID of the poll |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 投票訊息雪花 ID |
 
 ### poll end
 
-End a poll early.
+提前結束投票。
 
 ```
 discli poll end <channel> <message_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `MESSAGE_ID` | yes | Message snowflake ID of the poll |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `MESSAGE_ID` | 是 | 投票訊息雪花 ID |
 
 ---
 
 ## typing
 
-Show typing indicator in a channel.
+在頻道中顯示輸入指示。
 
 ```
 discli typing <channel> [OPTIONS]
 ```
 
-| Argument / Option | Required | Default | Description |
+| 參數 / 選項 | 必填 | 預設 | 說明 |
 |-------------------|----------|---------|-------------|
-| `CHANNEL` | yes | | Channel name or ID |
-| `--duration N` | no | 5 | Seconds to show typing indicator |
+| `CHANNEL` | 是 | | 頻道名稱或 ID |
+| `--duration N` | 否 | 5 | 輸入指示持續秒數 |
 
 ---
 
 ## listen
 
-Listen for real-time Discord events. Outputs events to stdout. Press Ctrl+C to stop.
+監聽 Discord 即時事件。 將事件輸出到 stdout。 按 Ctrl+C 停止。
 
 ```
 discli listen [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--server TEXT` | no | | Filter by server name or ID |
-| `--channel TEXT` | no | | Filter by channel name or ID |
-| `--events TEXT` | no | all | Comma-separated event types: `messages`, `reactions`, `members`, `edits`, `deletes`, `voice` |
-| `--ignore-bots` / `--include-bots` | no | `--ignore-bots` | Ignore messages from bots |
+| `--server TEXT` | 否 | | 依伺服器名稱或 ID 篩選 |
+| `--channel TEXT` | 否 | | 依頻道名稱或 ID 篩選 |
+| `--events TEXT` | 否 | all | 以半形逗號分隔的事件類型： `messages`, `reactions`, `members`, `edits`, `deletes`, `voice` |
+| `--ignore-bots` / `--include-bots` | 否 | `--ignore-bots` | 忽略機器人訊息 |
 
 ---
 
 ## serve
 
-Start a persistent bot process with bidirectional JSONL communication. Events are emitted on stdout; commands are read from stdin.
+啟動持久化機器人程序並以 JSONL 進行雙向通訊。 事件會輸出到 stdout，指令從 stdin 讀取。
 
 ```
 discli serve [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--server TEXT` | no | | Filter events by server name or ID |
-| `--channel TEXT` | no | | Filter events by channel name or ID |
-| `--events TEXT` | no | all | Comma-separated event types: `messages`, `reactions`, `members`, `edits`, `deletes`, `voice` |
-| `--include-self` / `--no-include-self` | no | `--include-self` | Include bot's own messages in events |
-| `--slash-commands PATH` | no | | JSON file defining slash commands to register |
-| `--status CHOICE` | no | `online` | Bot status: `online`, `idle`, `dnd`, `invisible` |
-| `--activity TEXT` | no | | Activity type: `playing`, `watching`, `listening`, `competing` |
-| `--activity-text TEXT` | no | | Activity display text |
+| `--server TEXT` | 否 | | 依伺服器名稱或 ID 篩選事件 |
+| `--channel TEXT` | 否 | | 依頻道名稱或 ID 篩選事件 |
+| `--events TEXT` | 否 | all | 以半形逗號分隔的事件類型： `messages`, `reactions`, `members`, `edits`, `deletes`, `voice` |
+| `--include-self` / `--no-include-self` | 否 | `--include-self` | 事件中包含機器人自己的訊息 |
+| `--slash-commands PATH` | 否 | | JSON 檔案，定義要註冊的 slash 指令 |
+| `--status CHOICE` | 否 | `online` | 機器人狀態：`online`、`idle`、`dnd`、`invisible` |
+| `--activity TEXT` | 否 | | 活動類型：`playing`、`watching`、`listening`、`competing` |
+| `--activity-text TEXT` | 否 | | 活動顯示文字 |
 
-See [Serve Actions](/reference/serve-actions) and [Serve Events](/reference/serve-events) for the full JSONL protocol.
+請參閱 [Serve 動作](/reference/serve-actions) 與 [Serve 事件](/reference/serve-events) 以取得完整 JSONL 協定。
 
 ---
 
 ## webhook
 
-Manage channel webhooks.
+管理頻道 webhook。
 
 ### webhook list
 
-List webhooks for a channel.
+列出指定頻道的 webhook。
 
 ```
 discli webhook list <channel>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
 
 ### webhook create
 
-Create a webhook for a channel.
+為頻道建立 webhook。
 
 ```
 discli webhook create <channel> <name>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `NAME` | yes | Webhook name |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `NAME` | 是 | Webhook 名稱 |
 
 ### webhook delete
 
-Delete a webhook. Requires confirmation (use `--yes` to skip).
+刪除 webhook。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli webhook delete <channel> <webhook_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `CHANNEL` | yes | Channel name or ID |
-| `WEBHOOK_ID` | yes | Webhook snowflake ID |
+| `CHANNEL` | 是 | 頻道名稱或 ID |
+| `WEBHOOK_ID` | 是 | Webhook 雪花 ID |
 
 ---
 
 ## event
 
-Manage scheduled server events.
+管理伺服器排程活動。
 
 ### event list
 
-List scheduled events for a server.
+列出伺服器的排程活動。
 
 ```
 discli event list <server>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
 
 ### event create
 
-Create a scheduled event.
+建立排程活動。
 
 ```
 discli event create <server> <name> <start_time> [OPTIONS]
 ```
 
-| Argument / Option | Required | Description |
+
 |-------------------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `NAME` | yes | Event name |
-| `START_TIME` | yes | Start time (ISO 8601 format) |
-| `--end-time TEXT` | no | End time (ISO 8601 format) |
-| `--location TEXT` | no | Event location (for external events) |
-| `--channel TEXT` | no | Voice/stage channel for the event |
-| `--description TEXT` | no | Event description |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `NAME` | 是 | 排程活動名稱 |
+| `START_TIME` | 是 | 開始時間（ISO 8601 格式） |
+| `--end-time TEXT` | 否 | 結束時間（ISO 8601 格式） |
+| `--location TEXT` | 否 | 事件地點（外部活動） |
+| `--channel TEXT` | 否 | 活動所使用的語音/舞台頻道 |
+| `--description TEXT` | 否 | 活動描述 |
 
 ### event delete
 
-Delete a scheduled event. Requires confirmation (use `--yes` to skip).
+刪除排程活動。 需要確認。可加上 `--yes` 直接略過。
 
 ```
 discli event delete <server> <event_id>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `SERVER` | yes | Server name or ID |
-| `EVENT_ID` | yes | Event snowflake ID |
+| `SERVER` | 是 | 伺服器名稱或 ID |
+| `EVENT_ID` | 是 | 活動雪花 ID |
 
 ---
 
 ## config
 
-Manage discli configuration. Configuration is stored in `~/.discli/config.json`.
+管理 discli 設定。 設定儲存在 `~/.discli/config.json`。
 
 ### config set
 
-Set a config value.
+設定一項值。
 
 ```
 discli config set <key> <value>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `KEY` | yes | Config key (e.g. `token`) |
-| `VALUE` | yes | Config value |
+| `KEY` | 是 | 設定鍵（例如 `token`） |
+| `VALUE` | 是 | 設定值 |
 
 ### config show
 
-Show current configuration. Token values are truncated in plain-text output.
+顯示目前設定。 純文字輸出時 token 值會被截斷。
 
 ```
 discli config show
@@ -927,11 +927,11 @@ discli config show
 
 ## permission
 
-Manage permission profiles for command access control.
+管理指令存取控制的權限設定檔。
 
 ### permission show
 
-Show the active permission profile, including allowed and denied command patterns.
+顯示目前權限設定檔，含允許與拒絕的指令模式。
 
 ```
 discli permission show
@@ -939,47 +939,47 @@ discli permission show
 
 ### permission set
 
-Set the active permission profile.
+設定目前權限設定檔。
 
 ```
 discli permission set <profile>
 ```
 
-| Argument | Required | Description |
+
 |----------|----------|-------------|
-| `PROFILE` | yes | One of `full`, `chat`, `readonly`, `moderation` |
+| `PROFILE` | 是 | `full`、`chat`、`readonly`、`moderation` 其中之一 |
 
 ### permission profiles
 
-List all available permission profiles.
+列出全部可用的權限設定檔。
 
 ```
 discli permission profiles
 ```
 
-See [Permission Profiles](/reference/permission-profiles) for details on each profile.
+參閱 [權限設定檔](/reference/permission-profiles) 了解各設定檔內容。
 
 ---
 
 ## audit
 
-View the audit log. Destructive actions are logged to `~/.discli/audit.log`.
+檢視稽核記錄。 破壞性操作會記錄到 `~/.discli/audit.log`。
 
 ### audit show
 
-Show recent audit log entries.
+顯示最近的稽核紀錄。
 
 ```
 discli audit show [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--limit N` | no | 20 | Number of entries to show |
+| `--limit N` | 否 | 20 | 要顯示的項目數 |
 
 ### audit clear
 
-Clear the audit log.
+清除稽核記錄。
 
 ```
 discli audit clear
@@ -989,40 +989,40 @@ discli audit clear
 
 ## doctor
 
-Diagnose the local install: token, voice deps, STT/TTS keys, ffmpeg. Optional dependencies that you haven't asked for are reported as `[--]` rather than failures — devs who only use text features see a clean two-section report. Exit code is `0` when no failures, `1` otherwise. See the [Voice guide](/guides/voice#step-2--run-the-doctor) for sample output.
+診斷本機安裝：token、語音相依元件、STT/TTS 金鑰、ffmpeg。未安裝的可選相依會以 `[--]` 呈現，不會直接失敗；僅使用文字功能的使用者可看到更乾淨的雙欄報告。 若無錯誤則結束代碼為 `0`，否則為 `1`。 請參閱[語音指南](/guides/voice#step-2--run-the-doctor)查看輸出範例。
 
 ```
 discli doctor [--json]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--json` | no | false | Emit machine-readable output |
+| `--json` | 否 | false | 輸出機器可讀格式 |
 
 ---
 
 ## voice
 
-Join voice channels, transcribe speech with STT, speak via TTS, and play audio. Voice subcommands require the `voice` extra — install with `pip install 'discord-cli-agent[voice]'` (or `uv sync --extra voice`). The read-only lookups (`voice status`, `voice where`, `voice members`) work without the voice extra.
+加入語音頻道、使用 STT 轉寫語音、以 TTS 發言並播放音訊。 語音子命令需要安裝 `voice` 額外套件，請執行 `pip install 'discord-cli-agent[voice]'`（或 `uv sync --extra voice`）。 唯讀查詢（`voice status`、`voice where`、`voice members`）不需安裝 voice 相依。
 
-See the [Voice guide](/guides/voice) for an end-to-end walkthrough.
+參閱 [語音指南](/guides/voice) 取得完整流程。
 
 ### voice join
 
-Join a server voice channel. Connects, confirms, and disconnects — one-shot.
+加入伺服器語音頻道。進行連線、確認與斷線，為一次性操作。
 
 ```
 discli voice join CHANNEL [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `CHANNEL` | yes | | Voice channel name or ID |
-| `--server` | no | | Scope lookup to one server |
+| `CHANNEL` | 是 | | 語音頻道名稱或 ID |
+| `--server` | 否 | | 指定為單一伺服器範圍 |
 
 ### voice leave
 
-Leave the active voice channel.
+離開目前語音頻道。
 
 ```
 discli voice leave [--server NAME_OR_ID]
@@ -1030,36 +1030,36 @@ discli voice leave [--server NAME_OR_ID]
 
 ### voice speak
 
-Synthesise text via TTS and play it in the active voice channel.
+透過 TTS 合成文字並在目前語音頻道播放。
 
 ```
 discli voice speak TEXT [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `TEXT` | yes | | Text to speak |
-| `--server` | no | | Scope to one server |
-| `--voice` | no | `default` | TTS voice name (provider-specific) |
-| `--speed` | no | `1.0` | Speech rate multiplier |
+| `TEXT` | 是 | | 要朗讀的文字 |
+| `--server` | 否 | | 指定為單一伺服器範圍 |
+| `--voice` | 否 | `default` | TTS 聲音名稱（依提供者而定） |
+| `--speed` | 否 | `1.0` | 語速倍率 |
 
 ### voice play
 
-Play an audio file or URL in the active voice channel via ffmpeg.
+透過 ffmpeg 在目前語音頻道播放音訊檔案或網址。
 
 ```
 discli voice play SOURCE [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `SOURCE` | yes | | File path or HTTP(S) URL |
-| `--server` | no | | Scope to one server |
-| `--volume` | no | `1.0` | Playback volume (0.0 – 2.0) |
+| `SOURCE` | 是 | | 檔案路徑或 HTTP(S) 網址 |
+| `--server` | 否 | | 指定為單一伺服器範圍 |
+| `--volume` | 否 | `1.0` | 播放音量（0.0 – 2.0） |
 
 ### voice stop / pause / resume
 
-Control current playback. None take a channel argument — they affect the active connection for the server (or auto-detect the only one).
+控制目前播放。 這些指令都不需頻道參數，會操作該伺服器目前作用中的連線（或自動偵測唯一連線）。
 
 ```
 discli voice stop   [--server NAME_OR_ID]
@@ -1069,35 +1069,35 @@ discli voice resume [--server NAME_OR_ID]
 
 ### voice listen
 
-Listen to the active voice channel and print finalised transcriptions per speaker.
+監聽目前語音頻道並逐位元輸出每位發言者的最終轉寫結果。
 
 ```
 discli voice listen [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--server` | no | | Scope to one server |
-| `--duration` | no | `0` | Stop after N seconds (`0` = until Ctrl+C) |
-| `--continuous` | no | false | Keep session alive after each transcription |
+| `--server` | 否 | | 指定為單一伺服器範圍 |
+| `--duration` | 否 | `0` | 在 N 秒後停止（`0` = 直到 Ctrl+C） |
+| `--continuous` | 否 | false | 每次轉寫後維持連線 |
 
 ### voice capture
 
-Debug helper: writes raw 48 kHz stereo PCM per speaker to WAV files, bypassing STT. Use this to confirm the bot is actually receiving audio when listening is silent.
+除錯輔助：將每位發言者的 48kHz 立體聲 PCM 寫入 WAV 檔，繞過 STT。 在監聽無結果時，確認機器人確實有接收到音訊。
 
 ```
 discli voice capture [OPTIONS]
 ```
 
-| Option | Required | Default | Description |
+| 選項 | 必填 | 預設 | 說明 |
 |--------|----------|---------|-------------|
-| `--server` | no | | Scope to one server |
-| `--duration` | no | `10` | Capture duration in seconds |
-| `--output-dir` | no | `~/.discli/debug-capture` | Where to write WAVs |
+| `--server` | 否 | | 指定為單一伺服器範圍 |
+| `--duration` | 否 | `10` | 擷取秒數 |
+| `--output-dir` | 否 | `~/.discli/debug-capture` | WAV 檔寫入路徑 |
 
 ### voice status
 
-List all active voice connections. Read-only — no `voice` extra required.
+列出目前啟用的語音連線。 唯讀模式，不需要 `voice` 額外安裝。
 
 ```
 discli voice status
@@ -1105,7 +1105,7 @@ discli voice status
 
 ### voice where
 
-Find which voice channel a user is currently in. Read-only.
+查詢使用者目前所在的語音頻道。 僅可讀。
 
 ```
 discli voice where USER [--server NAME_OR_ID]
@@ -1113,7 +1113,7 @@ discli voice where USER [--server NAME_OR_ID]
 
 ### voice members
 
-List members in a voice channel. Read-only.
+列出語音頻道中的成員。 僅可讀。
 
 ```
 discli voice members CHANNEL [--server NAME_OR_ID]

@@ -1,19 +1,19 @@
 ---
-title: Voice
-description: Join voice channels, transcribe speech, and play audio — including a live meeting transcriber you can build in 10 minutes
+title: 語音
+description: 加入語音頻道、即時轉譯與播放音訊，包含十到十五分鐘可完成的即時會議逐字稿範例
 ---
 
-# Voice
+# 語音
 
-discli's voice stack lets your bot **join a server voice channel**, **transcribe everyone live**, **speak via TTS**, and **play audio**. By the end of this guide you'll have a meeting transcriber that writes speaker-labelled lines to a file and asks Claude to summarise the call when you stop it.
+discli 的語音模組讓你的機器人具備：**加入伺服器語音頻道**、**即時轉譯所有說話人**、**以 TTS 說話**、**播放音訊**。完成本指南後，你會建立一個會議逐字稿工具：把每位發言者標註寫入檔案，並在停止時請 Claude 產生會議摘要。
 
 <Callout type="note">
-  Voice features only work in **server voice channels**. Discord's API does not let application bots join DM or group-DM voice calls.
+  語音功能僅在**伺服器語音頻道**可用。Discord API 不允許應用程式機器人加入 DM 或群組 DM 語音通話。
 </Callout>
 
-## What you'll build
+## 你將建置的範例
 
-A bot that joins a voice channel, prints lines like:
+一個會加入語音頻道、輸出以下格式逐行記錄的機器人：
 
 ```
 - **[14:32:08] Roy:** so what's our plan for the migration
@@ -21,11 +21,11 @@ A bot that joins a voice channel, prints lines like:
 - **[14:32:21] Roy:** good idea — can we ship that this sprint?
 ```
 
-…to console and to `~/.discli/transcripts/meeting-<timestamp>.md`, then on Ctrl+C asks Claude to produce a structured summary.
+…輸出到主控台與 `~/.discli/transcripts/meeting-<timestamp>.md`，按 `Ctrl+C` 時會叫用 Claude 產出結構化摘要。
 
-## Step 1 — Install the voice extras
+## 步驟 1 — 安裝語音相關附加元件
 
-The core `discord-cli-agent` install is text-only on purpose — the voice stack pulls in `PyNaCl`, `discord-ext-voice-recv`, `davey` (Discord's end-to-end voice encryption library), and `audioop-lts`. Install the extras when you want voice:
+`discord-cli-agent` 的核心安裝預設為文字專用；語音堆疊會額外載入 `PyNaCl`、`discord-ext-voice-recv`、`davey`（Discord 的端對端語音加密函式庫）與 `audioop-lts`。你在需要語音時安裝對應 extras：
 
 <Tabs>
   <Tab title="pip">
@@ -36,146 +36,146 @@ The core `discord-cli-agent` install is text-only on purpose — the voice stack
   <Tab title="uv">
     ```bash
     uv add 'discord-cli-agent[voice,deepgram]'
-    # or, in a checkout:
+    # 或在原始碼目錄中：
     uv sync --extra voice --extra deepgram
     ```
   </Tab>
 </Tabs>
 
-You'll also need:
+你也需要安裝：
 
-- **libopus** on the system — `apt install libopus0` (Debian/Ubuntu), `brew install opus` (macOS), bundled on Windows via `discord.py`'s wheel.
-- **ffmpeg** on `PATH` if you want to use `voice play` (file/URL playback) or TTS playback — `apt install ffmpeg` / `brew install ffmpeg` / `winget install ffmpeg`.
+- **libopus**：`apt install libopus0`（Debian/Ubuntu）、`brew install opus`（macOS）、Windows 版由 `discord.py` wheel 一併提供。
+- **ffmpeg**：若要使用 `voice play`（檔案/URL 播放）或 TTS 播放，需將其放入 `PATH`，可用 `apt install ffmpeg` / `brew install ffmpeg` / `winget install ffmpeg`。
 
-For provider-specific extras:
+各 provider 的可選 extras：
 
-| Extra | Adds |
-|-------|------|
-| `voice` | core voice send/receive, Silero VAD, `audioop-lts` for Python 3.13+ |
-| `deepgram` | Deepgram streaming STT + Aura TTS |
+| Extra | 加入的元件 |
+|-------|------------|
+| `voice` | 核心語音收發、Silero VAD、Python 3.13+ 的 `audioop-lts` |
+| `deepgram` | Deepgram 串流 STT 與 Aura TTS |
 | `elevenlabs` | ElevenLabs TTS |
 | `openai-voice` | OpenAI Whisper STT + TTS |
 | `all-voice` | `voice` + `elevenlabs` + `deepgram` |
 
-## Step 2 — Run the doctor
+## 步驟 2 — 執行診斷
 
-Before you debug "nothing is happening", run:
+在你開始除錯「沒有任何輸出」前，先跑：
 
 ```bash
 discli doctor
 ```
 
-`doctor` reports the state of every piece the voice stack needs. A working voice install looks like:
+`doctor` 會回報語音堆疊所需元件狀態。正常的輸出應如下：
 
 ```
 CORE
   [ok] python — Python 3.12.1
-  [ok] bot token — configured
+  [ok] bot token — 已設定
   [ok] discord.py — v2.7.1
 
 VOICE
-  [ok] libopus — loaded
+  [ok] libopus — 已載入
   [ok] PyNaCl — v1.5.0
   [ok] discord-ext-voice-recv — v0.5.2a179
   [ok] davey (DAVE crypto) — v0.1.5
-  [ok] DAVE/Opus patches — install ok
+  [ok] DAVE/Opus patches — 安裝正常
 
 STT
-  [ok] DEEPGRAM_API_KEY — set
-  [--] OPENAI_API_KEY (Whisper) — not set
+  [ok] DEEPGRAM_API_KEY — 已設定
+  [--] OPENAI_API_KEY (Whisper) — 未設定
 
 TTS
-  [--] ELEVENLABS_API_KEY — not set
-  [--] OPENAI_API_KEY (TTS) — not set
-  [ok] DEEPGRAM_API_KEY (Aura) — set
+  [--] ELEVENLABS_API_KEY — 未設定
+  [--] OPENAI_API_KEY (TTS) — 未設定
+  [ok] DEEPGRAM_API_KEY (Aura) — 已設定
 
 TOOLS
   [ok] ffmpeg — /usr/bin/ffmpeg
 
-OK — no problems found (3 optional check(s) skipped).
+正常 — 未發現問題（略過 3 個選用檢查）。
 ```
 
 <Callout type="tip">
-  Lines marked `[--]` are optional providers you haven't configured. discli only fails if something you actually need is broken. If `doctor` reports clean, voice will work.
+  `--` 標記表示的是可選 provider 尚未設定。discli 只會在你實際需要的元件壞掉時才失敗；若 `doctor` 顯示通過，語音可正常使用。
 </Callout>
 
-Use `--json` for machine-readable output (handy in CI):
+可使用 `--json` 取得機械可讀輸出（例如 CI）：
 
 ```bash
 discli doctor --json
 ```
 
-## Step 3 — Join a voice channel
+## 步驟 3 — 加入語音頻道
 
-Pick a voice channel ID (right-click → Copy ID in Discord with Developer Mode on, or use `discli channel list`), then:
+先取得一個語音頻道 ID（Discord 啟用開發者模式後，右鍵頻道複製 ID，或用 `discli channel list`）：
 
 ```bash
 discli voice join "<channel name or id>"
 ```
 
-`voice join` is a one-shot command — it connects, confirms, and disconnects. To stay connected you need either an interactive session (next step) or `discli serve` (covered in [Serve Mode](/guides/serve-mode)).
+`voice join` 是一次性指令：它會連線、回報後結束。若要保持連線，需要互動式流程（下一步）或使用 `discli serve`（見 [Serve 模式](/guides/serve-mode)）。
 
-## Step 4 — Listen and transcribe
+## 步驟 4 — 監聽並轉譯
 
-Start a transcription session in two terminals.
+用兩個終端機啟動一次轉譯會話。
 
-**Terminal 1** — keep the bot in the channel:
+**終端機 1**：讓機器人停留在語音頻道：
 
 ```bash
 discli voice join "general"
 ```
 
-**Terminal 2** — listen with Deepgram streaming STT:
+**終端機 2**：用 Deepgram 串流 STT 開始監聽：
 
 ```bash
 export DEEPGRAM_API_KEY=...
 discli voice listen
 ```
 
-You'll see lines like:
+你會看到類似：
 
 ```
 [123456789012345678] hello can you hear me
 [987654321098765432] yes loud and clear
 ```
 
-Each line is `[user_id] text`. Hit Ctrl+C to stop.
+每行格式為 `[user_id] text`。按 `Ctrl+C` 可停止。
 
 <Callout type="info">
-  `voice listen` defaults to **Deepgram** for streaming. Pass `--continuous` to keep the session alive after each transcript (default), and `--duration N` to listen for N seconds and stop.
+  `voice listen` 預設使用 **Deepgram** 串流。加上 `--continuous` 可保留 session（預設為保留），加上 `--duration N` 可聽 N 秒後停止。
 </Callout>
 
-## Step 5 — Speak with TTS
+## 步驟 5 — 使用 TTS 說話
 
 ```bash
 export ELEVENLABS_API_KEY=...
 discli voice speak "joining the call now"
 ```
 
-Pick a provider with `--server` config or env var:
+可透過 `--server` 設定或環境變數指定 provider：
 
-| Provider | Env var | Notes |
-|----------|---------|-------|
-| ElevenLabs | `ELEVENLABS_API_KEY` | Highest quality, paid |
-| OpenAI | `OPENAI_API_KEY` | Cheap and decent |
-| Deepgram Aura | `DEEPGRAM_API_KEY` | Streaming-friendly |
+| Provider | 環境變數 | 說明 |
+|----------|---------|------|
+| ElevenLabs | `ELEVENLABS_API_KEY` | 品質最高，收費，延遲低 |
+| OpenAI | `OPENAI_API_KEY` | 成本較低、品質穩定 |
+| Deepgram Aura | `DEEPGRAM_API_KEY` | 串流友善 |
 
-Customise the voice ID with `--voice <id>` and the speech rate with `--speed 0.8`.
+可用 `--voice <id>` 指定聲線，用 `--speed 0.8` 調整語速。
 
-## Step 6 — Play audio
+## 步驟 6 — 播放音訊
 
 ```bash
 discli voice play /path/to/file.mp3
 discli voice play https://example.com/stream.opus
 ```
 
-Playback goes through `ffmpeg` so any format ffmpeg understands works. Use `voice stop`, `voice pause`, `voice resume` to control it.
+播放透過 `ffmpeg` 進行，只要是 `ffmpeg` 可辨識的格式都可以。可用 `voice stop`、`voice pause`、`voice resume` 操作播放。
 
-## Step 7 — Build the meeting transcriber
+## 步驟 7 — 建置會議逐字稿
 
-discli ships a complete meeting-transcription example at `examples/meeting_transcriber.py`. It joins a server voice channel, transcribes everyone with their display names, appends to `~/.discli/transcripts/meeting-<timestamp>.md`, and uses the Claude Agent SDK to produce a structured summary on Ctrl+C.
+discli 內建完整範例：`examples/meeting_transcriber.py`。範例會加入伺服器語音頻道、以顯示名稱逐人轉譯並寫入 `~/.discli/transcripts/meeting-<timestamp>.md`，`Ctrl+C` 時呼叫 Claude 產生結構化摘要。
 
-Set up:
+安裝與啟動：
 
 ```bash
 pip install 'discord-cli-agent[voice,deepgram]' claude-agent-sdk
@@ -183,13 +183,13 @@ discli config set token YOUR_BOT_TOKEN
 export DEEPGRAM_API_KEY=...
 ```
 
-Run:
+執行：
 
 ```bash
 python examples/meeting_transcriber.py <voice_channel_id>
 ```
 
-Output during the meeting:
+會議期間輸出範例：
 
 ```
 Connected as MyBot#1234 (12345)
@@ -201,69 +201,68 @@ Press Ctrl+C to stop and generate a summary.
 - **[10:30:35] Roy:** nice
 ```
 
-On Ctrl+C:
+按下 `Ctrl+C` 後：
 
 ```
-Stopping listener…
-Generating summary from 47 line(s)…
-Summary cost: $0.0084
+停止監聽…
+共處理 47 行文字…
+摘要成本：$0.0084
 
-=== Meeting Summary ===
+=== 會議摘要 ===
 
-## Summary
-The team did a standup covering yesterday's work and today's plan.
-Sara finished the auth migration; rate limiter is next.
+## 摘要
+團隊回顧昨日工作並規劃今日任務。Sara 已完成 auth 移轉，接下來進行 rate limiter。
 
-## Key decisions
-- Move forward with read-path-first for the migration this sprint.
+## 關鍵決策
+- 在本次移轉中先採用 read-path-first 流程。
 
-## Action items
-- Sara: finish rate limiter today.
-- Roy: write the migration runbook by Friday.
+## 行動項目
+- Sara：今天完成 rate limiter。
+- Roy：在週五前完成移轉 runbook 文件。
 
-## Open questions
-- Do we backfill old sessions or expire them?
+## 未解決問題
+- 舊的會議會話要補回填，還是直接過期？
 ```
 
-The summary is appended to the same transcript file. You can re-summarise later by piping the markdown back to Claude.
+摘要會附加回同一份逐字稿。你也可以日後將該 markdown 再交給 Claude 重做一次摘要。
 
-## Behind the scenes — DAVE encryption
+## 背後機制：DAVE 加密
 
-Modern Discord wraps voice in **DAVE** (Discord Audio and Video Encryption — their end-to-end voice encryption). The off-the-shelf `discord-ext-voice-recv` library strips the legacy SecretBox layer but doesn't know about DAVE, so libopus rejects every packet as `corrupted stream`.
+新版 Discord 採用 **DAVE**（Discord Audio and Video Encryption，Discord 的端對端語音加密）。`discord-ext-voice-recv` 雖可處理舊式 SecretBox 層，但不認識 DAVE，導致 libopus 將每個封包視為 `corrupted stream` 而拒絕。
 
-discli patches `PacketDecoder._decode_packet` at runtime to insert a `davey.DaveSession.decrypt(...)` call between the SecretBox layer and libopus, and wraps `pop_data` so a single bad packet can't kill the listener. The patches install lazily on the first `VoiceEngine.listen_start(...)` call — you don't need to do anything.
+discli 在執行期修補 `PacketDecoder._decode_packet`，在 SecretBox 與 libopus 之間加入 `davey.DaveSession.decrypt(...)`，並包裝 `pop_data`，防止單一壞封包讓 listener 崩潰。這些修補會在首次呼叫 `VoiceEngine.listen_start(...)` 時懶載入，不需使用者手動啟用。
 
-If `discli doctor` reports `[FAIL] DAVE/Opus patches`, voice listening is broken at the framework level. File an issue with the doctor output.
+若 `discli doctor` 顯示 `[FAIL] DAVE/Opus patches`，代表架構層面的語音聆聽失效，請附帶診斷資訊建立 issue。
 
-## Permissions
+## 權限
 
-The `chat` profile **denies** voice — agents using `chat` cannot join or speak. Use `voice`, `moderation`, or `full` to allow voice actions:
+`chat` 權限組別會**拒絕語音相關行為**；使用 `chat` 的代理無法加入或發聲。請使用 `voice`、`moderation` 或 `full` 取得語音能力：
 
 ```bash
 discli --profile voice voice join general
-# or
+# 或
 DISCLI_PROFILE=voice discli voice listen
 ```
 
-The `readonly` profile allows the stateless voice lookups (`voice status`, `voice where`, `voice members`) so a read-only agent can answer "who's in voice?" without being able to join.
+`readonly` 可用於查詢語音狀態（`voice status`、`voice where`、`voice members`），讓唯讀代理可回答「誰在語音中」，但無法加入。
 
-See [Permission Profiles](/reference/permission-profiles) for full details.
+詳細權限定義請見 [權限設定檔](/reference/permission-profiles)。
 
-## Troubleshooting
+## 疑難排解
 
-| Symptom | Cause | Fix |
+| 症狀 | 原因 | 修正 |
 |---------|-------|-----|
-| `Voice features need extras that aren't installed` | Voice extras missing | `pip install 'discord-cli-agent[voice]'` |
-| `discli doctor` shows libopus not loaded | Missing system package | `apt install libopus0` / `brew install opus` |
-| Bot joins but transcript is silent | (rare) DAVE patch failed to install | `discli doctor` — file an issue if VOICE is red |
-| `discli voice play` fails with `FFmpeg not found` | ffmpeg not on `PATH` | `apt install ffmpeg` / `brew install ffmpeg` |
-| Deepgram returns nothing | Free tier auth or quota | check `DEEPGRAM_API_KEY` matches an active project |
+| `Voice features need extras that aren't installed` | 未安裝語音額外套件 | `pip install 'discord-cli-agent[voice]'` |
+| `discli doctor` 顯示 libopus 未載入 | 缺少系統套件 | `apt install libopus0` / `brew install opus` |
+| 機器人可加入但聽不到語音 | （罕見）DAVE 修補未安裝 | `discli doctor`，若 VOICE 為紅色請回報 issue |
+| `discli voice play` 顯示 `FFmpeg not found` | ffmpeg 不在 `PATH` | `apt install ffmpeg` / `brew install ffmpeg` |
+| Deepgram 無回應 | 免費方案授權或額度不足 | 檢查 `DEEPGRAM_API_KEY` 是否仍屬於啟用中的專案 |
 
-See the full list in [Common Issues](/troubleshooting/common-issues).
+完整清單請參考 [常見問題](/troubleshooting/common-issues)。
 
-## What's next
+## 後續步驟
 
-- Read the [Meeting Transcription use case](/use-cases/meeting-transcription) for a deeper walkthrough of the example.
-- Build a persistent agent that does voice + text — see [Building Agents](/guides/building-agents) and [Serve Mode](/guides/serve-mode).
-- Reference all voice commands in [CLI Commands](/reference/cli-commands#voice).
-- See voice serve actions and events in [Serve Actions](/reference/serve-actions#voice) and [Serve Events](/reference/serve-events#voice-events).
+- 閱讀 [會議逐字稿使用情境](/use-cases/meeting-transcription)，取得更完整的實作示範。
+- 建置可持續執行、同時具備語音與文字功能的代理，請參考 [建構代理](/guides/building-agents) 與 [Serve 模式](/guides/serve-mode)。
+- 參考 [CLI 命令](/reference/cli-commands#voice) 查閱所有語音指令。
+- 參考 [Serve 動作](/reference/serve-actions#voice) 與 [Serve 事件](/reference/serve-events#voice-events) 瞭解語音流程。

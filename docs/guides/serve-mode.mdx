@@ -1,21 +1,21 @@
 ---
-title: Serve Mode
-description: Run a persistent bot with bidirectional JSONL communication
+title: Serve 模式
+description: 透過持久 JSONL 雙向通訊執行長駐機器人
 ---
 
-`discli serve` starts a long-running bot process that communicates over stdin and stdout using JSONL (JSON Lines). This is the foundation for building real-time Discord agents.
+`discli serve` 會啟動常駐 bot 程序，透過 stdin/stdout 使用 JSONL（JSON Lines）進行通信。這是建置即時 Discord 代理的基礎。
 
-## Why Serve Mode?
+## 為何使用 Serve 模式
 
-Standard discli commands are fire-and-forget: each one connects to Discord, performs an action, and disconnects. This is fine for scripts and one-off operations, but not for agents that need to:
+標準 discli 指令是一次性（fire-and-forget）：每筆指令都會連上 Discord、執行後斷線。這對腳本與單次作業沒問題，但對需要：
 
-- React to events in real-time
-- Stream responses token-by-token
-- Manage typing indicators
-- Handle slash commands
-- Perform multiple actions without reconnecting
+- 即時反應事件
+- 逐字元串流回覆
+- 顯示輸入中狀態
+- 處理 slash command
+- 不重連執行多個行為
 
-Serve mode solves this by maintaining a single persistent Discord WebSocket connection and exposing it through JSONL over stdin/stdout. The protocol currently supports **54 actions** and **17 event types**.
+serve 模式可維持一條 Discord WebSocket，並透過 stdin/stdout 的 JSONL 將連線暴露出去。協定目前支援 **54 個動作**與 **17 種事件類型**。
 
 ```
 ┌──────────────┐    stdin (JSONL)     ┌──────────────────┐
@@ -25,59 +25,59 @@ Serve mode solves this by maintaining a single persistent Discord WebSocket conn
 └──────────────┘    stdout (JSONL)    └──────────────────┘
 ```
 
-## Starting Serve Mode
+## 啟動 Serve 模式
 
 ```bash
 discli serve
 ```
 
-### Flags
+### 旗標
 
-| Flag | Description | Example |
+| 旗標 | 說明 | 範例 |
 |------|------------|---------|
-| `--server` | Filter events to one server | `--server "My Server"` |
-| `--channel` | Filter events to one channel | `--channel "#general"` |
-| `--events` | Comma-separated event types | `--events messages,reactions,members` |
-| `--include-self` / `--no-include-self` | Include bot's own messages (default: include) | `--no-include-self` |
-| `--slash-commands` | JSON file with slash command definitions | `--slash-commands commands.json` |
-| `--status` | Bot status on connect | `--status idle` |
-| `--activity` | Activity type | `--activity watching` |
-| `--activity-text` | Activity text | `--activity-text "for commands"` |
-| `--profile` | Permission profile | `--profile chat` |
+| `--server` | 只接收單一伺服器事件 | `--server "My Server"` |
+| `--channel` | 只接收單一頻道事件 | `--channel "#general"` |
+| `--events` | 以逗號分隔事件類型 | `--events messages,reactions,members` |
+| `--include-self` / `--no-include-self` | 是否接收機器人自己訊息（預設接收） | `--no-include-self` |
+| `--slash-commands` | JSON 檔定義 slash command | `--slash-commands commands.json` |
+| `--status` | 連線時機器人狀態 | `--status idle` |
+| `--activity` | 活動類型 | `--activity watching` |
+| `--activity-text` | 活動文字 | `--activity-text "for commands"` |
+| `--profile` | 權限設定檔 | `--profile chat` |
 
-### Common startup patterns
+### 常見啟動組合
 
 <CodeGroup>
 
-```bash Basic
+```bash 基本
 discli serve
 ```
 
-```bash Filtered
+```bash 過濾
 discli serve --server "My Server" --channel "#support" --events messages
 ```
 
-```bash With presence
+```bash 帶狀態
 discli serve --status online --activity watching --activity-text "for questions"
 ```
 
-```bash With slash commands
+```bash 帶 slash command
 discli serve --slash-commands commands.json --events messages
 ```
 
-```bash With safety
+```bash 帶安全限制
 discli serve --profile chat --events messages,members
 ```
 
 </CodeGroup>
 
-## The JSONL Protocol
+## JSONL 協定
 
-Communication is line-delimited JSON. Each line is a complete JSON object followed by a newline character.
+通訊資料為逐行 JSON。每行都是一個完整 JSON 物件，結尾加換行符。
 
-### Events (stdout)
+### 事件（stdout）
 
-discli serve writes events to stdout. Your agent reads these line by line.
+serve 會將事件輸出到 stdout，代理逐行讀取。
 
 ```json
 {"event": "ready", "bot_id": "123456", "bot_name": "MyBot#1234"}
@@ -85,10 +85,10 @@ discli serve writes events to stdout. Your agent reads these line by line.
 {"event": "response", "req_id": "req-1", "ok": true, "message_id": "131415"}
 ```
 
-#### Event Types
+#### 事件類型
 
 <Accordion title="ready">
-Emitted once when the bot connects to the Discord gateway.
+機器人連上 Discord Gateway 時只會送出一次。
 
 ```json
 {
@@ -100,7 +100,7 @@ Emitted once when the bot connects to the Discord gateway.
 </Accordion>
 
 <Accordion title="message">
-Emitted for each new message in channels the bot can see.
+對機器人可見的每則新訊息都會送出。
 
 ```json
 {
@@ -124,7 +124,7 @@ Emitted for each new message in channels the bot can see.
 </Accordion>
 
 <Accordion title="message_edit">
-Emitted when a message is edited.
+訊息被編輯時送出。
 
 ```json
 {
@@ -144,7 +144,7 @@ Emitted when a message is edited.
 </Accordion>
 
 <Accordion title="message_delete">
-Emitted when a message is deleted.
+訊息被刪除時送出。
 
 ```json
 {
@@ -162,7 +162,7 @@ Emitted when a message is deleted.
 </Accordion>
 
 <Accordion title="reaction_add / reaction_remove">
-Emitted when a reaction is added or removed.
+反應被新增或移除時送出。
 
 ```json
 {
@@ -179,7 +179,7 @@ Emitted when a reaction is added or removed.
 </Accordion>
 
 <Accordion title="member_join / member_remove">
-Emitted when a member joins or leaves a server.
+成員加入或離開伺服器時送出。
 
 ```json
 {
@@ -193,7 +193,7 @@ Emitted when a member joins or leaves a server.
 </Accordion>
 
 <Accordion title="slash_command">
-Emitted when a user invokes a registered slash command.
+使用者觸發已註冊 slash command 時送出。
 
 ```json
 {
@@ -211,7 +211,7 @@ Emitted when a user invokes a registered slash command.
 </Accordion>
 
 <Accordion title="component_interaction">
-Emitted when a user clicks a button or selects an option from a select menu.
+使用者點擊按鈕或在選單選擇時送出。
 
 ```json
 {
@@ -228,11 +228,11 @@ Emitted when a user clicks a button or selects an option from a select menu.
 }
 ```
 
-For select menus, `values` contains the selected option values.
+選單事件的 `values` 會包含使用者選取的選項值。
 </Accordion>
 
 <Accordion title="modal_submit">
-Emitted when a user submits a modal form.
+使用者提交 modal 表單時送出。
 
 ```json
 {
@@ -252,7 +252,7 @@ Emitted when a user submits a modal form.
 </Accordion>
 
 <Accordion title="voice_state_update">
-Emitted when a member joins, leaves, or moves between voice channels.
+成員加入、離開或切換語音頻道時送出。
 
 ```json
 {
@@ -267,11 +267,11 @@ Emitted when a member joins, leaves, or moves between voice channels.
 }
 ```
 
-The `action` field is one of `join`, `leave`, or `move`.
+`action` 為 `join`、`leave` 或 `move`。
 </Accordion>
 
 <Accordion title="disconnect / resume">
-Emitted when the bot disconnects from or reconnects to the Discord gateway.
+機器人斷線或重連時送出。
 
 ```json
 {"event": "disconnect", "code": 1001, "reason": "Going away"}
@@ -280,7 +280,7 @@ Emitted when the bot disconnects from or reconnects to the Discord gateway.
 </Accordion>
 
 <Accordion title="response">
-Returned after your agent sends an action via stdin. Correlates via `req_id`.
+代理寫入 stdin 後回傳的動作結果。會透過 `req_id` 對齊。
 
 ```json
 {
@@ -293,7 +293,7 @@ Returned after your agent sends an action via stdin. Correlates via `req_id`.
 </Accordion>
 
 <Accordion title="error">
-Emitted when something goes wrong.
+操作出錯時送出。
 
 ```json
 {
@@ -303,22 +303,22 @@ Emitted when something goes wrong.
 ```
 </Accordion>
 
-### Actions (stdin)
+### 動作（stdin）
 
-Your agent writes JSONL actions to stdin. Every action must have an `action` field.
+代理將 JSONL action 寫入 stdin。每個 action 都必須有 `action` 欄位。
 
 ```json
 {"action": "send", "channel_id": "444555666", "content": "Hello!", "req_id": "req-1"}
 ```
 
-The optional `req_id` field lets you correlate responses. If you include it, the response event will echo it back.
+`req_id` 可選，用來對齊回應；若有提供，回應事件會原封 return 相同值。
 
-#### Full Action Reference
+#### 完整動作參考
 
 <Tabs>
-<Tab title="Messaging">
+<Tab title="訊息">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `send` | `channel_id`, `content` | `embed`, `components`, `files`, `req_id` |
 | `reply` | `channel_id`, `message_id`, `content` | `embed`, `components`, `files`, `req_id` |
@@ -336,13 +336,13 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 {"action": "dm_send", "user_id": "777888999", "content": "Hey there!"}
 ```
 
-**Rich embeds:** Include an `embed` object on `send` or `reply` actions:
+**Rich embeds：** 在 `send` 或 `reply` 中加入 `embed` 物件即可。
 
 ```json
 {"action": "send", "channel_id": "444555666", "content": "", "embed": {"title": "Status", "description": "All systems go", "color": 5865F2, "footer": {"text": "Updated now"}, "fields": [{"name": "Uptime", "value": "99.9%", "inline": true}]}}
 ```
 
-**Message components:** Include a `components` array to attach buttons and select menus:
+**訊息元件：** 加入 `components` 陣列可附加按鈕與選單。
 
 ```json
 {"action": "send", "channel_id": "444555666", "content": "Pick an option:", "components": [{"type": "action_row", "components": [{"type": "button", "style": "primary", "label": "Approve", "custom_id": "approve_btn"}, {"type": "button", "style": "danger", "label": "Reject", "custom_id": "reject_btn"}]}]}
@@ -353,9 +353,9 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 ```
 
 </Tab>
-<Tab title="Streaming">
+<Tab title="串流">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `stream_start` | `channel_id` | `reply_to`, `interaction_token`, `req_id` |
 | `stream_chunk` | `stream_id`, `content` | `req_id` |
@@ -369,9 +369,9 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 ```
 
 </Tab>
-<Tab title="Threads">
+<Tab title="討論串">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `thread_create` | `channel_id`, `name` | `message_id`, `content`, `auto_archive_duration`, `req_id` |
 | `thread_send` | `thread_id`, `content` | `files`, `req_id` |
@@ -394,9 +394,9 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 ```
 
 </Tab>
-<Tab title="Reactions & Typing">
+<Tab title="反應與輸入">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `reaction_add` | `channel_id`, `message_id`, `emoji` | `req_id` |
 | `reaction_remove` | `channel_id`, `message_id`, `emoji` | `req_id` |
@@ -412,9 +412,9 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 ```
 
 </Tab>
-<Tab title="Queries">
+<Tab title="查詢">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `message_list` | `channel_id` | `limit`, `req_id` |
 | `message_get` | `channel_id`, `message_id` | `req_id` |
@@ -444,9 +444,9 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 | `event_delete` | `guild_id`, `event_id` | `req_id` |
 
 </Tab>
-<Tab title="Other">
+<Tab title="其他">
 
-| Action | Required Fields | Optional Fields |
+| 動作 | 必要欄位 | 選用欄位 |
 |--------|----------------|----------------|
 | `presence` | | `status`, `activity_type`, `activity_text`, `req_id` |
 | `interaction_followup` | `interaction_token`, `content` | `embed`, `components`, `req_id` |
@@ -471,26 +471,26 @@ The optional `req_id` field lets you correlate responses. If you include it, the
 </Tab>
 </Tabs>
 
-## Request/Response Correlation
+## 請求/回應關聯
 
-Include a `req_id` in your action to match it with the response:
+動作中加上 `req_id` 可對應回傳：
 
 ```json
 → stdin:  {"action": "send", "channel_id": "444555666", "content": "Hello!", "req_id": "msg-1"}
 ← stdout: {"event": "response", "req_id": "msg-1", "ok": true, "message_id": "131415161718"}
 ```
 
-This is critical for actions where you need the result, like `stream_start` (which returns a `stream_id`) or `thread_create` (which returns a `thread_id`).
+對 `stream_start`（會回傳 `stream_id`）或 `thread_create`（會回傳 `thread_id`）這類需結果的動作很重要。
 
 <Callout type="tip">
-Use incrementing integers or UUIDs for `req_id` values. Keep a dictionary mapping `req_id` to callback or queue so you can dispatch responses when they arrive.
+`req_id` 可用遞增整數或 UUID。建議維護一個 map，將 `req_id` 映到 callback 或 queue，回傳到達時可正確分派。
 </Callout>
 
-## Python Integration Patterns
+## Python 整合模式
 
-### Synchronous (threading)
+### 同步模式（threading）
 
-The simplest approach. Uses a background thread to read events while the main thread processes them.
+最簡化做法。用背景執行緒讀事件，主執行緒處理邏輯。
 
 ```python
 import json
@@ -544,7 +544,7 @@ class ServeClient:
         return self.events.get()
 
 
-# Usage
+# 使用方式
 client = ServeClient(events="messages")
 ready = client.next_event()  # {"event": "ready", ...}
 
@@ -561,7 +561,7 @@ while True:
 
 ### Asyncio
 
-For agents that need to run concurrent tasks (timers, HTTP requests, etc.).
+當代理需要並行作業（計時器、HTTP 呼叫等）時適用。
 
 ```python
 import asyncio
@@ -630,24 +630,24 @@ asyncio.run(main())
 ```
 
 <Callout type="note">
-The asyncio pattern works well on Linux and macOS. On Windows, `asyncio.create_subprocess_exec` uses the ProactorEventLoop, which handles subprocess pipes correctly.
+Asyncio 在 Linux/macOS 可正常運作；Windows 上 `asyncio.create_subprocess_exec` 會使用 ProactorEventLoop，能正確處理子程序管道。
 </Callout>
 
-## Error Handling
+## 錯誤處理
 
-Errors from actions are returned as response events with an `error` field:
+動作錯誤會以 回應事件 回傳 `error` 欄位：
 
 ```json
 ← {"event": "response", "req_id": "req-1", "error": "Channel not found: 999"}
 ```
 
-Protocol-level errors (invalid JSON) are emitted as error events:
+協定層錯誤（無效 JSON）會輸出 錯誤事件：
 
 ```json
 ← {"event": "error", "message": "Invalid JSON: {bad json"}
 ```
 
-Always check for the `error` field in responses before using the result:
+在使用回傳前務必檢查 `error` 欄位：
 
 ```python
 result = client.send({"action": "send", "channel_id": "999", "content": "test"}, wait=True)
@@ -657,31 +657,29 @@ else:
     print(f"Sent message: {result['message_id']}")
 ```
 
-## Windows Stdin Note
+## Windows 的 stdin 提示
 
-On Windows, asyncio's `ProactorEventLoop` cannot use `connect_read_pipe` for stdin when the process is piped from a parent process. discli works around this by using a background thread to read stdin and feeding lines into an asyncio queue.
+Windows 上，當程式被父進程透過 pipe 啟動時，asyncio 的 `ProactorEventLoop` 無法使用 `connect_read_pipe` 讀 stdin。discli 在 serve 層用背景執行緒讀取 stdin 並將每行放到 asyncio queue，外部不需要關心此實作細節。若你自行實作 stdin reader，請注意這個限制。
 
-This is handled internally by discli serve -- you do not need to worry about it. However, if you are writing your own stdin reader for a different purpose, be aware of this limitation.
-
-## Lifecycle
+## 生命週期
 
 <Steps>
-<Step title="Start">
-Launch `discli serve` as a subprocess with stdin/stdout pipes.
+<Step title="啟動">
+以子程序方式啟動 `discli serve`，並建立 stdin/stdout pipes。
 </Step>
-<Step title="Ready">
-Wait for the `&#123;"event": "ready"&#125;` event on stdout. The bot is now connected to Discord.
+<Step title="就緒">
+等待 stdout 上的 `{"event": "ready"}` 事件。此時 bot 已連上 Discord。
 </Step>
-<Step title="Operate">
-Read events from stdout. Send actions to stdin. Use `req_id` to correlate responses.
+<Step title="運作">
+從 stdout 讀事件、向 stdin 寫 action，並用 `req_id` 對齊回應。
 </Step>
-<Step title="Shutdown">
-Close stdin. The serve process will close the Discord connection and exit. You can also send a SIGINT/Ctrl+C.
+<Step title="關閉">
+關閉 stdin，serve 會關掉 Discord 連線並退出。你也可發送 `SIGINT` / `Ctrl+C`。
 </Step>
 </Steps>
 
-## Next Steps
+## 下一步
 
-- [Building Agents](/guides/building-agents) -- See serve mode in action across 5 levels of agent complexity
-- [Streaming Responses](/guides/streaming-responses) -- Stream AI responses token-by-token
-- [Slash Commands](/guides/slash-commands) -- Register and handle slash commands through serve mode
+- [建構代理](/guides/building-agents) -- 觀察五個階段中 serve 模式實際應用
+- [串流回應](/guides/streaming-responses) -- 將 AI 回應逐字串流
+- [Slash 指令](/guides/slash-commands) -- 透過 serve 模式註冊並處理 slash command

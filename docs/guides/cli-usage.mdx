@@ -1,50 +1,50 @@
 ---
-title: CLI Usage
-description: Day-to-day Discord operations from your terminal
+title: CLI 使用方式
+description: 在終端機完成日常 Discord 操作
 ---
 
-discli gives you full Discord control from the command line. Every command works in two modes: human-readable output by default, and structured JSON with `--json` for scripting and piping.
+discli 讓你在命令列完整控制 Discord。預設輸出為人類易讀文字；加上 `--json` 則輸出結構化資料，便於腳本處理與導流。
 
-## Identifier Resolution
+## 實體名稱解析
 
-Before diving into commands, understand how discli resolves Discord entities:
+先確認 discli 對 Discord 實體的解析方式：
 
-| Prefix | Resolves to | Example |
+| 前綴 | 解析目標 | 範例 |
 |--------|------------|---------|
-| `#` | Channel by name | `#general` |
-| `@` | User by name | `@alice` |
-| Raw number | Any entity by ID | `1234567890` |
-| Plain string | Server by name | `"My Server"` |
+| `#` | 依名稱解析頻道 | `#general` |
+| `@` | 依名稱解析使用者 | `@alice` |
+| 純數字 | 依 ID 解析任意實體 | `1234567890` |
+| 一般字串 | 依名稱解析伺服器 | `"My Server"` |
 
 <Callout type="tip">
-Channel names with `#` and user names with `@` are matched case-insensitively across all servers your bot can see. When names collide, use the numeric ID instead.
+含 `#` 的頻道名稱與含 `@` 的使用者名稱，會在機器人可見的所有伺服器中做不分大小寫比對。若名稱重複，請改用 ID。
 </Callout>
 
-## Sending Messages
+## 傳送訊息
 
-The most common operation. Send a message to any channel your bot has access to:
+最常見操作。可以對機器人可存取的任意頻道傳訊息：
 
 <CodeGroup>
 
-```bash By channel name
+```bash 依頻道名稱
 discli message send "#general" "Hello from the terminal!"
 ```
 
-```bash By channel ID
+```bash 依頻道 ID
 discli message send 1234567890 "Deploy complete. All systems green."
 ```
 
-```bash With file attachment
+```bash 附帶檔案
 discli message send "#logs" "Here's today's report" --file ./report.csv
 ```
 
-```bash With embed
+```bash 附帶 embed
 discli message send "#announcements" "New release!" \
   --embed-title "v2.1.0" \
   --embed-desc "Bug fixes and performance improvements"
 ```
 
-```bash Rich embed with color, footer, and fields
+```bash 包含色碼、頁尾與欄位的 embed
 discli message send "#announcements" "Check this out" \
   --embed-title "Status Update" \
   --embed-color 5865F2 \
@@ -54,67 +54,67 @@ discli message send "#announcements" "Check this out" \
 
 </CodeGroup>
 
-## Reading Messages
+## 讀取訊息
 
-Fetch recent messages, search by content, or grab a specific message by ID.
+抓取近期訊息、依內容搜尋，或用 ID 取單筆訊息。
 
 <Tabs>
-<Tab title="List recent">
+<Tab title="列出近期訊息">
 ```bash
-# Last 10 messages (default)
+# 預設顯示最近 10 筆
 discli message list "#general"
 
-# Last 50 messages
+# 最近 50 筆
 discli message list "#general" --limit 50
 
-# Messages before a specific date
+# 取得特定時間之前訊息
 discli message list "#general" --before 2025-01-15
 
-# Messages after a specific date
+# 取得特定時間之後訊息
 discli message list "#general" --after 2025-01-01
 ```
 </Tab>
 
-<Tab title="Search">
+<Tab title="搜尋">
 ```bash
-# Search by content
+# 依內容搜尋
 discli message search "#support" "payment failed"
 
-# Search by content + author
+# 依內容與作者搜尋
 discli message search "#support" "refund" --author "alice#1234"
 
-# Search with date range
+# 指定時間區間搜尋
 discli message search "#general" "deploy" --after 2025-03-01 --limit 200
 ```
 </Tab>
 
-<Tab title="Fetch one">
+<Tab title="抓取單筆">
 ```bash
-# Get a specific message by ID
+# 以 ID 取得特定訊息
 discli message get "#general" 1234567890123456
 ```
 </Tab>
 
-<Tab title="Deep history">
+<Tab title="抓深層歷史">
 ```bash
-# Last 7 days of messages
+# 最近 7 天
 discli message history "#general" --days 7
 
-# Last 2 hours
+# 最近 2 小時
 discli message history "#general" --hours 2
 
-# Last 7 days, max 500 messages
+# 最近 7 天，最多 500 筆
 discli message history "#general" --days 7 --limit 500
 ```
 </Tab>
 </Tabs>
 
-## JSON Output and jq Piping
+## JSON 輸出與 jq 管線
 
-Add `--json` to any command to get structured JSON output. This is where discli becomes a scripting powerhouse.
+任一指令加上 `--json` 後會回傳 JSON 結構，適合做腳本串接。
 
 ```bash
-# Get JSON output
+# 取得 JSON 輸出
 discli --json message list "#general" --limit 5
 ```
 
@@ -131,160 +131,160 @@ discli --json message list "#general" --limit 5
 ]
 ```
 
-Pipe to `jq` for filtering and transformation:
+可用 `jq` 做過濾與轉換：
 
 <CodeGroup>
 
-```bash Extract just message content
+```bash 只取訊息內容
 discli --json message list "#general" --limit 20 | jq '.[].content'
 ```
 
-```bash Find messages with attachments
+```bash 過濾含附件訊息
 discli --json message list "#general" --limit 100 \
   | jq '[.[] | select(.attachments | length > 0)]'
 ```
 
-```bash Get unique authors
+```bash 取出不重複作者
 discli --json message list "#general" --limit 100 \
   | jq '[.[].author] | unique'
 ```
 
-```bash Count messages per author
+```bash 統計各作者訊息數
 discli --json message list "#general" --limit 100 \
   | jq 'group_by(.author) | map({author: .[0].author, count: length}) | sort_by(-.count)'
 ```
 
-```bash Export to CSV
+```bash 匯出 CSV
 discli --json message list "#general" --limit 100 \
   | jq -r '.[] | [.timestamp, .author, .content] | @csv' > messages.csv
 ```
 
 </CodeGroup>
 
-## Replying and Editing
+## 回覆與編輯
 
 ```bash
-# Reply to a specific message
+# 回覆指定訊息
 discli message reply "#general" 1234567890123456 "Thanks for the update!"
 
-# Edit a message (must be your bot's message)
+# 編輯訊息（必須是機器人自己的）
 discli message edit "#general" 1234567890123456 "Updated content here"
 
-# Delete a message (requires confirmation)
+# 刪除訊息（需要確認）
 discli message delete "#general" 1234567890123456
 
-# Bulk delete multiple messages by ID
+# 一次刪除多則訊息
 discli -y message bulk-delete "#general" 111 222 333
 ```
 
 <Callout type="warning">
-Destructive commands like `message delete` prompt for confirmation. Pass `--yes` or `-y` to skip the prompt in scripts: `discli --yes message delete "#general" 1234567890`.
+像 `message delete` 這類高風險指令會先要求確認。腳本場景可加 `--yes` 或 `-y`：`discli --yes message delete "#general" 1234567890`。
 </Callout>
 
-## Channel Management
+## 頻道管理
 
 <Tabs>
-<Tab title="List channels">
+<Tab title="列出頻道">
 ```bash
-# All channels across all servers
+# 所有伺服器的頻道
 discli channel list
 
-# Channels in a specific server
+# 指定伺服器頻道
 discli channel list --server "My Server"
 
-# JSON output for scripting
+# JSON 腳本用途
 discli --json channel list --server "My Server" | jq '.[] | select(.type == "text")'
 ```
 </Tab>
 
-<Tab title="Create channels">
+<Tab title="建立頻道">
 ```bash
-# Create a text channel
+# 建立文字頻道
 discli channel create "My Server" "new-channel"
 
-# Create a voice channel
+# 建立語音頻道
 discli channel create "My Server" "voice-room" --type voice
 
-# Create a category
+# 建立分類
 discli channel create "My Server" "Project Alpha" --type category
 
-# Create a forum channel
+# 建立論壇頻道
 discli channel create "My Server" "feedback" --type forum --topic "Share your feedback"
 
-# Create a forum post
+# 建立論壇貼文
 discli channel forum-post "#feedback" "Feature Request" "Add dark mode support"
 ```
 </Tab>
 
-<Tab title="Edit channels">
+<Tab title="編輯頻道">
 ```bash
-# Edit a channel's topic and slowmode
+# 編輯頻道主題與慢速模式
 discli channel edit "#general" --topic "New topic" --slowmode 10
 ```
 </Tab>
 
-<Tab title="Permissions">
+<Tab title="權限">
 ```bash
-# Set channel permissions for a role
+# 設定頻道權限（角色）
 discli channel set-permissions "#general" "Members" \
   --allow send_messages \
   --deny manage_messages
 ```
 </Tab>
 
-<Tab title="Channel info">
+<Tab title="頻道資訊">
 ```bash
-# Get channel details
+# 取得頻道詳情
 discli channel info "#general"
 
-# JSON output
+# JSON 輸出
 discli --json channel info "#general"
 ```
 
-Output includes: ID, name, type, server, topic, and creation date.
+輸出會包含：ID、名稱、類型、伺服器、主題與建立日期。
 </Tab>
 
-<Tab title="Delete channels">
+<Tab title="刪除頻道">
 ```bash
-# Delete a channel (requires confirmation)
+# 刪除頻道（需要確認）
 discli channel delete "#old-channel"
 
-# Skip confirmation
+# 跳過確認
 discli --yes channel delete "#old-channel"
 ```
 </Tab>
 </Tabs>
 
-## Member Operations
+## 成員操作
 
 ```bash
-# List members in a server
+# 列出伺服器成員
 discli member list "My Server"
 discli member list "My Server" --limit 100
 
-# Get member details (roles, join date, etc.)
+# 取得成員明細（角色、加入時間等）
 discli member info "My Server" "@alice"
 discli member info "My Server" 1234567890
 
-# Kick a member (confirmation required)
+# 踢除成員（需確認）
 discli member kick "My Server" "@spammer" --reason "Spam"
 
-# Ban a member
+# 封鎖成員
 discli member ban "My Server" "@troll" --reason "Repeated violations"
 
-# Unban
+# 解除封鎖
 discli member unban "My Server" "@reformed"
 
-# Timeout a member for 1 hour (3600 seconds)
+# 將成員禁言 1 小時（3600 秒）
 discli -y member timeout "My Server" "@spammer" 3600 --reason "Spam"
 
-# Remove a timeout (set duration to 0)
+# 解除禁言（duration 設 0）
 discli -y member timeout "My Server" "@spammer" 0
 ```
 
-### The `--triggered-by` Flag
+### `--triggered-by` 旗標
 
-When your bot acts on behalf of a Discord user, pass their ID to verify they have the required Discord permissions:
+當機器人代替 Discord 使用者執行動作時，請傳使用者 ID，讓 discli 驗證該使用者在伺服器中的必要權限：
 
 ```bash
 discli member kick "My Server" "@spammer" \
@@ -292,202 +292,202 @@ discli member kick "My Server" "@spammer" \
   --triggered-by 9876543210
 ```
 
-This checks that user `9876543210` has `kick_members` permission in the server before executing. The check is logged to the audit trail.
+此時會先檢查 `9876543210` 是否具備 `kick_members` 權限。檢查結果會寫進稽核紀錄。
 
-## Reactions
+## 反應
 
 ```bash
-# Add a reaction
+# 新增反應
 discli reaction add "#general" 1234567890123456 "👍"
 
-# Remove your bot's reaction
+# 移除機器人反應
 discli reaction remove "#general" 1234567890123456 "👍"
 
-# List reactions on a message
+# 列出訊息上的反應
 discli reaction list "#general" 1234567890123456
 
-# List users who reacted with a specific emoji
+# 列出對特定 emoji 反應的使用者
 discli reaction users "#general" 1234567890123456 "👍"
 ```
 
 <Callout type="note">
-Unicode emoji work directly. For custom server emoji, use the format `<:name:id>` or just the emoji name if your bot is in the server.
+Unicode emoji 可直接使用。自定義伺服器 emoji 請用 `<:name:id>`，或機器人已可見時直接用表情名稱。
 </Callout>
 
-## Direct Messages
+## 私訊
 
 ```bash
-# Send a DM to a user
+# 向使用者發 DM
 discli dm send "@alice" "Your report is ready!"
 discli dm send 1234567890 "Your report is ready!"
 
-# List recent DMs with a user
+# 列出與某位使用者的近期 DM
 discli dm list "@alice"
 discli dm list "@alice" --limit 20
 ```
 
-## Threads
+## 討論串
 
 ```bash
-# Create a thread from a message
+# 從訊息建立討論串
 discli thread create "#general" 1234567890123456 "Discussion Thread"
 
-# List active threads in a channel
+# 列出頻道中啟用的討論串
 discli thread list "#general"
 
-# Send a message to a thread
+# 發訊息到討論串
 discli thread send 9876543210 "Replying in the thread"
 
-# Send with file attachment
+# 附件傳送
 discli thread send 9876543210 "Here's the file" --file ./data.json
 
-# Archive / unarchive a thread
+# 封存 / 解除封存
 discli thread archive 9876543210
 discli thread unarchive 9876543210
 
-# Rename a thread
+# 重新命名
 discli thread rename 9876543210 "New Thread Name"
 
-# Add or remove a member from a thread
+# 新增或移除討論串成員
 discli thread add-member 9876543210 "@alice"
 discli thread remove-member 9876543210 "@alice"
 ```
 
-## Roles
+## 身分組
 
 ```bash
-# List roles in a server
+# 列出伺服器身分組
 discli role list "My Server"
 
-# Create a role
+# 建立身分組
 discli role create "My Server" "Contributor" --color "00ff00"
 
-# Assign a role to a member
+# 指派身分組
 discli role assign "My Server" "@alice" "Contributor"
 
-# Remove a role
+# 移除身分組
 discli role remove "My Server" "@alice" "Contributor"
 
-# Edit a role
+# 編輯身分組
 discli role edit "My Server" "Contributor" \
   --name "Core Contributor" \
   --color 00ff00 \
   --hoist \
   --mentionable
 
-# Delete a role (confirmation required)
+# 刪除身分組（需確認）
 discli role delete "My Server" "OldRole"
 ```
 
-## Server Operations
+## 伺服器操作
 
 ```bash
-# List all servers your bot is in
+# 列出機器人所在伺服器
 discli server list
 
-# Get server details
+# 取得伺服器詳細資料
 discli server info "My Server"
 
-# JSON for scripting
+# JSON 腳本用途
 discli --json server list | jq '.[] | {name, member_count}'
 ```
 
-## Polls
+## 投票
 
 ```bash
-# Create a poll (via serve mode action)
-# See the Serve Mode guide for poll_send details
+# 建立投票（透過 serve 模式）
+# 詳細參數請參閱 Serve 模式文件
 
-# View poll results
+# 查詢投票結果
 discli poll results "#general" 1234567890123456
 
-# End a poll early
+# 提前結束投票
 discli poll end "#general" 1234567890123456
 ```
 
 ## Webhooks
 
 ```bash
-# List webhooks in a channel
+# 列出頻道 webhook
 discli webhook list "#general"
 
-# Create a webhook
+# 建立 webhook
 discli webhook create "#general" "Deploy Notifier"
 
-# Delete a webhook (requires confirmation)
+# 刪除 webhook（需確認）
 discli -y webhook delete "#general" 9876543210
 ```
 
-## Scheduled Events
+## 排程事件
 
 ```bash
-# List scheduled events in a server
+# 列出伺服器排程事件
 discli event list "My Server"
 
-# Create a scheduled event
+# 建立排程事件
 discli event create "My Server" "Game Night" \
   --start "2026-04-01T20:00:00" \
   --end "2026-04-01T23:00:00" \
   --description "Weekly game night"
 
-# Delete a scheduled event (requires confirmation)
+# 刪除排程事件（需確認）
 discli -y event delete "My Server" 9876543210
 ```
 
-## Permission Profiles
+## 權限設定檔
 
-Control what commands your bot can execute:
+限制機器人的可執行範圍：
 
 ```bash
-# Show current profile
+# 顯示目前設定檔
 discli permission show
 
-# List available profiles
+# 列出可用設定檔
 discli permission profiles
 
-# Switch to a restricted profile
+# 切換到限制較高的設定檔
 discli permission set readonly
 
-# Override per-invocation
+# 指令層級覆蓋
 discli --profile chat message send "#general" "Hello"
 ```
 
-See the [Security & Permissions](/guides/security-permissions) guide for full details.
+完整限制內容請參考 [安全與權限](/guides/security-permissions)。
 
-## Audit Log
+## 稽核紀錄
 
-Review what destructive actions have been taken:
+檢視已執行的高風險操作：
 
 ```bash
-# Show recent audit entries
+# 顯示最近紀錄
 discli audit show
 discli audit show --limit 50
 
-# JSON output
+# JSON 輸出
 discli --json audit show --limit 10
 
-# Clear the audit log
+# 清空紀錄
 discli audit clear
 ```
 
-## Common Patterns
+## 常用模式
 
-### Quick Status Check
+### 快速狀態檢查
 
 ```bash
-# How active is a channel?
+# 某頻道活躍度
 discli --json message list "#general" --limit 100 \
   | jq 'length'
 ```
 
-### Find a User's Messages
+### 搜尋某位使用者訊息
 
 ```bash
 discli --json message search "#general" "" --author "alice#1234" --limit 100 \
   | jq 'length'
 ```
 
-### Broadcast to Multiple Channels
+### 廣播到多個頻道
 
 ```bash
 for channel in "#announcements" "#general" "#dev"; do
@@ -495,7 +495,7 @@ for channel in "#announcements" "#general" "#dev"; do
 done
 ```
 
-### Export Channel History
+### 匯出頻道歷史
 
 ```bash
 discli --json message history "#general" --days 30 \
@@ -503,11 +503,11 @@ discli --json message history "#general" --days 30 \
   > general-export.csv
 ```
 
-## Global Flags Reference
+## 全域旗標參考
 
-| Flag | Short | Description |
+| 旗標 | 短版 | 說明 |
 |------|-------|-------------|
-| `--token` | | Bot token (overrides env and config) |
-| `--json` | | Output as structured JSON |
-| `--yes` | `-y` | Skip destructive action confirmations |
-| `--profile` | | Override permission profile (`full`, `chat`, `readonly`, `moderation`) |
+| `--token` | | 指定 bot token（優先權高於 env 與 config） |
+| `--json` | | 以結構化 JSON 輸出 |
+| `--yes` | `-y` | 跳過高風險操作確認 |
+| `--profile` | | 覆寫權限設定檔（`full`、`chat`、`readonly`、`moderation`） |
