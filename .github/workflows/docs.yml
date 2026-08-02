@@ -33,7 +33,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build docs with Lito
-        run: npx --yes @litodocs/cli@1.4.2 build -i ./docs -o ./docs/dist
+        run: npx --yes @litodocs/cli@1.4.2 build -i ./docs -o ./docs/dist --base-url "/"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
