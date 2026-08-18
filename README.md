@@ -89,6 +89,8 @@ You'll also need **libopus** (`apt install libopus0` / `brew install opus`) and 
 
    ```bash
    discli config set token YOUR_BOT_TOKEN
+   # or configure using an environment variable
+   discli config set token $DISCORD_TOKEN
    ```
 
 5. Verify everything works:
@@ -178,6 +180,9 @@ Voice needs the `[voice]` extra plus a provider (`[deepgram]` / `[elevenlabs]` /
 
 ```bash
 discli config set token YOUR_TOKEN
+# or configure from an environment variable:
+discli config set token $DISCORD_TOKEN
+
 discli config show
 ```
 
