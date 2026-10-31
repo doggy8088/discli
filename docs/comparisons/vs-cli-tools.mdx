@@ -1,85 +1,85 @@
 ---
-title: discli vs CLI Tools
-description: How discli compares to discrawl and other Discord CLI tools
+title: discli 與其他 CLI 工具
+description: discli 與 discrawl 及其他 Discord CLI 工具的差異
 ---
 
-# discli vs CLI Tools
+# discli 與其他 CLI 工具
 
-Several command-line tools exist for Discord. Most were built for a single purpose — scraping, chatting as a user, or modifying the client. discli is the only one designed as a full bidirectional bot interface with an agent protocol.
+市面上有不少 Discord 命令列工具。多數只針對單一目的而設計，例如爬文、代替人類聊天、或是只做客戶端操作。discli 則是少數設計成完整雙向 bot 介面並支援代理協定的工具。
 
 ## discrawl
 
-**discrawl** is a Discord scraper and crawler. It connects to Discord, reads messages, and exports them to files or databases.
+**discrawl** 是一個 Discord 爬文與資料擷取工具，會連線 Discord、讀取訊息，並輸出到檔案或資料庫。
 
-**Strengths:**
-- Excellent at bulk data export (CSV, JSON, SQLite)
-- Handles pagination and rate limiting for large history pulls
-- Simple CLI for one-off scrapes
+**優勢：**
+- 擅長大量資料匯出（CSV、JSON、SQLite）
+- 可處理大量歷史訊息的分頁與速率限制
+- 簡單、好上手的單次爬取 CLI
 
-**Limitations:**
-- Read-only — cannot send messages, react, create channels, or perform any write operation
-- No real-time event stream — runs as a batch job, not a live listener
-- No agent protocol — no way to feed events to an AI model and act on them
-- No security model — no permission profiles or audit logging
+**限制：**
+- 僅讀取：不能傳送訊息、加反應、建立頻道或執行任何寫入操作
+- 無即時事件串流：以批次任務為主，不是長時間監聽
+- 無代理協定：無法把事件送進 AI 模型後再行動作
+- 無安全模型：沒有權限設定檔與稽核紀錄
 
-discli reads **and** writes. It streams events in real time, accepts actions via JSONL, and wraps everything in a security layer. If you need to export old messages and nothing else, discrawl is a solid choice. For anything interactive, discli is the tool.
+discli 會同時進行**讀取與寫入**。它能即時串流事件，透過 JSONL 接收動作，並以安全層包住所有行為。若你只要匯出舊訊息且沒有其他需求，discrawl 很適合；若需要互動式使用，則選 discli。
 
 ## discord-cli / cordless
 
-**discord-cli** and **cordless** are terminal-based Discord clients. They let humans chat on Discord from a terminal UI, similar to how IRC clients work.
+**discord-cli** 與 **cordless** 是終端機版 Discord 客戶端，讓人類能在文字介面上聊天，類似 IRC 客戶端的使用方式。
 
 <Callout type="danger">
-These tools use **user account tokens** (self-botting), which violates Discord's Terms of Service. Your account can be permanently banned. discli uses official bot tokens exclusively.
+這兩款工具使用的是**使用者帳號 token**（自機器人化），違反 Discord 服務條款，帳號可能被永久封禁。discli 僅使用官方 bot token。
 </Callout>
 
-**Limitations:**
-- Self-bot risk — against Discord TOS
-- Not designed for bots — no bot token support, no slash commands, no gateway intents
-- Unmaintained — most have not been updated in years
-- No programmatic interface — designed for human keyboard interaction, not automation
+**限制：**
+- 自機器人風險：違反 Discord ToS
+- 非為機器人設計：不支援 bot token、沒有 slash command、也沒有 Gateway intents
+- 缺乏維護：多數專案多年未更新
+- 缺乏程式化介面：主要供人手動鍵盤操作，不是自動化
 
 ## BetterDiscord
 
-**BetterDiscord** is a client-side modification for the Discord desktop app. It adds themes, plugins, and custom CSS to the Discord UI.
+**BetterDiscord** 是 Discord 桌面版的客戶端外掛，提供主題、插件與自訂 CSS。
 
-This is an entirely different category. BetterDiscord modifies what **you** see in Discord. discli controls what **a bot** does on Discord. There is no overlap in functionality:
+這屬於完全不同類型。BetterDiscord 修改的是你在 Discord 看到的畫面，discli 控制的是**機器人**在 Discord 上的行為，兩者的重疊很少：
 
-- BetterDiscord: client-side, visual, user-facing
-- discli: server-side, programmatic, bot-facing
+- BetterDiscord：客戶端層、視覺化、使用者面向
+- discli：伺服器端、程式化、機器人面向
 
-## Comparison table
+## 比較表
 
-| Feature | discli | discrawl | discord-cli / cordless | BetterDiscord |
+| 功能 | discli | discrawl | discord-cli / cordless | BetterDiscord |
 |---|---|---|---|---|
-| **Read messages** | Yes | Yes | Yes | N/A (client mod) |
-| **Write messages** | Yes | No | Yes (self-bot) | N/A |
-| **Real-time events** | Yes (JSONL stream) | No (batch only) | Yes (TUI) | N/A |
-| **Agent protocol** | Yes (bidirectional JSONL) | No | No | No |
-| **Security model** | Permission profiles, audit log, rate limits | None | None | None |
-| **Bot token support** | Yes (official API) | Yes | No (user tokens) | N/A |
-| **Actively maintained** | Yes | Varies | No | Community-driven |
-| **TOS compliant** | Yes | Yes | No (self-bot risk) | Gray area |
+| **讀取訊息** | 是 | 是 | 是 | 不適用（客戶端修改） |
+| **傳送訊息** | 是 | 否 | 是（自機器人） | 不適用 |
+| **即時事件** | 是（JSONL 串流） | 否（僅批次） | 是（TUI） | 不適用 |
+| **代理協定** | 是（雙向 JSONL） | 否 | 否 | 否 |
+| **安全模型** | 權限設定檔、稽核紀錄、速率限制 | 無 | 無 | 無 |
+| **Bot Token 支援** | 是（官方 API） | 是 | 否（使用者 token） | 不適用 |
+| **維護狀態** | 是 | 視情況 | 否 | 社群維護 |
+| **符合 TOS** | 是 | 是 | 否（有自機器人風險） | 灰色地帶 |
 
-## When to use what
+## 如何選擇
 
 <Tabs>
-<Tab title="Use discli when">
-- You need to **read and write** from a bot account
-- You want **real-time events** streamed as JSONL
-- You are building an **AI agent** that interacts with Discord
-- You need **security guardrails** (permission profiles, audit logs)
-- You want a **maintained, TOS-compliant** tool
+<Tab title="使用 discli 的情境">
+- 需要透過 bot 帳號同時**讀取與寫入**
+- 需要**即時事件**以 JSONL 串流
+- 要建置可與 Discord 互動的**AI 代理**
+- 需要**安全邊界**（權限設定檔、稽核紀錄）
+- 需要一個有持續維護且符合 TOS 的工具
 </Tab>
 
-<Tab title="Use discrawl when">
-- You only need to **export message history** in bulk
-- You want data in CSV, JSON, or SQLite format
-- You do not need real-time events or write operations
+<Tab title="使用 discrawl 的情境">
+- 僅需大量**匯出訊息歷史**
+- 需要 CSV、JSON 或 SQLite 格式資料
+- 不需要即時事件與寫入操作
 </Tab>
 
-<Tab title="Avoid discord-cli / cordless">
-- Self-botting risks account termination
-- These projects are unmaintained
-- If you want a terminal Discord experience, consider running discli with `discli listen` for read and `discli message send` for write — same terminal workflow, zero TOS risk
+<Tab title="避免 discord-cli / cordless">
+- 自機器人行為有停權風險
+- 專案長期未維護
+- 若只是要終端機體驗，可改用 discli：讀取用 `discli listen`，寫入用 `discli message send`，流程相同且無 TOS 風險
 </Tab>
 </Tabs>

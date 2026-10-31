@@ -1,17 +1,17 @@
 ---
-title: Permission Profiles
-description: Built-in and custom permission profile definitions
+title: 權限設定檔
+description: 內建與自訂權限設定檔定義
 ---
 
-# Permission Profiles
+# 權限設定檔
 
-Permission profiles control which discli commands can be executed. They are useful when running discli as a subprocess of an AI agent, allowing you to restrict what the agent can do.
+權限設定檔控制可執行哪些 discli 指令。當 discli 以 AI 代理的子程序執行時，這個機制非常重要，可限制代理可做的操作。
 
-## Built-in Profiles
+## 內建設定檔
 
 ### full
 
-Full access to all commands. This is the default.
+完整權限，允許所有指令。預設值即為 full。
 
 ```json
 {
@@ -23,7 +23,7 @@ Full access to all commands. This is the default.
 
 ### chat
 
-Messages, reactions, threads, typing, DMs, listening, serving, config, and server queries. Blocks destructive moderation and infrastructure actions.
+訊息、反應、討論串、輸入狀態、DM、接聽、服務模式、設定、伺服器查詢。封鎖會造成破壞性的審核與基礎建設操作。
 
 ```json
 {
@@ -57,7 +57,7 @@ Messages, reactions, threads, typing, DMs, listening, serving, config, and serve
 
 ### readonly
 
-Read-only access. Only list, info, get, search, and listen commands are permitted. Everything else is denied by default.
+唯讀權限。只允許 list、info、get、search 與 listen。其他行為預設全部拒絕。
 
 ```json
 {
@@ -85,7 +85,7 @@ Read-only access. Only list, info, get, search, and listen commands are permitte
 
 ### moderation
 
-Full access to all commands, including moderation actions. Functionally identical to `full`.
+包含所有指令與 moderation 動作的完整權限。功能上等同 `full`。
 
 ```json
 {
@@ -97,13 +97,13 @@ Full access to all commands, including moderation actions. Functionally identica
 
 ---
 
-## Checking the Active Profile
+## 檢查目前權限檔
 
 ```
 discli permission show
 ```
 
-Output (plain text):
+純文字輸出：
 
 ```
 Active profile: chat
@@ -112,7 +112,7 @@ Allowed: message, reaction, thread, typing, dm, listen, serve, config, server
 Denied: member kick, member ban, member unban, member timeout, channel delete, role delete, role create, channel create, message bulk-delete, webhook delete, event delete
 ```
 
-With `--json`:
+使用 `--json`：
 
 ```json
 {
@@ -125,31 +125,31 @@ With `--json`:
 
 ---
 
-## Setting the Active Profile
+## 設定目前權限檔
 
 ```
 discli permission set <profile>
 ```
 
-Where `<profile>` is one of `full`, `chat`, `readonly`, or `moderation`.
+`<profile>` 可使用 `full`、`chat`、`readonly`、`moderation`。
 
-Example:
+範例：
 
 ```
 discli permission set readonly
 ```
 
-Output:
+輸出：
 
 ```
 Permission profile set to: readonly (Read-only: list, info, get, search, listen)
 ```
 
-The setting is persisted to `~/.discli/permissions.json`.
+設定會儲存在 `~/.discli/permissions.json`。
 
 ---
 
-## Listing All Profiles
+## 列出所有設定檔
 
 ```
 discli permission profiles
@@ -157,15 +157,15 @@ discli permission profiles
 
 ---
 
-## Overriding Per-Invocation
+## 單次命令覆蓋
 
-Use the `--profile` global option to override the active profile for a single command without changing the persisted setting:
+使用 `--profile` 全域參數可覆蓋目前設定，只套用到單一指令，不修改持久化設定：
 
 ```
 discli --profile readonly message list general
 ```
 
-The `DISCLI_PROFILE` environment variable also works:
+也可以用 `DISCLI_PROFILE` 環境變數：
 
 ```
 DISCLI_PROFILE=chat discli message send general "Hello"
@@ -173,9 +173,9 @@ DISCLI_PROFILE=chat discli message send general "Hello"
 
 ---
 
-## Custom Profiles
+## 自訂權限檔
 
-You can define custom profiles by editing `~/.discli/permissions.json` directly. The file structure:
+可直接編輯 `~/.discli/permissions.json`。檔案格式如下：
 
 ```json
 {
@@ -190,36 +190,36 @@ You can define custom profiles by editing `~/.discli/permissions.json` directly.
 }
 ```
 
-Custom profiles follow the same matching rules as built-in profiles. Set `active_profile` to the custom profile name.
+自訂設定檔採用與內建相同比對規則；將 `active_profile` 設為自訂名稱即可啟用。
 
 ---
 
-## How Permission Checking Works
+## 權限比對邏輯
 
-When a command is executed, discli resolves the active profile (from `--profile` flag, `DISCLI_PROFILE` env var, or `~/.discli/permissions.json`) and evaluates it as follows:
+執行指令時，discli 會先解析目前權限（來源順序：`--profile`、`DISCLI_PROFILE` 環境變數、`~/.discli/permissions.json`），再做以下判斷：
 
-1. **Check denied list first.** If any denied pattern matches the command, the command is blocked -- unless the allowed list also matches (see step 2 for the `"*"` denied case).
+1. **先比對 denied。** 若任何 denied 規則符合，指令會被封鎖；只有在 denied 包含 `"*"` 的情況下，且同時在 allowed 有明確放行時，才會放行（見步驟 2）。
 
-2. **Wildcard denial (`"*"` in denied).** When `denied` contains `"*"`, everything is denied by default. The command is only allowed if it explicitly matches an entry in the `allowed` list. This is how the `readonly` profile works.
+2. **全域拒絕（`"*"` 在 denied）。** 當 `denied` 包含 `"*"` 時，預設封鎖全部指令，只有 allowed 明確列出的指令才放行。`readonly` 行為即如此。
 
-3. **Check allowed list.** If no denied pattern matched, the command must match an allowed pattern to proceed. A wildcard `"*"` in the allowed list permits all commands.
+3. **再比對 allowed。** 若 denied 無任何命中，指令必須符合 allowed 規則才能執行。allowed 中若有 `"*"` 則放行全部。
 
-**Pattern matching rules:**
+**模式比對規則：**
 
-- `"*"` matches all commands.
-- `"message"` matches `message send`, `message list`, `message delete`, and any other `message` subcommand.
-- `"message send"` matches only the `message send` command exactly.
-- `"member kick"` matches `member kick` exactly.
+- `"*"` 符合全部指令。
+- `"message"` 符合 `message send`、`message list`、`message delete` 等 `message` 子指令。
+- `"message send"` 僅符合 `message send`。
+- `"member kick"` 僅符合 `member kick`。
 
-Patterns are matched by checking if the full command path equals the pattern or starts with the pattern followed by a space. This means `"message"` matches `"message send"` but not `"messaging"`.
+比對邏輯是完整指令路徑完全相符，或以 pattern 開頭且後面接一個空白。也就是 `"message"` 能比對 `message send`，但不會比對 `messaging`。
 
 ---
 
-## Discord Permission Mapping
+## Discord 權限對照表
 
-Some commands require the bot to have specific Discord permissions in the server. The following table maps discli commands to their required Discord permissions:
+部分指令仍需機器人本身在伺服器上具備對應 Discord 權限：
 
-| Command | Discord Permission |
+| 指令 | Discord 權限 |
 |---------|-------------------|
 | `member kick` | `kick_members` |
 | `member ban` / `member unban` | `ban_members` |
@@ -232,9 +232,9 @@ Some commands require the bot to have specific Discord permissions in the server
 
 ---
 
-## Destructive Command Protection
+## 危險操作保護
 
-Independently of permission profiles, the following commands require interactive confirmation before execution:
+即使未受權限檔限制，以下指令仍需互動確認：
 
 - `member kick`
 - `member ban`
@@ -247,4 +247,4 @@ Independently of permission profiles, the following commands require interactive
 - `webhook delete`
 - `event delete`
 
-Use the `--yes` / `-y` global flag to skip confirmation prompts (e.g., in scripted or agent-driven usage). Destructive actions are logged to the audit log at `~/.discli/audit.log`.
+可加上 `--yes` / `-y` 全域旗標跳過確認（例如腳本、代理自動化）。破壞性動作都會寫入稽核日誌 `~/.discli/audit.log`。

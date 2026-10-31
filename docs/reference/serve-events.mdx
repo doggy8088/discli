@@ -1,17 +1,17 @@
 ---
-title: Serve Events
-description: Complete reference for all events emitted via stdout in serve mode
+title: Serve 事件
+description: serve 模式以 stdout 輸出的所有事件完整參考
 ---
 
-# Serve Events
+# Serve 事件
 
-When running `discli serve`, events are emitted as JSONL (one JSON object per line) on stdout. Every event includes an `"event"` field identifying the event type.
+使用 `discli serve` 時，事件會以 JSONL（每行一個 JSON 物件）輸出到 stdout。每個事件都包含 `event` 欄位，用於識別事件類型。
 
 ---
 
 ## ready
 
-Emitted once when the bot connects to the Discord gateway. This fires before slash commands are synced.
+在機器人連線到 Discord gateway 時只會發送一次。這個事件會在 slash 指令同步前先觸發。
 
 ```json
 {
@@ -21,16 +21,16 @@ Emitted once when the bot connects to the Discord gateway. This fires before sla
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `bot_id` | string | Bot's user snowflake ID |
-| `bot_name` | string | Bot's username and discriminator |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `bot_id` | string | Bot 的使用者雪花 ID |
+| `bot_name` | string | Bot 的使用者名稱與識別碼 |
 
 ---
 
 ## slash_commands_synced
 
-Emitted after slash commands have been registered with Discord (only if `--slash-commands` was provided).
+在 Discord 已註冊 slash 指令後會發送（僅當傳入 `--slash-commands` 時）。
 
 ```json
 {
@@ -40,16 +40,16 @@ Emitted after slash commands have been registered with Discord (only if `--slash
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `count` | integer | Number of slash commands registered |
-| `guilds` | integer | Number of guilds commands were synced to |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `count` | integer | 已註冊的 slash 指令數 |
+| `guilds` | integer | 已同步指令的伺服器數量 |
 
 ---
 
 ## message
 
-Emitted when a message is sent in a visible channel. Bot messages from other bots are excluded; the bot's own messages are included by default (controlled by `--include-self` / `--no-include-self`).
+在可見頻道中有訊息送出時發送。其它機器人的訊息會被排除；本機器人自己的訊息預設會包含（由 `--include-self` / `--no-include-self` 控制）。
 
 ```json
 {
@@ -71,28 +71,28 @@ Emitted when a message is sent in a visible channel. Bot messages from other bot
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string \| null | Server name, or `null` for DMs |
-| `server_id` | string \| null | Server snowflake ID, or `null` for DMs |
-| `channel` | string | Channel name, or `"DM"` for direct messages |
-| `channel_id` | string | Channel snowflake ID |
-| `author` | string | Message author's username |
-| `author_id` | string | Author's user snowflake ID |
-| `is_bot` | boolean | Whether the author is a bot |
-| `content` | string | Message text content |
-| `timestamp` | string | ISO 8601 timestamp |
-| `message_id` | string | Message snowflake ID |
-| `mentions_bot` | boolean | Whether the message @-mentions the bot |
-| `is_dm` | boolean | Whether this is a direct message |
-| `attachments` | array | List of `&#123;"filename", "url", "size"&#125;` objects |
-| `reply_to` | string \| null | Message ID this is a reply to, or `null` |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string \| null | 伺服器名稱，DM 為 `null` |
+| `server_id` | string \| null | 伺服器雪花 ID，DM 為 `null` |
+| `channel` | string | 頻道名稱，DM 為 `"DM"` |
+| `channel_id` | string | 頻道雪花 ID |
+| `author` | string | 訊息作者名稱 |
+| `author_id` | string | 作者的使用者雪花 ID |
+| `is_bot` | boolean | 是否為機器人 |
+| `content` | string | 訊息文字內容 |
+| `timestamp` | string | ISO 8601 時間戳 |
+| `message_id` | string | 訊息雪花 ID |
+| `mentions_bot` | boolean | 是否 @ 提及本機器人 |
+| `is_dm` | boolean | 是否為 DM |
+| `attachments` | array | `&#123;"filename", "url", "size"&#125;` 物件清單 |
+| `reply_to` | string \| null | 回覆目標訊息 ID，或 `null` |
 
 ---
 
 ## slash_command
 
-Emitted when a user invokes a registered slash command. The interaction is automatically deferred (shows "thinking..."). You must respond using `interaction_followup` or `stream_start` with the `interaction_token`.
+使用者觸發已註冊 slash 指令時會發送。互動會自動延遲回覆（顯示「thinking...」）。必須使用 `interaction_followup` 或 `stream_start` 搭配 `interaction_token` 回覆。
 
 ```json
 {
@@ -108,22 +108,22 @@ Emitted when a user invokes a registered slash command. The interaction is autom
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `command` | string | Slash command name |
-| `args` | object | Key-value map of command arguments (all values are strings) |
-| `channel_id` | string | Channel where the command was invoked |
-| `user` | string | Username of the invoking user |
-| `user_id` | string | User snowflake ID |
-| `guild_id` | string \| null | Server ID, or `null` for DM slash commands |
-| `interaction_token` | string | Token for responding via `interaction_followup` or `stream_start` |
-| `is_admin` | boolean | Whether the user has administrator permission in the guild |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `command` | string | slash 指令名稱 |
+| `args` | object | 指令參數的鍵值對（值皆為字串） |
+| `channel_id` | string | 指令被觸發的頻道 |
+| `user` | string | 觸發者名稱 |
+| `user_id` | string | 觸發者使用者雪花 ID |
+| `guild_id` | string \| null | 伺服器 ID，DM slash 指令為 `null` |
+| `interaction_token` | string | 用於透過 `interaction_followup` 或 `stream_start` 回覆的 token |
+| `is_admin` | boolean | 使用者是否具備該伺服器管理員權限 |
 
 ---
 
 ## message_edit
 
-Emitted when a non-bot user edits a message.
+非機器人使用者編輯訊息時會發送。
 
 ```json
 {
@@ -141,24 +141,24 @@ Emitted when a non-bot user edits a message.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string \| null | Server name |
-| `server_id` | string \| null | Server snowflake ID |
-| `channel` | string | Channel name |
-| `channel_id` | string | Channel snowflake ID |
-| `author` | string | Author username |
-| `author_id` | string | Author user snowflake ID |
-| `message_id` | string | Edited message snowflake ID |
-| `old_content` | string \| null | Previous message content (may be null if uncached) |
-| `new_content` | string | New message content |
-| `timestamp` | string | ISO 8601 timestamp of the edit |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string \| null | 伺服器名稱 |
+| `server_id` | string \| null | 伺服器雪花 ID |
+| `channel` | string | 頻道名稱 |
+| `channel_id` | string | 頻道雪花 ID |
+| `author` | string | 作者名稱 |
+| `author_id` | string | 作者使用者雪花 ID |
+| `message_id` | string | 已編輯訊息的雪花 ID |
+| `old_content` | string \| null | 編輯前內容（若未快取可能為 null） |
+| `new_content` | string | 編輯後內容 |
+| `timestamp` | string | 編輯發生時間（ISO 8601） |
 
 ---
 
 ## message_delete
 
-Emitted when a message is deleted.
+訊息被刪除時會發送。
 
 ```json
 {
@@ -174,22 +174,22 @@ Emitted when a message is deleted.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string \| null | Server name |
-| `server_id` | string \| null | Server snowflake ID |
-| `channel` | string | Channel name |
-| `channel_id` | string | Channel snowflake ID |
-| `author` | string \| null | Author username (null if uncached) |
-| `author_id` | string \| null | Author user snowflake ID (null if uncached) |
-| `message_id` | string | Deleted message snowflake ID |
-| `content` | string \| null | Message content (null if uncached) |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string \| null | 伺服器名稱 |
+| `server_id` | string \| null | 伺服器雪花 ID |
+| `channel` | string | 頻道名稱 |
+| `channel_id` | string | 頻道雪花 ID |
+| `author` | string \| null | 作者名稱（未快取時為 null） |
+| `author_id` | string \| null | 作者使用者雪花 ID（未快取時為 null） |
+| `message_id` | string | 被刪除訊息的雪花 ID |
+| `content` | string \| null | 訊息內容（未快取時為 null） |
 
 ---
 
 ## reaction_add
 
-Emitted when a user adds a reaction to a message.
+使用者為訊息加上反應時會發送。
 
 ```json
 {
@@ -204,26 +204,25 @@ Emitted when a user adds a reaction to a message.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string \| null | Server name |
-| `channel` | string | Channel name |
-| `channel_id` | string | Channel snowflake ID |
-| `message_id` | string | Message snowflake ID |
-| `emoji` | string | Emoji name or unicode character |
-| `user` | string | Username of the user who reacted |
-| `user_id` | string | User snowflake ID |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string \| null | 伺服器名稱 |
+| `channel` | string | 頻道名稱 |
+| `channel_id` | string | 頻道雪花 ID |
+| `message_id` | string | 訊息雪花 ID |
+| `emoji` | string | Emoji 名稱或 Unicode 字元 |
+| `user` | string | 反應使用者名稱 |
+| `user_id` | string | 反應使用者的使用者雪花 ID |
 
 ---
 
 ## reaction_remove
 
-Emitted when a user removes a reaction from a message.
+使用者移除訊息反應時會發送。
 
 ```json
 {
   "event": "reaction_remove",
-  "server": "My Server",
   "channel": "general",
   "channel_id": "789012",
   "message_id": "333444",
@@ -233,21 +232,21 @@ Emitted when a user removes a reaction from a message.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string \| null | Server name |
-| `channel` | string | Channel name |
-| `channel_id` | string | Channel snowflake ID |
-| `message_id` | string | Message snowflake ID |
-| `emoji` | string | Emoji name or unicode character |
-| `user` | string | Username of the user |
-| `user_id` | string | User snowflake ID |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string \| null | 伺服器名稱 |
+| `channel` | string | 頻道名稱 |
+| `channel_id` | string | 頻道雪花 ID |
+| `message_id` | string | 訊息雪花 ID |
+| `emoji` | string | Emoji 名稱或 Unicode 字元 |
+| `user` | string | 反應使用者名稱 |
+| `user_id` | string | 使用者雪花 ID |
 
 ---
 
 ## member_join
 
-Emitted when a new member joins a server.
+新成員加入伺服器時會發送。
 
 ```json
 {
@@ -259,18 +258,18 @@ Emitted when a new member joins a server.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string | Server name |
-| `server_id` | string | Server snowflake ID |
-| `member` | string | New member's username |
-| `member_id` | string | Member's user snowflake ID |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string | 伺服器名稱 |
+| `server_id` | string | 伺服器雪花 ID |
+| `member` | string | 新成員名稱 |
+| `member_id` | string | 成員使用者雪花 ID |
 
 ---
 
 ## member_remove
 
-Emitted when a member leaves or is removed from a server.
+成員離開或被移出伺服器時會發送。
 
 ```json
 {
@@ -282,18 +281,18 @@ Emitted when a member leaves or is removed from a server.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `server` | string | Server name |
-| `server_id` | string | Server snowflake ID |
-| `member` | string | Member's username |
-| `member_id` | string | Member's user snowflake ID |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `server` | string | 伺服器名稱 |
+| `server_id` | string | 伺服器雪花 ID |
+| `member` | string | 成員名稱 |
+| `member_id` | string | 成員使用者雪花 ID |
 
 ---
 
 ## voice_state
 
-Emitted when a member's voice state changes (joins, leaves, moves between, or updates settings in a voice channel).
+當語音成員狀態變更時（加入、離開、頻道移動，或更新語音設定）會發送。
 
 ```json
 {
@@ -305,22 +304,22 @@ Emitted when a member's voice state changes (joins, leaves, moves between, or up
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `action` | string | One of `joined`, `left`, `moved`, or `updated` |
-| `member` | string | Member's username |
-| `channel` | string | Voice channel name |
-| `channel_id` | string | Voice channel snowflake ID |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `action` | string | 可能為 `joined`、`left`、`moved`、`updated` 之一 |
+| `member` | string | 成員名稱 |
+| `channel` | string | 語音頻道名稱 |
+| `channel_id` | string | 語音頻道雪花 ID |
 
 ---
 
-## Voice events
+## Voice 事件
 
-Voice events are emitted by the engine when the bot connects, plays audio, or transcribes speech. Each has the standard `event` field plus a `guild_id`.
+Bot 連線、播放音訊、轉譯語音時，語音引擎會輸出這些事件。每則事件都包含標準的 `event` 欄位與 `guild_id`。
 
 ### voice_connected
 
-Emitted after the bot joins a voice channel.
+Bot 加入語音頻道後發送。
 
 ```json
 {"event": "voice_connected", "guild_id": "767327865100304394", "channel_id": "1016638171854938152"}
@@ -328,7 +327,7 @@ Emitted after the bot joins a voice channel.
 
 ### voice_disconnected
 
-Emitted after the bot leaves a voice channel.
+Bot 離開語音頻道後發送。
 
 ```json
 {"event": "voice_disconnected", "guild_id": "767327865100304394"}
@@ -336,20 +335,20 @@ Emitted after the bot leaves a voice channel.
 
 ### voice_playback_started
 
-Emitted when TTS or file playback begins.
+TTS 或檔案播放開始時發送。
 
 ```json
 {"event": "voice_playback_started", "guild_id": "767327865100304394", "type": "tts"}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | `tts` or `file` |
-| `source` | string | Source URL/path (for `file` type) |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `type` | string | `tts` 或 `file` |
+| `source` | string | 來源 URL/路徑（`file` 類型） |
 
 ### voice_playback_finished
 
-Emitted when playback completes or is stopped.
+播放完成或被中止時發送。
 
 ```json
 {"event": "voice_playback_finished", "guild_id": "767327865100304394"}
@@ -357,7 +356,7 @@ Emitted when playback completes or is stopped.
 
 ### voice_speech_detected
 
-Emitted when STT returns a finalised transcription for a speaker. Interim partials are not surfaced — only finals.
+STT 回傳特定成員最終稿文字時發送。不會輸出未完成的中繼結果，僅輸出最終結果。
 
 ```json
 {
@@ -371,18 +370,18 @@ Emitted when STT returns a finalised transcription for a speaker. Interim partia
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `user_id` | string | Speaker's user snowflake ID |
-| `text` | string | Finalised transcript |
-| `confidence` | number | Provider-reported confidence (`0.0` – `1.0`) |
-| `is_final` | bool | Always `true` for this event (interim partials are filtered out) |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `user_id` | string | 發言者使用者雪花 ID |
+| `text` | string | 最終稿文字 |
+| `confidence` | number | 供應者回報的信心值（`0.0` – `1.0`） |
+| `is_final` | bool | 此事件永遠為 `true`（中繼結果會被過濾） |
 
 ---
 
 ## component_interaction
 
-Emitted when a user interacts with a message component (button click, select menu choice). Respond using `interaction_respond`, `interaction_edit`, or `modal_send` with the `interaction_token`.
+使用者與訊息元件互動（按鈕點擊、下拉選單選擇）時發送。回覆可使用 `interaction_respond`、`interaction_edit` 或 `modal_send`，並傳入 `interaction_token`。
 
 ```json
 {
@@ -395,19 +394,19 @@ Emitted when a user interacts with a message component (button click, select men
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `custom_id` | string | The `custom_id` set on the component |
-| `component_type` | integer | Component type (`2` = button, `3` = select menu) |
-| `values` | array | Selected values (empty for buttons, populated for select menus) |
-| `user` | string | Username of the interacting user |
-| `interaction_token` | string | Token for responding to the interaction |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `custom_id` | string | 元件上設定的 `custom_id` |
+| `component_type` | integer | 元件類型（`2` = 按鈕、`3` = 下拉選單） |
+| `values` | array | 已選值（按鈕為空陣列，下拉選單有值） |
+| `user` | string | 互動者名稱 |
+| `interaction_token` | string | 回覆互動用 token |
 
 ---
 
 ## modal_submit
 
-Emitted when a user submits a modal form. Respond using `interaction_respond` or `interaction_edit` with the `interaction_token`.
+使用者提交 modal 時會發送。回覆可使用 `interaction_respond` 或 `interaction_edit` 搭配 `interaction_token`。
 
 ```json
 {
@@ -419,42 +418,42 @@ Emitted when a user submits a modal form. Respond using `interaction_respond` or
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `custom_id` | string | The `custom_id` set on the modal |
-| `fields` | object | Key-value map of field `custom_id` to submitted value |
-| `user` | string | Username of the submitting user |
-| `interaction_token` | string | Token for responding to the submission |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `custom_id` | string | modal 上設定的 `custom_id` |
+| `fields` | object | 欄位 `custom_id` 與回傳值的鍵值對 |
+| `user` | string | 提交者名稱 |
+| `interaction_token` | string | 回覆互動提交用 token |
 
 ---
 
 ## disconnected
 
-Emitted when the bot loses its connection to the Discord gateway.
+機器人與 Discord gateway 連線中斷時發送。
 
 ```json
 {"event": "disconnected"}
 ```
 
-No additional fields.
+無額外欄位。
 
 ---
 
 ## resumed
 
-Emitted when the bot successfully reconnects to the Discord gateway after a disconnection.
+機器人斷線後成功重連到 Discord gateway 時發送。
 
 ```json
 {"event": "resumed"}
 ```
 
-No additional fields.
+無額外欄位。
 
 ---
 
 ## response
 
-Emitted as the reply to every stdin action. Contains `"ok": true` on success or an `"error"` string on failure. If the original action included a `req_id`, it is echoed back.
+回覆 stdin 每筆指令皆使用此事件。若成功則包含 `"ok": true`，失敗則為 `"error"` 字串。若原始指令帶有 `req_id`，會回傳相同值。
 
 ```json
 {"event": "response", "ok": true, "message_id": "789", "req_id": "1"}
@@ -464,57 +463,57 @@ Emitted as the reply to every stdin action. Contains `"ok": true` on success or 
 {"event": "response", "error": "Channel not found: 999", "req_id": "2"}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `ok` | boolean | Present and `true` on success |
-| `error` | string | Present on failure with an error description |
-| `req_id` | string | Echoed from the original action, if provided |
-| _(varies)_ | | Additional fields depend on the action (see [Serve Actions](/reference/serve-actions)) |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `ok` | boolean | 成功時存在且為 `true` |
+| `error` | string | 失敗時存在，內容為錯誤描述 |
+| `req_id` | string | 若有提供，回傳原始 `req_id` |
+| _(依動作而異)_ | | 額外欄位會依 action 不同而變動，請參考 [Serve 動作](/reference/serve-actions) |
 
 ---
 
 ## error
 
-Emitted when an internal error occurs (e.g., invalid JSON on stdin, slash command sync failure).
+當內部錯誤發生時發送，例如 stdin JSON 無效、slash 指令同步失敗。
 
 ```json
 {"event": "error", "message": "Invalid JSON: {bad input"}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `message` | string | Error description |
+| 欄位 | 型別 | 說明 |
+|-------|------|------|
+| `message` | string | 錯誤描述 |
 
 ---
 
 ## shutdown
 
-Emitted when the bot process is shutting down (e.g., Ctrl+C).
+當 Bot 程序進入關機流程時發送，例如 Ctrl+C。
 
 ```json
 {"event": "shutdown"}
 ```
 
-No additional fields.
+無額外欄位。
 
 ---
 
-## Event Filtering
+## 事件篩選
 
-Use the `--events` option to limit which events are emitted. Pass a comma-separated list of event categories:
+可用 `--events` 選項限制輸出事件。傳入以逗號分隔的事件分類清單：
 
-| Category | Events included |
+| 分類 | 含蓋事件 |
 |----------|-----------------|
 | `messages` | `message` |
 | `edits` | `message_edit` |
 | `deletes` | `message_delete` |
-| `reactions` | `reaction_add`, `reaction_remove` |
-| `members` | `member_join`, `member_remove` |
-| `voice` | `voice_state`, `voice_connected`, `voice_disconnected`, `voice_playback_started`, `voice_playback_finished`, `voice_speech_detected` |
+| `reactions` | `reaction_add`、`reaction_remove` |
+| `members` | `member_join`、`member_remove` |
+| `voice` | `voice_state`、`voice_connected`、`voice_disconnected`、`voice_playback_started`、`voice_playback_finished`、`voice_speech_detected` |
 
-The `ready`, `slash_command`, `slash_commands_synced`, `component_interaction`, `modal_submit`, `response`, `error`, `disconnected`, `resumed`, and `shutdown` events are always emitted regardless of the filter.
+`ready`、`slash_command`、`slash_commands_synced`、`component_interaction`、`modal_submit`、`response`、`error`、`disconnected`、`resumed`、`shutdown` 事件不受此篩選影響，始終輸出。
 
-Example:
+範例：
 
 ```
 discli serve --events messages,reactions

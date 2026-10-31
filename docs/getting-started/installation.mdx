@@ -1,33 +1,33 @@
 ---
-title: Installation
-description: Install discli on macOS, Linux, or Windows
+title: 安裝
+description: 在 macOS、Linux 或 Windows 安裝 discli
 ---
 
-# Installation
+# 安裝
 
-discli runs on **Python 3.10+** and works on macOS, Linux, and Windows. Pick the installation method that suits your workflow.
+discli 使用 **Python 3.10+**，可在 macOS、Linux 與 Windows 執行。請依你的作業流程選擇適合的安裝方式。
 
-## Requirements
+## 安裝需求
 
-Before installing, make sure you have:
+安裝前請先確認已具備以下條件：
 
-- **Python 3.10 or later** — check with `python --version` or `python3 --version`
-- **A Discord bot token** — you will need this to authenticate. See [Your First Bot](/getting-started/your-first-bot) if you do not have one yet.
+- **Python 3.10 或更新版本** — 可用 `python --version` 或 `python3 --version` 檢查
+- **Discord 機器人 Token** — 需要用來完成驗證。若你尚未取得，請先參考 [第一個機器人](/getting-started/your-first-bot)。
 
-## Install discli
+## 安裝 discli
 
 <Tabs>
-  <Tab title="pip (recommended)">
-    The fastest way to install discli is from PyPI:
+  <Tab title="pip（建議）">
+    最快的安裝方式是透過 PyPI 安裝 discli：
 
     ```bash
     pip install discord-cli-agent
     ```
 
-    This installs the `discli` command globally along with its dependencies ([discord.py](https://pypi.org/project/discord.py/) and [click](https://pypi.org/project/click/)).
+    這會連同依賴套件（[discord.py](https://pypi.org/project/discord.py/) 與 [click](https://pypi.org/project/click/)）一起安裝 `discli` 指令到全域環境。
 
     <Callout type="tip">
-      If you use virtual environments (recommended for project isolation), activate your environment first:
+      如果你使用虛擬環境（建議用於專案隔離），請先啟用環境：
 
       ```bash
       python -m venv .venv
@@ -38,20 +38,20 @@ Before installing, make sure you have:
     </Callout>
   </Tab>
 
-  <Tab title="macOS / Linux (curl)">
-    Use the one-line installer to download and set up discli automatically:
+  <Tab title="macOS / Linux（curl）">
+    使用一行安裝指令可自動下載並完成 discli 安裝：
 
     ```bash
     curl -fsSL https://raw.githubusercontent.com/DevRohit06/discli/main/installers/install.sh | bash
     ```
 
-    This script will:
-    1. Check that Python 3.10+ is available
-    2. Install `discord-cli-agent` via pip
-    3. Verify the installation
+    這支指令會：
+    1. 檢查 Python 3.10+ 是否可用
+    2. 用 pip 安裝 `discord-cli-agent`
+    3. 驗證安裝結果
 
     <Callout type="note">
-      If you prefer not to pipe to bash, you can download the script first and inspect it:
+      若不想直接 pipe 到 bash，可先下載指令稿再檢查內容：
 
       ```bash
       curl -fsSL https://raw.githubusercontent.com/DevRohit06/discli/main/installers/install.sh -o install.sh
@@ -61,17 +61,17 @@ Before installing, make sure you have:
     </Callout>
   </Tab>
 
-  <Tab title="Windows (PowerShell)">
-    Open PowerShell and run:
+  <Tab title="Windows（PowerShell）">
+    開啟 PowerShell 並執行：
 
     ```powershell
     irm https://raw.githubusercontent.com/DevRohit06/discli/main/installers/install.ps1 | iex
     ```
 
-    This script handles Python detection and installs `discord-cli-agent` via pip.
+    這支指令會偵測 Python 後，透過 pip 安裝 `discord-cli-agent`。
 
     <Callout type="warning">
-      You may need to adjust your PowerShell execution policy first:
+      你可能需要先調整 PowerShell 的執行原則：
 
       ```powershell
       Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -79,8 +79,8 @@ Before installing, make sure you have:
     </Callout>
   </Tab>
 
-  <Tab title="From source">
-    Clone the repository and install in development mode:
+  <Tab title="從原始碼安裝">
+    複製原始碼庫並以可編輯模式安裝：
 
     ```bash
     git clone https://github.com/DevRohit06/discli.git
@@ -88,13 +88,13 @@ Before installing, make sure you have:
     pip install -e ".[dev]"
     ```
 
-    This installs discli in editable mode with development dependencies (pytest, pytest-asyncio), so you can modify the source and see changes immediately.
+    此方法會以可編輯模式安裝 discli，並包含開發相依套件（pytest、pytest-asyncio），方便你修改原始碼後立即驗證。
   </Tab>
 </Tabs>
 
-## Verify the installation
+## 驗證安裝
 
-After installing, confirm that discli is available and check which version you got:
+安裝後請確認 `discli` 是否可用，並檢查安裝的版本：
 
 ```bash
 discli --version
@@ -103,107 +103,105 @@ discli --version
 discli --help
 ```
 
-You should see output like:
+你應該會看到類似輸出：
 
 ```
-Usage: discli [OPTIONS] COMMAND [ARGS]...
+用法：discli [選項] 指令 [參數]...
 
-  discli — Discord CLI for AI agents.
+  discli — 給 AI 代理使用的 Discord CLI。
 
-Options:
-  -V, --version                   Show the version and exit.
-  --token TEXT                     Discord bot token.
-  --json                          Output as JSON.
-  -y, --yes                       Skip confirmation prompts for destructive
-                                  actions.
+選項：
+  -V, --version                    顯示版本並結束。
+  --token TEXT                     Discord 機器人 token。
+  --json                           以 JSON 格式輸出。
+  -y, --yes                        略過破壞性動作的確認提示。
   --profile [full|chat|readonly|moderation]
-                                  Override permission profile for this
-                                  invocation.
-  --help                          Show this message and exit.
+                                  覆寫本次執行使用的權限設定檔。
+  --help                           顯示這則訊息並結束。
 
-Commands:
-  audit       View the audit log.
-  channel     Manage channels.
-  config      Manage discli configuration.
-  dm          Send and read direct messages.
-  listen      Listen to real-time Discord events.
-  member      Manage server members.
-  message     Send, read, and manage messages.
-  permission  Manage permission profiles for command access control.
-  poll        Create and manage polls.
-  reaction    Manage message reactions.
-  role        Manage server roles.
-  serve       Start a persistent agent session (JSONL protocol).
-  server      List and inspect servers.
-  thread      Manage threads.
-  typing      Show typing indicator in a channel.
+指令：
+  audit       檢視稽核日誌。
+  channel     管理頻道。
+  config      管理 discli 設定。
+  dm          傳送及讀取私人訊息。
+  listen      接收即時 Discord 事件。
+  member      管理伺服器成員。
+  message     傳送、讀取及管理訊息。
+  permission  管理指令存取控制的權限設定檔。
+  poll        建立及管理投票。
+  reaction    管理訊息反應。
+  role        管理伺服器身分組。
+  serve       啟動持續執行的代理工作階段（JSONL 通訊協定）。
+  server      列出及檢視伺服器。
+  thread      管理討論串。
+  typing      在頻道中顯示輸入中指示器。
 ```
 
 <Callout type="danger">
-  If you see `command not found: discli`, make sure the Python scripts directory is on your `PATH`. For pip installs, this is typically `~/.local/bin` on Linux/macOS or `%APPDATA%\Python\Scripts` on Windows.
+  如果出現 `command not found: discli`，請確認 Python 的 scripts 目錄已加入 `PATH`。pip 安裝通常在 Linux/macOS 為 `~/.local/bin`，在 Windows 為 `%APPDATA%\Python\Scripts`。
 </Callout>
 
-## Optional: voice features
+## 選用項目：語音功能
 
-The core install is **text-only** by design — voice pulls in heavy dependencies (PyNaCl, discord-ext-voice-recv, davey, audioop-lts) you don't need for chat-only bots. Install voice extras when you want them:
+核心安裝預設為 **僅文字模式**。若僅用聊天機器人，可不安裝語音依賴；語音功能會引入較重的套件（PyNaCl、discord-ext-voice-recv、davey、audioop-lts）。在需要時再安裝語音額外套件：
 
 ```bash
 pip install 'discord-cli-agent[voice,deepgram]'
-# or, in a checkout:
+# 或是用套件管理指令：
 uv sync --extra voice --extra deepgram
 ```
 
-Available extras:
+可用的額外套件：
 
-| Extra | Adds |
+| 額外套件 | 說明 |
 |-------|------|
-| `voice` | Core voice send/receive, Silero VAD, audioop-lts (Python 3.13+) |
-| `deepgram` | Deepgram streaming STT + Aura TTS |
+| `voice` | 核心語音收發、Silero VAD、audioop-lts（支援 Python 3.13+） |
+| `deepgram` | Deepgram 串流 STT + Aura TTS |
 | `elevenlabs` | ElevenLabs TTS |
 | `openai-voice` | OpenAI Whisper STT + TTS |
-| `all-voice` | `voice` + `elevenlabs` + `deepgram` (convenience meta) |
+| `all-voice` | `voice` + `elevenlabs` + `deepgram`（便利性匯總） |
 
-You'll also need **libopus** on the system (`apt install libopus0`, `brew install opus`) and **ffmpeg** if you want to use `voice play` or TTS playback.
+使用 `voice play` 或 TTS 播放時，系統亦需安裝 **libopus**（`apt install libopus0`、`brew install opus`）與 **ffmpeg**。
 
-Verify with:
-
-```bash
-discli doctor
-```
-
-See the [Voice guide](/guides/voice) for the full setup.
-
-## Diagnose your install
+可用下列指令驗證：
 
 ```bash
 discli doctor
 ```
 
-Reports the state of everything discli needs grouped into CORE / VOICE / STT / TTS / TOOLS. Optional dependencies you haven't asked for are silenced — a pure-text dev sees a clean two-section report. `--json` for scripting.
+完整設定請參考[語音指南](/guides/voice)。
 
-## Upgrading
+## 檢查安裝狀態
 
-To upgrade to the latest version:
+```bash
+discli doctor
+```
+
+`discli doctor` 會依 CORE / VOICE / STT / TTS / TOOLS 分組回報 discli 所需元件。未安裝的選用依賴不會顯示為錯誤訊息；純文字使用者可看到精簡的兩段式報表。若要做腳本串接請加上 `--json`。
+
+## 升級
+
+升級到最新版本：
 
 ```bash
 pip install --upgrade discord-cli-agent
 ```
 
-## Uninstalling
+## 移除
 
 ```bash
 pip uninstall discord-cli-agent
 ```
 
-This removes the `discli` command but leaves your configuration at `~/.discli/` intact. Delete that directory manually if you want a clean removal.
+這只會移除 `discli` 指令，不會刪除 `~/.discli/` 的設定目錄；若要完整移除，請手動刪除該目錄。
 
-## Next steps
+## 後續步驟
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" href="/getting-started/quickstart">
-    Send your first Discord message in 2 minutes.
+  <Card title="快速上手" href="/getting-started/quickstart">
+    兩分鐘內傳送第一則 Discord 訊息。
   </Card>
-  <Card title="Configuration" href="/getting-started/configuration">
-    Set up your bot token and permission profiles.
+  <Card title="設定" href="/getting-started/configuration">
+    設定機器人 Token 與權限設定檔。
   </Card>
 </CardGroup>

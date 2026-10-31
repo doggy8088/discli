@@ -1,69 +1,69 @@
 ---
-title: Quickstart
-description: Send your first Discord message in 2 minutes
+title: 快速上手
+description: 兩分鐘內傳送第一則 Discord 訊息
 ---
 
-# Quickstart
+# 快速上手
 
-Go from zero to sending Discord messages in under 2 minutes. This guide assumes you have already [installed discli](/getting-started/installation) and have a Discord bot token. If you need a token, follow the [Your First Bot](/getting-started/your-first-bot) guide first.
+兩分鐘內完成第一則 Discord 訊息。這份指南假設你已完成 [discli 安裝](/getting-started/installation) 且已有 Discord 機器人 Token。若尚未擁有，先依 [第一個機器人](/getting-started/your-first-bot) 說明取得。
 
 <Steps>
-  <Step title="Set your bot token">
-    Store your Discord bot token so discli can authenticate:
+  <Step title="設定機器人 Token">
+    儲存 Discord 機器人 Token，供 discli 進行驗證：
 
     ```bash
     discli config set token YOUR_BOT_TOKEN
     ```
 
     ```
-    Set token.
+    已設定 Token。
     ```
 
-    This saves the token to `~/.discli/config.json`. You only need to do this once.
+    此操作會將 Token 存到 `~/.discli/config.json`，只需設定一次。
 
     <Callout type="tip">
-      You can also pass the token per-command with `--token YOUR_BOT_TOKEN` or set the `DISCORD_BOT_TOKEN` environment variable. See [Configuration](/getting-started/configuration) for details.
+      你也可以在單次指令中用 `--token YOUR_BOT_TOKEN`，或設定 `DISCORD_BOT_TOKEN` 環境變數。詳情請參考[設定](/getting-started/configuration)。
     </Callout>
   </Step>
 
-  <Step title="Send a message">
-    Send a message to a channel your bot has access to:
+  <Step title="傳送訊息">
+    向機器人可存取的頻道傳送訊息：
 
     ```bash
-    discli message send "#general" "Hello from discli!"
+    discli message send "#general" "來自 discli 的問候！"
     ```
 
     ```
-    Message sent to #general (ID: 1234567890123456789)
+    已傳送訊息到 #general（ID：1234567890123456789）
     ```
 
-    Check your Discord server — the message should appear in the channel.
+    回到 Discord 伺服器確認，訊息應該會出現在該頻道。
 
     <Callout type="note">
-      **Channel identifiers:** You can reference channels by name with a `#` prefix (e.g., `#general`) or by their raw numeric ID (e.g., `1234567890123456789`). Channel names are matched within the server the bot has access to. If your bot is in multiple servers with identically named channels, use the numeric ID to be precise.
+      **頻道識別方式：**你可使用 `#` 開頭的頻道名稱（例如 `#general`）或使用純數字 ID（例如 `1234567890123456789`）。頻道名稱會在機器人可存取的伺服器內比對；若同名頻道出現在多個伺服器，建議改用 ID 以避免誤判。
     </Callout>
   </Step>
 
-  <Step title="Read messages">
-    Fetch the most recent messages from a channel:
+  <Step title="讀取訊息">
+    取得頻道最近幾則訊息：
 
     ```bash
     discli message list "#general" --limit 5
     ```
 
     ```
-    [2026-03-15 10:32] discli-bot: Hello from discli!
-    [2026-03-15 10:30] Alice: Has anyone tried the new CLI tool?
-    [2026-03-15 10:28] Bob: Good morning everyone!
-    [2026-03-15 10:15] Alice: Welcome to the server!
-    [2026-03-15 09:45] Bob: Hey folks
+    [2026-03-15 10:32] discli-bot: 來自 discli 的問候！
+    [2026-03-15 10:30] Alice: 有人試過這個新 CLI 工具嗎？
+    [2026-03-15 10:28] Bob: 早安，大家好！
+    [2026-03-15 10:15] Alice: 歡迎加入伺服器！
+    [2026-03-15 09:45] Bob: 嗨，大家
     ```
 
-    The output shows the most recent messages, newest first, with timestamps and authors.
+    輸出會列出最近訊息，採新到舊排序，並顯示時間與作者。
   </Step>
 
-  <Step title="Try JSON output">
-    Add the `--json` flag to get structured output, perfect for piping to other tools or feeding to an AI agent:
+  <Step title="使用 JSON 輸出">
+    加上 `--json` 旗標可取得結構化輸出，適合接到其他工具、或供 AI 代理處理：
 
     ```bash
     discli --json message list "#general" --limit 3
@@ -75,7 +75,7 @@ Go from zero to sending Discord messages in under 2 minutes. This guide assumes 
         "id": "1234567890123456789",
         "author": "discli-bot",
         "author_id": "9876543210987654321",
-        "content": "Hello from discli!",
+        "content": "來自 discli 的問候！",
         "timestamp": "2026-03-15T10:32:00+00:00",
         "channel": "general",
         "channel_id": "1111111111111111111",
@@ -85,7 +85,7 @@ Go from zero to sending Discord messages in under 2 minutes. This guide assumes 
         "id": "1234567890123456780",
         "author": "Alice",
         "author_id": "2222222222222222222",
-        "content": "Has anyone tried the new CLI tool?",
+        "content": "有人試過這個新 CLI 工具嗎？",
         "timestamp": "2026-03-15T10:30:00+00:00",
         "channel": "general",
         "channel_id": "1111111111111111111",
@@ -95,7 +95,7 @@ Go from zero to sending Discord messages in under 2 minutes. This guide assumes 
         "id": "1234567890123456770",
         "author": "Bob",
         "author_id": "3333333333333333333",
-        "content": "Good morning everyone!",
+        "content": "早安，大家好！",
         "timestamp": "2026-03-15T10:28:00+00:00",
         "channel": "general",
         "channel_id": "1111111111111111111",
@@ -105,50 +105,50 @@ Go from zero to sending Discord messages in under 2 minutes. This guide assumes 
     ```
 
     <Callout type="tip">
-      The `--json` flag works with every command. It is placed **before** the subcommand: `discli --json message list`, not `discli message list --json`.
+      `--json` 旗標可用於所有指令，且必須放在子指令前面：`discli --json message list`，而非 `discli message list --json`。
     </Callout>
   </Step>
 </Steps>
 
-## What else can you do?
+## 還能做什麼？
 
-Here are a few more commands to try:
+你可以再嘗試以下指令：
 
 ```bash
-# List servers your bot is in
+# 列出機器人所在的伺服器
 discli server list
 
-# List channels in a server
+# 列出伺服器中的頻道
 discli channel list "My Server"
 
-# Send a DM to a user
-discli dm send @username "Hey there!"
+# 傳送 DM 給使用者
+discli dm send @username "你好，這裡是測試訊息"
 
-# React to a message
+# 為訊息加上表情回應
 discli reaction add "#general" MESSAGE_ID "👍"
 
-# Search messages
-discli message search "#general" "search term"
+# 搜尋訊息
+discli message search "#general" "搜尋關鍵字"
 
-# Start a real-time event stream
+# 開啟即時事件串流
 discli listen
 ```
 
-Run `discli --help` or `discli <command> --help` to explore all available commands and options.
+執行 `discli --help` 或 `discli <command> --help` 可查看全部指令與選項。
 
-## Next steps
+## 下一步
 
 <CardGroup cols={2}>
-  <Card title="Your First Bot" href="/getting-started/your-first-bot">
-    Build a working Discord bot agent from scratch with discli serve.
+  <Card title="第一個機器人" href="/getting-started/your-first-bot">
+    使用 discli serve 從零開始建立可上線的 Discord 機器人代理。
   </Card>
-  <Card title="Configuration" href="/getting-started/configuration">
-    Learn about token management, permission profiles, and config options.
+  <Card title="設定" href="/getting-started/configuration">
+    了解 Token 管理、權限設定檔與設定選項。
   </Card>
-  <Card title="CLI Usage Guide" href="/guides/cli-usage">
-    Deep dive into all available commands and day-to-day usage patterns.
+  <Card title="CLI 用法指南" href="/guides/cli-usage">
+    深入了解可用指令與日常使用情境。
   </Card>
-  <Card title="Building Agents" href="/guides/building-agents">
-    Build progressively more autonomous AI agents on top of discli.
+  <Card title="建立代理" href="/guides/building-agents">
+    逐步打造更自主的 AI 代理。
   </Card>
 </CardGroup>

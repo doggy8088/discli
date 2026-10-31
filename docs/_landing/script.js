@@ -1,8 +1,8 @@
 /* ============================================================
-   discli Landing — Scripts
+   discli 首頁 — 腳本
    ============================================================ */
 
-// --- Copy install command ---
+// --- 複製安裝指令 ---
 window.copyInstall = function () {
   navigator.clipboard.writeText('pip install discord-cli-agent').then(function () {
     var pill = document.getElementById('installPill');
@@ -13,7 +13,7 @@ window.copyInstall = function () {
   });
 };
 
-// --- Copy code snippet ---
+// --- 複製程式碼片段 ---
 window.copyCode = function () {
   var el = document.getElementById('codeSnippet');
   if (!el) return;
@@ -27,7 +27,7 @@ window.copyCode = function () {
   });
 };
 
-// --- Animated terminal in hero ---
+// --- 首頁動態主控台動畫 ---
 (function () {
   var body = document.getElementById('termBody');
   if (!body) return;
@@ -36,20 +36,20 @@ window.copyCode = function () {
   var lines = body.querySelectorAll('.tl');
   var cursor = body.querySelector('.t-cursor');
 
-  // If reduced motion, show everything immediately
+  // 若啟用降低動態效果，立即顯示所有內容
   if (reducedMotion) {
     lines.forEach(function (l) { l.style.opacity = '1'; });
     return;
   }
 
   function run() {
-    // Hide all lines
+  // 隱藏全部列
     lines.forEach(function (l) {
       l.style.transition = 'none';
       l.style.opacity = '0';
     });
 
-    // Reveal each line based on its data-delay
+    // 依照 data-delay 逐列顯示
     lines.forEach(function (line, i) {
       var delay = parseInt(line.getAttribute('data-delay'), 10);
       if (isNaN(delay)) delay = i * 600;
@@ -60,7 +60,7 @@ window.copyCode = function () {
       }, delay);
     });
 
-    // Find max delay and loop after pause
+    // 取得最長延遲並在暫停後重複播放
     var maxDelay = 0;
     lines.forEach(function (l) {
       var d = parseInt(l.getAttribute('data-delay'), 10) || 0;

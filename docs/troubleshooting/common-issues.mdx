@@ -1,250 +1,249 @@
 ---
-title: Common Issues
-description: Solutions for the most frequent discli problems
+title: 常見問題
+description: discli 最常見問題的對應解法
 ---
 
-# Common Issues
+# 常見問題
 
-The most frequent problems people encounter with discli, with symptoms, causes, and fixes.
+以下列出 discli 使用者最常遇到的問題、症狀、根因與處理方式。
 
-## Token not found
+## 找不到 token
 
 <Callout type="danger">
 ```
-Error: No bot token found. Set via `discli config set token`, --token flag, or DISCORD_BOT_TOKEN env var.
+錯誤：找不到機器人 token。請透過 `discli config set token`、`--token` 旗標或 `DISCORD_BOT_TOKEN` 環境變數設定。
 ```
 </Callout>
 
-**Cause:** discli checks three places for your bot token, in order: the `--token` CLI flag, the `DISCORD_BOT_TOKEN` environment variable, and `~/.discli/config.json`. If none of them have a token, you get this error.
+**原因：** discli 會依序檢查三個位置是否有 token：`--token` CLI 參數、`DISCORD_BOT_TOKEN` 環境變數，以及 `~/.discli/config.json`。若三者都沒有，則出現此錯誤。
 
-**Fix:**
+**修正方式：**
 
 ```bash
-# Option 1: Save it permanently
+# 方案一：永久儲存
 discli config set token YOUR_BOT_TOKEN
 
-# Option 2: Set it for the current session
+# 方案二：本次工作階段設定
 export DISCORD_BOT_TOKEN=YOUR_BOT_TOKEN
 
-# Option 3: Pass it per-command
-discli --token YOUR_BOT_TOKEN message send "#general" "hello"
+# 方案三：指令級指定
+ discli --token YOUR_BOT_TOKEN message send "#general" "hello"
 ```
 
-## Permission denied on command
+## 指令被權限拒絕
 
 ```
-Error: Action "channel_delete" is not allowed by profile "safe-agent".
+錯誤：動作 "channel_delete" 不受權限設定檔 "safe-agent" 允許。
 ```
 
-**Cause:** You are running with a permission profile that restricts the command you are trying to use.
+**原因：** 你使用的權限設定檔限制了目前操作。
 
-**Fix:**
+**修正方式：**
 
 ```bash
-# See what the current profile allows
-discli permission show safe-agent
+# 檢查目前設定檔
+ discli permission show safe-agent
 
-# Switch to a different profile
+# 切換到可用的設定檔
 discli serve --profile admin
 
-# Or run without a profile (all actions allowed)
+# 或不帶設定檔（允許全部）
 discli serve
 ```
 
 <Callout type="tip">
-Permission profiles are a safety feature, not a bug. If an agent hits this error, it is working as intended — the profile is preventing an action you did not want the agent to take.
+權限檔是安全機制，不是 bug。若代理收到這個錯誤，表示它的能力邊界生效中，避免它執行你不希望的動作。
 </Callout>
 
-## Bot does not respond to messages
+## 機器人沒有回應訊息
 
-**Symptom:** Your bot is online (green dot in Discord) but ignores all messages. `discli listen --events messages` produces no output.
+**症狀：** 機器人在線上（Discord 顯示綠點）但完全不回應訊息；`discli listen --events messages` 無輸出。
 
-**Cause:** The MESSAGE_CONTENT privileged intent is not enabled for your bot.
+**原因：** 未啟用機器人的 **MESSAGE_CONTENT** Privileged Intent。
 
-**Fix:**
+**修正方式：**
 
 <Steps>
-<Step title="Go to the Discord Developer Portal">
-Open [discord.com/developers/applications](https://discord.com/developers/applications) and select your bot.
+<Step title="前往 Discord Developer Portal">
+打開 [discord.com/developers/applications](https://discord.com/developers/applications) 並選擇你的機器人。
 </Step>
-<Step title="Enable the intent">
-Navigate to **Bot** > **Privileged Gateway Intents** > enable **Message Content Intent**.
+<Step title="啟用 Intent">
+前往 **Bot** > **Privileged Gateway Intents**，勾選 **Message Content Intent**。
 </Step>
-<Step title="Restart discli">
-The intent change takes effect on the next gateway connection. Restart `discli serve` or `discli listen`. One-shot commands do not open a gateway connection at all, so they are unaffected by this toggle.
+<Step title="重啟 discli">
+Intent 的變更會在下一次 Gateway 連線生效。請重啟 `discli serve` 或 `discli listen`。一次性指令完全不會開啟 Gateway 連線，因此不受此切換設定影響。
 </Step>
 </Steps>
 
-## Rate limited errors
+## 被速率限制
 
 ```
-Error: Rate limited. Retry after 2.5s.
+錯誤：觸發速率限制。請在 2.5 秒後重試。
 ```
 
-**Cause:** Either Discord's API rate limiter or discli's built-in rate limiter has been triggered. discli enforces a default limit of 5 destructive actions per 5 seconds to protect your bot from accidental spam.
+**原因：** Discord API 速率限制或 discli 內建速率限制被觸發。discli 預設保護設定為每 5 秒最多 5 次破壞性動作，避免機器人意外發送大量請求。
 
-**Fix:**
+**修正方式：**
 
-- **Reduce frequency** — space out your actions, especially bulk sends
-- **Check your code** — an infinite loop or missing deduplication can cause rapid-fire requests
-- **For Discord 429s** — discli retries automatically with backoff. If you see persistent 429s, you are sending too much traffic
+- **降低發送頻率**：特別是大量發送時要放慢節奏
+- **檢查程式邏輯**：無窮迴圈或缺少去重會造成爆量請求
+- **針對 429**：discli 會自動退避重試；若仍持續 429，表示請求量過高
 
-## `discli listen` shows nothing
+## `discli listen` 無任何輸出
 
-**Symptom:** You run `discli listen --events messages` and the process starts but no events appear, even when messages are sent in the server.
+**症狀：** 執行 `discli listen --events messages` 後進程啟動，但即使 server 有訊息也沒事件。
 
-**Cause:** The Message Content intent is not enabled, or the bot does not have permission to view the channel.
+**原因：** Message Content intent 未啟用，或機器人沒有該頻道的觀看權限。
 
-**Fix:**
+**修正方式：**
 
-1. Enable **Message Content Intent** in the Developer Portal (see above). `--events messages` is the filter that requests it; `--events reactions` does not need it
-2. Verify the bot has **View Channel** and **Read Message History** permissions in the target channel
-3. Check that the bot is actually in the server — `discli server list` should show it
+1. 到開發者主控台啟用 **Message Content Intent**（見上方說明）。`--events messages` 篩選條件會要求此 intent；`--events reactions` 則不需要
+2. 確認機器人在目標頻道具有 **View Channel** 與 **Read Message History** 權限
+3. 檢查機器人是否確實加入伺服器；`discli server list` 應列出該伺服器
 
 <Callout type="note">
-`discli listen` requests only the intents its `--events` filter needs. If you narrowed the
-filter, you narrowed the `IDENTIFY` too — see [Connection Model](/architecture/connection-model).
+`discli listen` 只會要求其 `--events` 篩選條件所需的 intent。縮小篩選範圍也會縮小 `IDENTIFY` 宣告的 intent；詳見[連線模型](/architecture/connection-model)。
 </Callout>
 
-## `discli serve` exits immediately
+## `discli serve` 立即退出
 
-**Symptom:** `discli serve` starts and then exits within a few seconds, sometimes with no output.
+**症狀：** `discli serve` 啟動後數秒內退出，有時完全沒有輸出。
 
-**Cause:** Usually an invalid token, network connectivity issue, or missing intents.
+**原因：** 常見為 token 無效、網路不通，或缺少意圖設定。
 
-**Fix:**
+**修正方式：**
 
 ```bash
-# Check stderr for error details
-discli serve 2> error.log
-cat error.log
+# 看 stderr 錯誤
+ discli serve 2> error.log
+ cat error.log
 
-# Verify your token works
+# 確認 token 是否可用
 discli server list
 
-# Check network connectivity
+# 確認網路連線
 discli config show
 ```
 
 <Callout type="note">
-If `discli server list` works but `discli serve` exits, the issue is likely a missing gateway intent. One-shot CLI commands go over HTTP and never send intents, but `serve`, `listen`, and `voice` open a gateway connection that Discord rejects outright if a declared privileged intent is disabled. Narrow `--events` to drop the intents you do not need — see [Connection Model](/architecture/connection-model).
+若 `discli server list` 可用但 `discli serve` 仍退出，多半是缺少 Gateway intent。一次性 CLI 指令透過 HTTP 執行且不會傳送 intent，但 `serve`、`listen` 與 `voice` 會開啟 Gateway 連線；若宣告的特權 intent 未啟用，Discord 會直接拒絕連線。請縮小 `--events` 範圍，排除不需要的 intent；詳見[連線模型](/architecture/connection-model)。
 </Callout>
 
-## Slash commands do not appear
+## Slash 指令未顯示
 
-**Symptom:** You registered slash commands but they do not show up in Discord's command picker.
+**症狀：** 已註冊 Slash 指令，但在 Discord 命令選單中看不到。
 
-**Cause:** Global slash commands can take **up to 1 hour** to propagate across Discord. This is a Discord limitation, not a discli issue.
+**原因：** 全域 Slash 指令需要最多 **1 小時** 傳播，不是 discli 的問題，而是 Discord 的傳播限制。
 
-**Fix:**
+**修正方式：**
 
-- **Wait up to 1 hour** for global commands to sync
-- **Use guild-specific commands for testing** — they sync instantly:
+- **等待最多 1 小時** 等全域同步完成
+- **測試階段請用伺服器註冊**，可立即同步：
 
 ```bash
-# Guild-specific (instant)
+# 伺服器同步（即時）
 discli slash register --guild 1234567890 --name ping --description "Pong!"
 
-# Global (up to 1 hour delay)
+# 全域同步（最慢）
 discli slash register --name ping --description "Pong!"
 ```
 
-## Unknown channel error
+## 未知頻道錯誤
 
 ```
-Error: Unknown channel "general". Did you mean "#general"?
+錯誤：找不到頻道 "general"。你是否要使用 "#general"？
 ```
 
-**Cause:** Channel names must be prefixed with `#` so discli knows you are referencing a channel name, not a server name.
+**原因：** 頻道名稱必須加 `#` 前綴，否則 discli 會將它當作伺服器名稱。
 
-**Fix:**
+**修正方式：**
 
 ```bash
-# Wrong — discli interprets this as a server name
-discli message send general "hello"
+# 錯誤：會被當作伺服器名稱
+ discli message send general "hello"
 
-# Right — the # prefix identifies it as a channel
-discli message send "#general" "hello"
+# 正確：# 前綴代表頻道
+ discli message send "#general" "hello"
 
-# Also right — raw numeric IDs need no prefix
-discli message send 1234567890123456789 "hello"
+# 直接使用數字 ID 不需前綴
+ discli message send 1234567890123456789 "hello"
 ```
 
-## Bot can see messages but cannot reply
+## 機器人可讀訊息但無法回覆
 
-**Symptom:** `discli message list "#general"` works fine, but `discli message send "#general" "hello"` returns a permission error.
+**症狀：** `discli message list "#general"` 正常，但 `discli message send "#general" "hello"` 回傳權限錯誤。
 
-**Cause:** The bot has **View Channel** and **Read Message History** permissions but is missing **Send Messages**.
+**原因：** 機器人有 **View Channel** 與 **Read Message History**，但缺少 **Send Messages**。
 
-**Fix:**
+**修正方式：**
 
-1. Open **Server Settings** > **Roles** in Discord
-2. Find your bot's role
-3. Enable the **Send Messages** permission
-4. If the channel has permission overrides, check those too — channel-level permissions override role permissions
+1. 進入 Discord 的 **Server Settings** > **Roles**
+2. 找到機器人的身分組
+3. 開啟 **Send Messages** 權限
+4. 若該頻道有權限覆蓋，請另外檢查該頻道權限（頻道權限優先於身分組）
 
-## Voice features error: "Voice features need extras that aren't installed"
+## 語音功能錯誤：未安裝語音額外套件
 
-**Symptom:** Running any `discli voice` command exits immediately with:
+**症狀：** 任一 `discli voice` 指令執行後立刻退出，顯示：
 
 ```
-Error: Voice features need extras that aren't installed: PyNaCl, discord-ext-voice-recv, davey.
-Install with: uv sync --extra voice  (or: pip install 'discord-cli-agent[voice]').
-Run `discli doctor` to verify the full setup.
+錯誤：尚未安裝語音功能所需的額外套件：PyNaCl、discord-ext-voice-recv、davey。
+請使用：`uv sync --extra voice`（或：`pip install 'discord-cli-agent[voice]'`）。
+請執行 `discli doctor` 確認完整設定。
 ```
 
-**Cause:** The voice optional dependencies aren't installed. discli's core install is text-only to keep dependency footprint small.
+**原因：** 未安裝語音可選依賴套件。discli 的核心安裝為文字精簡版。
 
-**Fix:**
+**修正方式：**
 
 ```bash
 pip install 'discord-cli-agent[voice,deepgram]'
-# or, in a checkout:
+# 或在 checkout 目錄中：
 uv sync --extra voice --extra deepgram
 ```
 
-Then verify:
+再執行：
 
 ```bash
 discli doctor
 ```
 
-## Bot joins voice but no transcripts appear
+## 機器人加入語音但沒有逐字稿
 
-**Symptom:** `discli voice listen` (or the meeting transcriber example) connects, prints `Listening to #...`, but no transcript lines ever appear no matter how loud anyone speaks.
+**症狀：** `discli voice listen`（或會議逐字稿示範）顯示已連線 `Listening to #...`，但不論音量多大都不出現轉譯文字。
 
-**Possible causes and fixes:**
+可能原因與修正：
 
-1. **No STT key set.** Run `discli doctor` — if `DEEPGRAM_API_KEY` (or your provider's key) is not set, set it and restart.
-2. **Bot is server-deafened.** Discord lets server admins deafen bots — check the channel members list and right-click the bot to confirm it isn't muted/deafened server-side.
-3. **DAVE patch failed to install.** `discli doctor` should show `[ok] DAVE/Opus patches`. If it shows `[FAIL]`, the listener can't decrypt audio. File an issue with the doctor output.
-4. **Audio is reaching the bot but STT is rejecting it.** Run `discli voice capture --duration 10` while someone speaks. If the WAV file is non-empty and plays back as real audio, capture works and the issue is downstream (STT key, network, provider quota). If the WAV is empty or only ~20ms long, capture itself is broken — file an issue.
+1. **未設定 STT 金鑰。** 執行 `discli doctor`，若 `DEEPGRAM_API_KEY`（或你使用的 provider）未設定，請補上並重啟。
+2. **機器人被伺服器設定為啞音。** 管理員可將機器人 server-deafen，請在成員清單中確認機器人未被靜音/被語音封禁。
+3. **DAVE 修補未生效。** `discli doctor` 應顯示 `[ok] DAVE/Opus patches`；若顯示 `[FAIL]`，listener 無法解密音訊，請附帶輸出提交 issue。
+4. **音訊有到達但 STT 拒絕。** 你可執行 `discli voice capture --duration 10` 讓人說話測試。若 WAV 非空且可播，表示收音正常，問題在下游（STT 金鑰、網路、供應額度）。若 WAV 空白或長度僅約 20ms，收音本身壞掉，請回報問題。
 
-## "OpusError: corrupted stream" in voice logs
+## 語音日誌出現 `OpusError: corrupted stream`
 
-**Symptom:** Logs show repeated `OpusError('corrupted stream')` lines, transcripts are empty or sporadic.
+**症狀：** 日誌重複出現 `OpusError('corrupted stream')`，逐字稿會空白或不穩定。
 
-**Cause:** Discord's voice transport uses DAVE (end-to-end voice encryption). The off-the-shelf `discord-ext-voice-recv` library doesn't decrypt DAVE, so libopus sees still-encrypted bytes and rejects them. discli ships a runtime monkeypatch that calls `davey.DaveSession.decrypt(...)` between the SecretBox layer and libopus.
+**原因：** Discord 語音傳輸使用 DAVE 加密；`discord-ext-voice-recv` 原生函式庫不會解開 DAVE，libopus 看到的是加密位元組所以回傳錯誤。discli 於執行期做 monkeypatch，於 SecretBox 與 libopus 之間呼叫 `davey.DaveSession.decrypt(...)`。
 
-If the patch is installed correctly you should still see occasional `[voice] skipping bad opus packet` lines (a few per session is normal — those are out-of-order or corrupt-on-the-wire frames). If you see hundreds, the patch isn't taking effect.
+若修補成功，通常仍會看到少量 `[voice] skipping bad opus packet`（每個 session 少數，代表封包順序不穩或傳輸異常）。若看到大量訊息，通常表示修補沒生效。
 
-**Fix:**
+**修正方式：**
 
 ```bash
 discli doctor
 ```
 
-Confirm `DAVE/Opus patches` reports `[ok]`. If it doesn't, your `davey` install is broken — reinstall the voice extra:
+確認 `DAVE/Opus patches` 為 `[ok]`。若不是，重新安裝語音 extras：
 
 ```bash
 pip install --force-reinstall 'discord-cli-agent[voice]'
 ```
 
-## discli doctor reports a problem
+## `discli doctor` 回報問題
 
-**Symptom:** `discli doctor` exits with `N problem(s) found.`
+**症狀：** `discli doctor` 結束訊息為 `找到 N 個問題。`
 
-**Fix:** Each failed line has a `hint:` underneath. Follow those — they list the exact install command or env var for the specific dependency. `--json` output gives the same structured data for scripting:
+**修正方式：** 每條失敗檢查都有 `hint:` 說明，依該提示安裝套件或設定環境變數。`--json` 也會輸出相同結構資料，方便腳本處理：
 
 ```bash
 discli doctor --json | jq '.sections[].checks[] | select(.ok==false)'

@@ -1,83 +1,83 @@
 ---
-title: discli vs Hosted Bots
-description: How discli compares to MEE6, Dyno, Carl-bot, and other hosted platforms
+title: discli 與託管型機器人
+description: discli 與 MEE6、Dyno、Carl-bot 等託管平台的差異
 ---
 
-# discli vs Hosted Bots
+# discli 與託管型機器人
 
-MEE6, Dyno, Carl-bot, and Combot are popular hosted bot platforms. You add them to your server through a web dashboard, configure features with clicks, and they run on someone else's infrastructure. discli is a self-hosted tool you run yourself.
+MEE6、Dyno、Carl-bot 與 Combot 都是常見的託管機器人平台。你透過網頁儀表板加入機器人、點選開關啟用功能，服務都運行在第三方基礎設施。discli 則是你自己自架的工具。
 
-## What hosted bots offer
+## 託管機器人提供了什麼
 
-Hosted bot platforms share a common model:
+託管平台通常有一致模式：
 
-- **No-code setup** — invite the bot, open a web dashboard, toggle features
-- **Pre-built features** — leveling, auto-moderation, welcome messages, role menus, music playback
-- **Managed hosting** — the platform runs the bot 24/7, handles updates and scaling
-- **Web dashboard** — configure everything through a browser UI
+- **免程式上手**：邀請機器人、開啟網頁控制台、以點擊方式設定功能
+- **預建功能**：等級系統、自動仲裁、歡迎訊息、身分組選單、音樂播放
+- **託管管理**：平台負責 24/7 運行、升級與擴充
+- **網頁儀表板**：以瀏覽器介面管理所有設定
 
-These are genuine strengths. For a server admin who wants moderation and leveling without writing code, MEE6 or Dyno is the fastest path.
+這些優點都是真實存在的。若你是伺服器管理者，希望快速啟用仲裁與等級功能，不想寫程式，MEE6 或 Dyno 通常是最快上手的方案。
 
-## Where hosted bots fall short
+## 託管平台的限制
 
 <Callout type="warning">
-The limitations below are inherent to the hosted model, not specific bugs. They apply to MEE6, Dyno, Carl-bot, and similar platforms.
+下列限制是託管模式本身所致，不是個別 Bug。它同時適用於 MEE6、Dyno、Carl-bot 等平台。
 </Callout>
 
-- **Vendor lock-in** — your configuration lives on their servers. If the platform shuts down or changes pricing, you start over
-- **Paid premium tiers** — most useful features (custom commands, advanced auto-mod, analytics) require a monthly subscription. MEE6 Premium is $12/month per server
-- **No custom AI** — you cannot plug in your own LLM. Some platforms offer basic "AI" features, but you have no control over the model, prompt, or behavior
-- **Limited customization** — you can configure what they expose. If you need logic they did not anticipate, you are stuck
-- **Privacy concerns** — your server's messages pass through a third-party platform. You have no visibility into how they are stored or used
-- **No CI/CD integration** — hosted bots are configured through a web UI, not code. You cannot version-control your bot configuration or deploy it through a pipeline
+- **供應商綁定**：設定資料存放在平台側。若平台關閉或改價，你往往得重建流程
+- **付費授權分層**：大多數進階功能（自訂指令、進階自動仲裁、分析）需要月費方案；MEE6 Premium 為每個伺服器每月 12 美元
+- **無法自訂 AI**：你不能插入自己的 LLM。部分平台有簡易「AI」功能，但無法控管模型、提示詞與行為
+- **客製化受限**：只能設定平台提供的項目。當需求超出其設計範圍時會無法完成
+- **隱私疑慮**：你的訊息會經過第三方平台，對儲存與使用流程難以完全掌握
+- **缺少 CI/CD 串接**：託管機器人以 UI 設定為主，不易版本控制，難以納入部署流程
 
-## What discli offers instead
+## discli 提供的替代方案
 
-| Aspect | Hosted bots (MEE6, Dyno, etc.) | discli |
+| 面向 | 託管機器人（MEE6、Dyno…） | discli |
 |---|---|---|
-| **Setup** | Web dashboard, click to invite | `pip install`, set token, run |
-| **Hosting** | Managed by platform | Self-hosted (your server, your cloud, your laptop) |
-| **Cost** | Free tier + $6-16/month premium | Free, MIT licensed, forever |
-| **AI integration** | None or locked to platform's model | Any model — OpenAI, Claude, Llama, Mistral, local |
-| **Customization** | Dashboard toggles and templates | Full programmatic control, any language |
-| **Privacy** | Messages routed through third party | Your infrastructure, your data |
-| **Audit trail** | Platform-controlled logs | Built-in audit log you own and control |
-| **Version control** | Not possible | Config and scripts live in your repo |
-| **Extensibility** | Limited to platform's plugin system | Unlimited — it is just a CLI and JSONL protocol |
+| **設定方式** | 網頁儀表板、點擊邀請 | `pip install`、設定 token、執行 |
+| **託管方式** | 平台代管 | 自行託管（自己的主機、雲端或筆電） |
+| **成本** | 免費額度 + 每月 6–16 美元進階方案 | 免費，MIT 授權，長期免費 |
+| **AI 串接** | 無，或只能使用平台限定模型 | 任意模型（OpenAI、Claude、Llama、Mistral、本機） |
+| **客製化程度** | 儀表板開關與模板 | 全程程式控制、任意語言 |
+| **隱私控制** | 訊息經由第三方轉送 | 你的基礎設施、你的資料 |
+| **稽核紀錄** | 平台統一管理 | 內建你自己可持有與查詢的稽核紀錄 |
+| **版本控制** | 不支援 | 設定與腳本可放在你的 repo |
+| **延展性** | 受限於插件系統 | 幾乎無上限，底層是 CLI 與 JSONL 協定 |
 
-## Platform-by-platform notes
+## 平台逐一比較
 
 <Accordion title="MEE6">
-The most popular hosted bot. Known for leveling, auto-moderation, and custom commands. The free tier is restrictive — most servers end up on the $12/month Premium plan. MEE6 has faced controversy over aggressive monetization and NFT integration. No custom AI support.
+最受歡迎的託管機器人之一，以等級、仲裁與自訂指令見長。免費方案限制較多，多數伺服器最後會升級到每月 12 美元的 Premium。MEE6 曾因高壓商業化與 NFT 合作而引發爭議，亦未提供客製 AI 能力。
 </Accordion>
 
 <Accordion title="Dyno">
-Strong auto-moderation and logging features. Dashboard is well-designed. Premium unlocks auto-purge, advanced auto-mod, and more. Dyno is reliable but shares the same fundamental limitations: no custom AI, no version control, no self-hosting.
+Dyno 以自動仲裁與日誌管理見長，儀表板體驗成熟。其進階方案可開啟 auto-purge、進階 auto-mod 等功能。Dyno 本身穩定，但同樣受限於託管模式：無客製 AI、無版本控制、無法自架。
 </Accordion>
 
 <Accordion title="Carl-bot">
-Excellent reaction roles and auto-moderation. Free tier is more generous than MEE6. Carl-bot's tag system allows limited custom commands. Still no AI integration, no CI/CD, no self-hosting option.
+在反應式身分組與自動仲裁方面表現強悍，免費方案比 MEE6 寬鬆。Carl-bot 的標籤機制可做有限度自訂指令，但仍沒有 AI 串接、CI/CD，亦不支援自行託管。
 </Accordion>
 
 <Accordion title="Combot">
-Focused on analytics and community management. Provides member activity stats, chat analytics, and moderation tools. Less feature-rich than MEE6/Dyno for general bot tasks. Analytics are locked behind premium tiers.
+主打社群管理與分析功能，提供成員活躍度、聊天分析與仲裁工具。就一般機器人功能而言，成熟度與完整性不及 MEE6 / Dyno。進階分析通常在付費方案中才能取得。
 </Accordion>
 
-## When hosted bots win
+## 何時託管平台比較適合
 
-Be honest about when a hosted platform is the better choice:
+合理評估什麼情況下託管平台較合適：
 
-- **Non-technical server admins** — if nobody on the team can run a terminal command, a web dashboard is the right answer
-- **Simple, standard needs** — leveling, welcome messages, basic auto-mod are solved problems. No need to reinvent them
-- **No server to run** — if you do not have a machine to host discli on (even a $5/month VPS), a managed platform removes that burden
-- **Music playback** — several hosted bots offer music features that discli does not
+- **非技術背景的管理者**：若團隊沒有人能穩定操作終端機，網頁儀表板是更實際的解法
+- **需求單純且標準化**：等級、歡迎訊息、基本仲裁本身是成熟既有需求，不必自行重建
+- **沒有可運行主機**：若無法自行部署 discli（即使是每月 5 美元小 VPS 也沒）則託管平台可降低維運成本
+- **音樂播放需求**：部分託管機器人有 discli 尚未全面提供的音樂功能
 
-## When discli wins
+## 何時 discli 比較適合
 
-- **AI integration** — connect any LLM to Discord with the JSONL agent protocol
-- **Custom logic** — write exactly the behavior you need in any programming language
-- **Privacy and control** — your messages never leave your infrastructure
-- **No recurring cost** — MIT licensed, free forever, no premium upsells
-- **CI/CD integration** — deploy your bot the same way you deploy your app
-- **Audit and compliance** — built-in audit logging you own and can query
-- **Multiple channels/servers** — one discli instance, full programmatic control across everything your bot can see
+- **AI 串接**：透過 JSONL 代理協定接任意 LLM 到 Discord
+- **客製邏輯**：任何程式語言都可實作所需行為
+- **隱私與控制**：訊息資料不必離開你自己的基礎設施
+- **無持續費用**：MIT 授權、長期免費、沒有月費升級誘導
+- **CI/CD 串接**：可像部署其他應用一樣部署機器人
+- **稽核與合規**：內建稽核紀錄可自己查詢與保存
+- **多頻道 / 多伺服器**：一個 discli 實例即可對可見資源做完整程式化管理

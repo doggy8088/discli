@@ -1,38 +1,38 @@
 ---
-title: Security Model
-description: How discli enforces permissions, logs actions, and rate limits
+title: 安全模型
+description: discli 如何在 CLI 層強制權限、紀錄操作與速率限制
 ---
 
-# Security Model
+# 安全模型
 
-discli implements a layered security model that operates at the CLI level, before any Discord API call is made. This means an AI agent running with a `readonly` profile cannot send messages, regardless of what the underlying bot token allows on Discord.
+discli 在任何 Discord API 呼叫之前，先於 CLI 層執行分層式安全控管。這代表即使機器人 token 在 Discord 中有完整權限，使用 `readonly` 設定檔的 AI 代理也無法傳送訊息。
 
-## Permission enforcement pipeline
+## 權限強制流程
 
 ```mermaid
 flowchart TD
-    A[Command Invoked] --> B{Profile Override\nvia --profile?}
-    B -- Yes --> C[Load specified profile]
-    B -- No --> D[Load active profile\nfrom ~/.discli/permissions.json]
-    D --> E{File exists?}
-    E -- No --> F[Default: full]
-    E -- Yes --> C
-    C --> G{Command in\ndenied list?}
-    G -- Yes --> H[DENIED - ClickException]
-    G -- No --> I{denied = *?}
-    I -- Yes --> J{Command in\nallowed list?}
-    I -- No --> K{Command in\nallowed list?}
-    J -- Yes --> L[ALLOWED]
-    J -- No --> H
-    K -- Yes --> L
-    K -- No --> H
-    L --> M{Destructive\ncommand?}
-    M -- Yes --> N{--yes flag set?}
-    M -- No --> O[Execute command]
-    N -- Yes --> O
-    N -- No --> P[Prompt for\nconfirmation]
-    P -- Confirmed --> O
-    P -- Aborted --> Q[Abort]
+    A[指令被呼叫] --> B{是否透過 --profile 覆寫？}
+    B -- 是 --> C[載入指定設定檔]
+    B -- 否 --> D[載入 ~/.discli/permissions.json 中的作用中設定檔]
+    D --> E{檔案是否存在？}
+    E -- 否 --> F[預設：full]
+    E -- 是 --> C
+    C --> G{指令在\ndenied 清單中？}
+    G -- 是 --> H[DENIED - ClickException]
+    G -- 否 --> I{denied = *？}
+    I -- 是 --> J{指令在\nallowed 清單中？}
+    I -- 否 --> K{指令在\nallowed 清單中？}
+    J -- 是 --> L[允許]
+    J -- 否 --> H
+    K -- 是 --> L
+    K -- 否 --> H
+    L --> M{高風險\n指令？}
+    M -- 是 --> N{有設定 --yes？}
+    M -- 否 --> O[執行指令]
+    N -- 是 --> O
+    N -- 否 --> P[提示確認]
+    P -- 已確認 --> O
+    P -- 已取消 --> Q[中止]
 
     style H fill:#dc2626,color:#fff
     style L fill:#059669,color:#fff
@@ -40,25 +40,25 @@ flowchart TD
     style O fill:#2563eb,color:#fff
 ```
 
-## Permission profiles
+## 權限設定檔
 
-discli ships with four built-in profiles. Each profile defines an `allowed` list and a `denied` list. The wildcard `*` matches all commands.
+discli 內建四種設定檔。每個設定檔都有 `allowed` 與 `denied` 清單。萬用字元 `*` 代表全部指令。
 
 <Tabs>
   <Tab title="full">
     ```json
     {
-      "description": "Full access to all commands",
+      "description": "完全存取所有指令",
       "allowed": ["*"],
       "denied": []
     }
     ```
-    The default profile. Every command is permitted.
+    預設設定檔。所有指令都允許執行。
   </Tab>
   <Tab title="chat">
     ```json
     {
-      "description": "Messages, reactions, threads, typing only",
+      "description": "僅允許訊息、反應、討論串、正在輸入",
       "allowed": [
         "message", "reaction", "thread", "typing",
         "dm", "listen", "serve", "config", "server"
@@ -70,12 +70,12 @@ discli ships with four built-in profiles. Each profile defines an `allowed` list
       ]
     }
     ```
-    Allows conversational commands. Blocks moderation and structural changes.
+    允許對話類指令。封鎖審核與結構變更相關操作。
   </Tab>
   <Tab title="readonly">
     ```json
     {
-      "description": "Read-only: list, info, get, search, listen",
+      "description": "唯讀：list、info、get、search、listen",
       "allowed": [
         "message list", "message get", "message search",
         "message history", "channel list", "channel info",
@@ -86,66 +86,66 @@ discli ships with four built-in profiles. Each profile defines an `allowed` list
       "denied": ["*"]
     }
     ```
-    Only read operations are allowed. The `denied: ["*"]` catches everything not explicitly in the allowed list.
+    僅允許讀取操作。`denied: ["*"]` 會擋掉未明確列在 `allowed` 的其他指令。
   </Tab>
   <Tab title="moderation">
     ```json
     {
-      "description": "Full access including moderation",
+      "description": "完全存取，包含審核相關功能",
       "allowed": ["*"],
       "denied": []
     }
     ```
-    Currently identical to `full`. Exists as a distinct profile for semantic clarity and future differentiation.
+    目前與 `full` 完全一致。保留此名稱主要為語意清楚並方便未來延伸。
   </Tab>
 </Tabs>
 
-### How `is_command_allowed()` works
+### `is_command_allowed()` 的運作方式
 
-Permission checking follows a deny-first strategy:
+權限檢查採用「先拒絕後允許」策略：
 
-1. **Resolve the profile.** If `--profile` is passed, use that built-in profile. Otherwise, load from `~/.discli/permissions.json` (defaulting to `full` if the file does not exist).
-2. **Check denied list first.** If `denied` contains `*`, everything is denied unless explicitly in `allowed`. If the command matches a specific denied pattern, it is blocked.
-3. **Check allowed list.** If `allowed` contains `*`, the command passes. Otherwise, the command must match an allowed pattern.
-4. **Pattern matching** uses prefix matching: `"message"` allows `message send`, `message list`, `message delete`, etc. The exact command path `"message send"` only allows that specific command.
+1. **先解析設定檔。** 若有傳入 `--profile`，使用對應內建設定檔；否則從 `~/.discli/permissions.json` 讀取，若檔案不存在則預設為 `full`。
+2. **先檢查 `denied` 清單。** 若 `denied` 包含 `*`，一律拒絕，除非該指令同時落在 `allowed` 白名單。若有明確符合的拒絕模式，也會直接封鎖。
+3. **再檢查 `allowed` 清單。** 若 `allowed` 包含 `*`，指令直接通過；否則需符合允許清單中的模式。
+4. **模式比對採前綴匹配。** `"message"` 可比對到 `message send`、`message list`、`message delete` 等。精準比對 `"message send"` 則只允許該子指令。
 
 ```python
-# These patterns match "message send":
+# 這些模式會符合 "message send"：
 "*"              # wildcard
-"message"        # prefix match
-"message send"   # exact match
+"message"        # 前綴比對
+"message send"   # 精準比對
 
-# These do NOT match "message send":
-"message list"   # different subcommand
-"msg"            # not a prefix of the command path
+# 這些不會符合 "message send"：
+"message list"   # 不同子指令
+"msg"            # 不是指令路徑的前綴
 ```
 
-### Setting the active profile
+### 設定啟用中的設定檔
 
 ```bash
-# Set profile for all future commands
+# 將設定檔套用到後續所有指令
 discli permission set readonly
 
-# Override for a single command
+# 單次指令覆蓋設定
 discli --profile chat message send "#general" "Hello"
 
-# Show current profile
+# 顯示目前設定檔
 discli permission show
 
-# List all profiles
+# 列出所有設定檔
 discli permission profiles
 ```
 
-### Custom profiles
+### 自訂設定檔
 
-Create custom profiles by editing `~/.discli/permissions.json`:
+編輯 `~/.discli/permissions.json` 來建立自訂設定檔：
 
 ```json
 {
   "active_profile": "support-agent",
   "profiles": {
     "support-agent": {
-      "description": "Can read and reply, but not delete or manage",
+      "description": "可閱讀與回覆，但不能刪除或管理",
       "allowed": [
         "message list", "message get", "message search",
         "message send", "reply",
@@ -165,40 +165,40 @@ Create custom profiles by editing `~/.discli/permissions.json`:
 }
 ```
 
-Custom profiles take precedence over built-in profiles when they share the same name. The `active_profile` key determines which profile is loaded by default.
+當自訂設定檔名稱與內建設定檔重名時，會以自訂設定檔為準。`active_profile` 決定預設載入哪一組規則。
 
-## Destructive action confirmation
+## 高風險操作確認
 
-Certain commands are flagged as destructive and require explicit confirmation before execution:
+部分指令被標記為高風險，執行前會要求明確確認：
 
-| Command | Action |
+| 指令 | 行為 |
 |---|---|
-| `member kick` | Remove a member from the server |
-| `member ban` | Ban a member from the server |
-| `member unban` | Unban a previously banned member |
-| `channel delete` | Delete a channel permanently |
-| `message delete` | Delete a message |
-| `role delete` | Delete a role |
+| `member kick` | 從伺服器移除成員 |
+| `member ban` | 封鎖（ban）成員 |
+| `member unban` | 解除先前封鎖成員 |
+| `channel delete` | 永久刪除頻道 |
+| `message delete` | 刪除訊息 |
+| `role delete` | 刪除身分組 |
 
-When a destructive command runs, discli prompts:
+當高風險指令執行時，discli 會提示：
 
 ```
-⚠ Destructive action: member kick (user: Alice#1234). Continue? [y/N]
+⚠ 破壞性操作：移除成員（member kick）（使用者：Alice#1234）。是否繼續？[y/N]
 ```
 
-To skip the prompt (for automation), pass `--yes` or `-y`:
+若要略過提示（用於自動化場景），可傳 `--yes` 或 `-y`：
 
 ```bash
 discli --yes message delete "#general" 123456789
 ```
 
 <Callout type="warning">
-  The `--yes` flag bypasses all confirmation prompts. Use it carefully in automated pipelines. Pair it with a restrictive permission profile to limit what can be auto-confirmed.
+  `--yes` 會繞過所有確認提示。請僅在已採取其他防線的自動化流程中使用，並搭配限制較窄的權限設定檔，避免過度自動授權。
 </Callout>
 
-## Audit logging
+## 稽核紀錄
 
-Every command execution is recorded in a JSONL audit log at `~/.discli/audit.log`. Each line is a JSON object:
+每次指令執行都會寫入 JSONL 稽核日誌：`~/.discli/audit.log`。每一行都是一個 JSON 物件：
 
 ```json
 {
@@ -210,47 +210,47 @@ Every command execution is recorded in a JSONL audit log at `~/.discli/audit.log
 }
 ```
 
-| Field | Description |
+| 欄位 | 說明 |
 |---|---|
-| `timestamp` | ISO 8601 UTC timestamp |
-| `command` | The command path that was executed |
-| `args` | Arguments passed to the command (tokens are never included) |
-| `result` | `"ok"` on success, or an error description |
-| `user` | The Discord user who triggered the action (populated by `--triggered-by` or slash commands) |
+| `timestamp` | ISO 8601 UTC 時間戳 |
+| `command` | 執行的指令路徑 |
+| `args` | 指令接收的參數（不會寫入 token） |
+| `result` | 成功為 `"ok"`，或錯誤描述 |
+| `user` | 觸發動作的 Discord 使用者（由 `--triggered-by` 或 slash command 填入） |
 
-### Viewing and managing the audit log
+### 查看與管理稽核紀錄
 
 ```bash
-# Show last 20 entries
+# 顯示最後 20 筆
 discli audit show
 
-# Show last 50 entries
+# 顯示最後 50 筆
 discli audit show --limit 50
 
-# Show as JSON
+# 以 JSON 輸出
 discli --json audit show
 
-# Clear the log
+# 清除紀錄
 discli audit clear
 ```
 
 <Callout type="note">
-  The audit log also records permission check events. When `check_user_permission()` denies a user or cannot resolve a member, a `permission_check` entry is written with the result (`denied` or `skipped_not_found`).
+  稽核紀錄同時也會記錄權限檢查事件。當 `check_user_permission()` 拒絕使用者或找不到成員時，會寫入 `permission_check`，結果為 `denied` 或 `skipped_not_found`。
 </Callout>
 
-## Rate limiting
+## 速率限制
 
-discli includes a client-side rate limiter to prevent hitting Discord's API rate limits. It uses a **token bucket algorithm**:
+discli 提供用戶端速率限制，避免超過 Discord API 的頻率限制。使用 **Token bucket**（令牌桶）演算法：
 
-- **Bucket size:** 5 tokens (calls)
-- **Refill window:** 5 seconds
-- **Behavior:** When the bucket is empty, discli auto-waits until a token is available and prints a message to stderr
+- **桶容量：** 5 次呼叫
+- **補充週期：** 5 秒
+- **行為：** 當桶空時，discli 會自動等待直到有可用令牌，並在 `stderr` 輸出提示
 
 ```
-Rate limited. Waiting 3.2s...
+速率限制中。等待 3.2 秒中……
 ```
 
-The rate limiter is a global singleton (`security.rate_limiter`). It tracks call timestamps and prunes expired ones on each call:
+速率限制器是全域單例（`security.rate_limiter`）。它會追蹤呼叫時間戳，並在每次呼叫時清理過期項目：
 
 ```python
 class RateLimiter:
@@ -269,36 +269,36 @@ class RateLimiter:
         self.calls.append(time.time())
 ```
 
-This is a safety net on top of discord.py's own rate limit handling. It prevents burst scenarios where multiple CLI invocations in rapid succession could trigger Discord's global rate limits.
+這是在 discord.py 內建速率限制之外的保險措施。它能防止短時間內高頻率多次 CLI 呼叫，導致 Discord 全域速率限制被觸發。
 
-## Discord-level permission checks
+## Discord 層級權限檢查
 
-For actions triggered by Discord users (e.g., via slash commands with `--triggered-by`), discli can verify that the triggering user has the required Discord permissions in the server.
+對於 Discord 使用者觸發的操作（例如透過 `--triggered-by` 的 slash command），discli 會驗證該使用者在伺服器中是否具備必要權限。
 
-`check_user_permission()` resolves the user and checks their server-level permissions:
+`check_user_permission()` 會先解析使用者，再檢查其在伺服器層級的權限：
 
 ```mermaid
 flowchart TD
-    A[check_user_permission\nguild, user_id, permission] --> B{Member in\nguild cache?}
-    B -- Yes --> D
-    B -- No --> C[Fetch member\nfrom API]
-    C -- Found --> D{Server owner?}
-    C -- Not found --> W[Warn and proceed\nlog: skipped_not_found]
-    D -- Yes --> E[ALLOWED]
-    D -- No --> F{Has administrator\npermission?}
-    F -- Yes --> E
-    F -- No --> G{Has required\npermission?}
-    G -- Yes --> E
-    G -- No --> H[DENIED\nlog: denied]
+    A[check_user_permission\nguild、user_id、permission] --> B{使用者是否在\nguild 快取中？}
+    B -- 是 --> D
+    B -- 否 --> C[從 API 抓取\n使用者]
+    C -- 找到 --> D{是伺服器擁有者？}
+    C -- 未找到 --> W[記錄警告並繼續\nlog: skipped_not_found]
+    D -- 是 --> E[允許]
+    D -- 否 --> F{具備管理員權限？}
+    F -- 是 --> E
+    F -- 否 --> G{具備\n必要權限？}
+    G -- 是 --> E
+    G -- 否 --> H[DENIED\nlog: denied]
 
     style E fill:#059669,color:#fff
     style H fill:#dc2626,color:#fff
     style W fill:#d97706,color:#fff
 ```
 
-Supported permission checks:
+支援的權限檢查：
 
-| Permission key | Discord permission |
+| 權限鍵值 | Discord 權限 |
 |---|---|
 | `kick` | `kick_members` |
 | `ban` | `ban_members` |
@@ -307,24 +307,24 @@ Supported permission checks:
 | `manage_messages` | `manage_messages` |
 
 <Callout type="info">
-  If the member cannot be resolved (not in cache and fetch fails), discli logs a warning and **proceeds anyway** rather than blocking the action. This handles edge cases where the member cache is incomplete.
+  當找不到使用者（快取未命中且 API 重新抓取失敗）時，discli 會記錄警告並 **繼續執行**，而不會直接阻擋指令。這可處理快取不完整的邊界情境。
 </Callout>
 
-## Security best practices
+## 安全建議
 
-1. **Use `readonly` or `chat` profiles for AI agents** to prevent accidental destructive operations.
-2. **Review the audit log** periodically with `discli audit show` to track what your agents are doing.
-3. **Never commit tokens** to version control. Use environment variables in CI and `~/.discli/config.json` for local development.
-4. **Use `--yes` sparingly** and only in pipelines where the permission profile is already restrictive.
-5. **Create custom profiles** tailored to each agent's specific needs rather than relying on broad built-in profiles.
+1. **AI 代理請使用 `readonly` 或 `chat` 設定檔**，可降低意外高風險操作機率。
+2. **定期使用 `discli audit show` 檢視稽核紀錄**，追蹤代理的實際行為。
+3. **切勿提交權杖** 到版本控制。CI 建議使用環境變數，本機開發可放在 `~/.discli/config.json`。
+4. **慎用 `--yes`**，僅在權限設定檔已經嚴格限制的流程中使用。
+5. **依代理需求建立自訂設定檔**，不要長期依賴權限過寬的預設設定檔。
 
-## Next steps
+## 後續步驟
 
 <CardGroup cols={2}>
-  <Card title="Token Resolution" href="/architecture/token-resolution">
-    How discli finds and protects your bot token.
+  <Card title="Token 解析" href="/architecture/token-resolution">
+    說明 discli 如何尋找並保護機器人 token。
   </Card>
-  <Card title="Architecture Overview" href="/architecture/overview">
-    See how the security module fits into the overall system.
+  <Card title="架構總覽" href="/architecture/overview">
+    瞭解安全模組在整體架構中的位置。
   </Card>
 </CardGroup>

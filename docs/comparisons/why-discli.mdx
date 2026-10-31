@@ -1,91 +1,91 @@
 ---
-title: Why discli?
-description: When to choose discli and when to choose alternatives
+title: 為什麼是 discli？
+description: 何時選 discli，何時應該考慮其他方案
 ---
 
-# Why discli?
+# 為什麼是 discli？
 
-discli is not the right tool for every Discord project. This page helps you decide quickly whether it fits your use case — or whether something else is a better match.
+discli 並非每個 Discord 專案都適合。這一頁幫你快速判斷：你的使用情境是否需要它，或是否有更合適的替代方案。
 
-## Decision guide
+## 決策指引
 
-Find the statement that matches your goal:
+選擇與你的目標最接近的敘述：
 
-<Accordion title="I want an AI agent on Discord">
-**Use discli.** This is exactly what it was built for. The bidirectional JSONL protocol in `discli serve` was designed for LLM tool-use. Your agent reads events from stdout, writes actions to stdin, and discli handles all Discord API communication, authentication, rate limiting, and security.
+<Accordion title="我想在 Discord 上使用 AI 代理">
+**選 discli。** 這正是 discli 的設計目標。`discli serve` 的雙向 JSONL 協定原生對應 LLM 工具呼叫：代理讀取 stdout 事件、寫入 stdin 動作，discli 會處理 Discord API 通訊、驗證、速率限制與安全控管。
 
 ```bash
 discli serve --events messages --profile safe-agent
 ```
 
-Works with OpenAI, Claude, Llama, Mistral, or any model that can read and write JSON.
+支援 OpenAI、Claude、Llama、Mistral 以及任何可讀寫 JSON 的模型。
 </Accordion>
 
-<Accordion title="I want to script Discord from CI/bash">
-**Use discli.** Every command outputs structured JSON with `--json`. Pipe it to `jq`, feed it to another tool, or parse it in your CI pipeline.
+<Accordion title="我想在 CI/Bash 做 Discord 腳本">
+**選 discli。** 每個指令都可用 `--json` 輸出結構化結果，能直接 `pipe` 到 `jq`、傳給其他工具，或在 CI pipeline 解析。
 
 ```bash
-# Post deploy notification
+# 發送部署通知
 discli message send "#deploys" "v2.3.1 deployed to production"
 
-# Get recent errors and pipe to a file
+# 讀取最近錯誤後輸出到檔案
 discli --json message search "#errors" "critical" --limit 100 > errors.json
 ```
 </Accordion>
 
-<Accordion title="I want a no-code moderation bot">
-**Use MEE6 or Dyno.** They have web dashboards with pre-built auto-moderation, leveling, and welcome messages. No terminal required. See [discli vs Hosted Bots](/comparisons/vs-hosted-bots) for a detailed comparison.
+<Accordion title="我想要免寫程式的仲裁機器人">
+**用 MEE6 或 Dyno。** 這類工具有網頁儀表板，提供預建自動仲裁、等級與歡迎訊息；不需終端機操作。詳細差異可看 [discli vs Hosted Bots](/comparisons/vs-hosted-bots)。
 </Accordion>
 
-<Accordion title="I want full API control in Python">
-**Use discord.py** for complex bots that need embeds, buttons, voice, modals, and fine-grained event handling. **Use discli** if you want simpler Python scripts that treat Discord as an I/O channel rather than a platform to build on. See [discli vs Discord Libraries](/comparisons/vs-discord-libraries).
+<Accordion title="我想在 Python 做完整 API 控制">
+若要做需要 embeds、按鈕、語音、modal 與精細事件處理的複雜機器人，**用 discord.py**。如果你只想用較簡單的 Python 腳本把 Discord 當作 I/O 通道，**則可用 discli**。可參考 [discli vs Discord Libraries](/comparisons/vs-discord-libraries)。
 </Accordion>
 
-<Accordion title="I want to build a complex stateful bot">
-**Use discord.py or discord.js.** Conversation state machines, multi-step wizards, persistent user sessions, and custom caching strategies are better handled by a full library. discli is stateless by design — each command is independent.
+<Accordion title="我想做高複雜度有狀態機器人">
+**用 discord.py 或 discord.js。** 對話狀態機、多步驟精靈、持久使用者 session、客製快取策略這類需求，完整函式庫較適合。discli 預設是無狀態，每個指令獨立執行。
 </Accordion>
 
-<Accordion title="I want to scrape/export messages">
-**Use discrawl** for bulk, read-only data export to CSV/JSON/SQLite. **Use discli** if you also need to write messages, listen to events in real time, or feed the data to an AI agent. See [discli vs CLI Tools](/comparisons/vs-cli-tools).
+<Accordion title="我需要大量爬取/匯出訊息">
+大量只讀匯出 CSV/JSON/SQLite 輸出可用 **discrawl**。若你還要傳訊息、即時監聽事件，或將資料提供給 AI 代理，則改用 **discli**。比較可見 [discli vs CLI Tools](/comparisons/vs-cli-tools)。
 </Accordion>
 
-<Accordion title="I need voice/video features">
-**Use discord.py or discord.js.** discli does not support voice channels, audio playback, or video. This is intentional — voice requires persistent binary streams that do not fit the CLI/JSONL model.
+<Accordion title="我需要語音／影片功能">
+**用 discord.py 或 discord.js。** discli 不支援語音頻道、音訊播放與視訊。這是刻意限制，因為這類需求牽涉長時間二進位串流，不符合 CLI/JSONL 的通道模型。
 </Accordion>
 
-## What makes discli unique
+## discli 的獨特性
 
-No other tool combines all of these:
+目前沒有其他工具同時具備以下組合：
 
 <Steps>
-<Step title="Dual-mode operation">
-Use it as a **CLI** for one-off commands (`discli message send`) or as a **persistent server** for long-running agents (`discli serve`). Same tool, same configuration, same security model.
+<Step title="雙模式運作">
+可直接做一次性命令（`discli message send`）的 **CLI**，也可用於長時間運作代理的 **持續式伺服器**（`discli serve`）。同一工具、同一套設定、同一個安全模型。
 </Step>
 
-<Step title="Agent-first design">
-The JSONL protocol is not an afterthought. Every event and every action is a single line of JSON. No parsing HTML, no scraping DOM, no reverse-engineering WebSocket frames. Your agent reads structured data and writes structured commands.
+<Step title="代理優先設計">
+JSONL 協定不是加上的次要功能。每個事件與每個動作都用單行 JSON 表述，不需解析 HTML、不需爬 DOM，也不需逆向 WebSocket frame。代理直接處理結構化資料並輸出結構化指令。
 </Step>
 
-<Step title="Security built-in">
-Permission profiles restrict what actions are allowed. Audit logs record every action taken. Rate limiting prevents runaway agents from flooding the API. These are not optional add-ons — they ship with discli.
+<Step title="內建安全機制">
+權限設定檔會限制可執行行為，稽核紀錄會記錄每個操作，速率限制則可防止失控代理刷 API。這些不是選配，而是 discli 預設提供。
 
 ```bash
-# Create a restricted profile
+# 建立限制較嚴的設定檔
 discli permission create safe-agent \
   --allow message_send,message_list \
   --deny channel_delete,member_ban
 
-# Run serve with that profile
+# 使用該設定檔啟動 serve
 discli serve --profile safe-agent
 ```
 </Step>
 
-<Step title="Language-agnostic">
-discli does not care what language your agent is written in. Python, Node.js, Go, Rust, Ruby, Bash, or anything that can spawn a process and read/write lines. No SDK required — just stdin and stdout.
+<Step title="語言無關">
+discli 不綁定代理語言。Python、Node.js、Go、Rust、Ruby、Bash，只要能啟動程序並讀寫文字行，都可接軌。你不需要 SDK，只要 stdin 與 stdout。
 </Step>
 
-<Step title="Zero boilerplate">
-No client classes. No intent objects. No async event loop setup. No decorator registration. One install command, one config command, and you are sending messages.
+<Step title="低樣板負擔">
+沒有 client class、沒有 intent 物件、沒有 async 事件迴圈建置，也不需 decorator 註冊。只要一個安裝指令、一個設定指令，就能開始傳送訊息。
 
 ```bash
 pip install discord-cli-agent
@@ -95,16 +95,16 @@ discli message send "#general" "Hello, world."
 </Step>
 </Steps>
 
-## Quick reference
+## 快速參考
 
-| Use case | Best tool | Runner-up |
+| 使用情境 | 最適工具 | 次佳工具 |
 |---|---|---|
-| AI agent on Discord | **discli** | Custom discord.py bot |
-| Bash/CI scripting | **discli** | curl + Discord webhook |
-| No-code moderation | **MEE6 / Dyno** | Carl-bot |
-| Full API control (Python) | **discord.py** | discli for simpler cases |
-| Full API control (JS) | **discord.js** | discli for simpler cases |
-| Bulk message export | **discrawl** | discli |
-| Voice / audio | **discord.py** | discord.js |
-| Buttons / embeds / modals | **discord.py / discord.js** | discli (text only currently) |
-| Privacy-first bot | **discli** (self-hosted) | Self-hosted discord.py bot |
+| Discord 的 AI 代理 | **discli** | 自行開發 discord.py bot |
+| Bash/CI 腳本 | **discli** | curl + Discord webhook |
+| 免程式仲裁 | **MEE6 / Dyno** | Carl-bot |
+| Python 全面 API 控制 | **discord.py** | 簡化用途可用 discli |
+| JS 全面 API 控制 | **discord.js** | 簡化用途可用 discli |
+| 大量訊息匯出 | **discrawl** | discli |
+| 語音／音訊 | **discord.py** | discord.js |
+| 按鈕、embeds、modals | **discord.py / discord.js** | discli（目前以文字為主） |
+| 隱私優先機器人 | **discli**（自行託管） | 自行託管的 discord.py bot |

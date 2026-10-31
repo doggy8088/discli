@@ -1,48 +1,48 @@
 ---
-title: Streaming Responses
-description: Show AI thinking in real-time with token-by-token streaming
+title: 串流回應
+description: 以逐字元（逐 token）串流方式即時顯示 AI 思考過程
 ---
 
-Streaming lets your agent display responses as they are being generated, just like ChatGPT or Claude typing in real-time. Instead of a long pause followed by a wall of text, users see the response appear word by word.
+串流讓你的代理在回覆產生時即時顯示內容，效果類似 ChatGPT 或 Claude 的即時輸入。使用者不需要先等待一段長時間再看到一段完整文字，而是會逐字看到訊息被逐步填滿。
 
-## Why Streaming Matters
+## 為什麼要用串流
 
-Without streaming, a user mentioning your bot sees:
+不使用串流時，使用者在叫用你的機器人後會看到：
 
-1. Nothing for 3-10 seconds (while your LLM generates)
-2. A complete message appears all at once
+1. 空白 3–10 秒（LLM 生成中）
+2. 一次性跳出完整訊息
 
-With streaming, they see:
+有了串流後，使用者會看到：
 
-1. A message appears immediately with "..."
-2. Text flows in progressively as it is generated
-3. The final message is clean and complete
+1. 立刻出現一則訊息，內容是「...」
+2. 文字隨模型生成逐步流入
+3. 最終訊息乾淨完整
 
-This dramatically improves perceived responsiveness, especially for longer AI-generated responses.
+這會明顯提升主觀回應速度，尤其是較長的 AI 生成內容。
 
-## The Three-Step Protocol
+## 三步驟協定
 
-Streaming in discli uses three actions sent to `discli serve` via stdin:
+discli 的串流由三個 action 透過 stdin 傳送給 `discli serve`：
 
 <Steps>
 <Step title="stream_start">
-Creates a placeholder message in the channel. Returns a `stream_id` that you use for subsequent chunks.
+在頻道建立一則占位訊息，回傳可被後續 `chunk` 使用的 `stream_id`。
 
 ```json
 → {"action": "stream_start", "channel_id": "444555666", "reply_to": "101010", "req_id": "s1"}
 ← {"event": "response", "req_id": "s1", "stream_id": "a1b2c3d4", "message_id": "131415"}
 ```
 
-| Field | Required | Description |
+| 欄位 | 是否必填 | 說明 |
 |-------|----------|-------------|
-| `channel_id` | Yes | Channel to send the stream in |
-| `reply_to` | No | Message ID to reply to |
-| `interaction_token` | No | Slash command interaction to respond to |
-| `req_id` | Recommended | To receive the `stream_id` back |
+| `channel_id` | 是 | 要發送串流的頻道 |
+| `reply_to` | 否 | 要回覆的訊息 ID |
+| `interaction_token` | 否 | 回覆 Slash 指令互動時使用 |
+| `req_id` | 建議 | 用來接收 `stream_id` |
 
 </Step>
 <Step title="stream_chunk">
-Appends text to the stream buffer. discli automatically flushes the buffer to Discord every 1.5 seconds by editing the placeholder message.
+將文字附加到串流緩衝區。discli 會每 1.5 秒自動更新一次占位訊息（編輯）將緩衝內容同步到 Discord。
 
 ```json
 → {"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "Hello, "}
@@ -50,38 +50,38 @@ Appends text to the stream buffer. discli automatically flushes the buffer to Di
 → {"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "help with that!"}
 ```
 
-| Field | Required | Description |
+| 欄位 | 是否必填 | 說明 |
 |-------|----------|-------------|
-| `stream_id` | Yes | From the `stream_start` response |
-| `content` | Yes | Text to append to the buffer |
+| `stream_id` | 是 | 來自 `stream_start` 回傳值 |
+| `content` | 是 | 要附加到緩衝區的文字 |
 
 </Step>
 <Step title="stream_end">
-Performs a final edit with the complete content and cleans up the stream state.
+發送最後一次編輯並清理串流狀態。
 
 ```json
 → {"action": "stream_end", "stream_id": "a1b2c3d4", "req_id": "s2"}
 ← {"event": "response", "req_id": "s2", "ok": true, "message_id": "131415"}
 ```
 
-| Field | Required | Description |
+| 欄位 | 是否必填 | 說明 |
 |-------|----------|-------------|
-| `stream_id` | Yes | From the `stream_start` response |
-| `req_id` | No | To confirm completion |
+| `stream_id` | 是 | 來自 `stream_start` 回傳值 |
+| `req_id` | 否 | 用來確認完成 |
 
 </Step>
 </Steps>
 
-## The 1.5-Second Flush Interval
+## 1.5 秒更新間隔
 
-Discord rate-limits message edits. discli uses a 1.5-second flush interval to stay within limits:
+Discord 對訊息編輯有速率限制。discli 用 1.5 秒刷新間隔來避免超過限制：
 
-- When you send `stream_chunk`, the content is appended to an in-memory buffer
-- A background task edits the Discord message every 1.5 seconds with the current buffer content
-- Only changed content triggers an edit (no redundant API calls)
-- `stream_end` performs one final edit with the complete text
+- 送出 `stream_chunk` 時，先寫入記憶體緩衝區
+- 背景任務每 1.5 秒用目前緩衝區內容編輯 Discord 訊息
+- 只有內容有變動時才編輯（不做重複 API 呼叫）
+- `stream_end` 會用完整內容再做最後一次編輯
 
-This means users see updates roughly every 1.5 seconds, which feels responsive without hitting rate limits.
+因此使用者大約每隔 1.5 秒看到一次更新，既有連續感，又不會踩到速率限制。
 
 ```
 Time:  0s      1.5s     3.0s     4.5s     5.0s
@@ -90,9 +90,9 @@ Chunks: Hello,  I can    help     with     that!
 Edits:  "..."   "Hello, I can "  "Hello, I can help with "  (stream_end) "Hello, I can help with that!"
 ```
 
-## Full Working Example
+## 完整可執行範例
 
-This example connects to an OpenAI-compatible API and streams the response to Discord.
+這個範例連接到 OpenAI 相容 API，並將回覆以串流方式回傳到 Discord。
 
 ```python
 import json
@@ -141,9 +141,9 @@ class StreamingAgent:
         return None
 
     def stream_to_discord(self, channel_id, reply_to, text_generator):
-        """Stream text from a generator to a Discord message."""
+        """將生成器輸出的文字串流到 Discord 訊息。"""
 
-        # Step 1: Start the stream
+        # 步驟一：啟動串流
         self.send({"action": "typing_start", "channel_id": channel_id})
         result = self.send({
             "action": "stream_start",
@@ -153,7 +153,7 @@ class StreamingAgent:
         self.send({"action": "typing_stop", "channel_id": channel_id})
 
         if "error" in result:
-            # Fallback: collect all text and send as a regular message
+            # 備援：若串流失敗，將內容整段收集後直接發送
             full_text = "".join(text_generator)
             self.send({
                 "action": "reply",
@@ -165,7 +165,7 @@ class StreamingAgent:
 
         stream_id = result["stream_id"]
 
-        # Step 2: Send chunks as they arrive
+        # 步驟二：逐片段寫入
         try:
             for chunk in text_generator:
                 self.send({
@@ -174,22 +174,22 @@ class StreamingAgent:
                     "content": chunk,
                 })
         except Exception as e:
-            # Send error message as final chunk
+            # 以錯誤訊息作為最後片段
             self.send({
                 "action": "stream_chunk",
                 "stream_id": stream_id,
                 "content": f"\n\n[Error: {e}]",
             })
 
-        # Step 3: Finalize
+        # 步驟三：結束
         self.send({"action": "stream_end", "stream_id": stream_id}, wait=True)
 
 
 def call_llm(prompt):
-    """Call an OpenAI-compatible API and yield response chunks."""
+    """呼叫 OpenAI 相容 API，並逐段回傳回覆內容。"""
     import openai
 
-    client = openai.OpenAI()  # Uses OPENAI_API_KEY env var
+    client = openai.OpenAI()  # 使用 OPENAI_API_KEY 環境變數
     stream = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
@@ -204,14 +204,14 @@ def call_llm(prompt):
 def main():
     agent = StreamingAgent()
 
-    # Wait for ready
+    # 等待 ready
     while True:
         event = agent.events.get()
         if event.get("event") == "ready":
             print(f"Ready as {event['bot_name']}")
             break
 
-    # Process messages
+    # 處理訊息
     while True:
         event = agent.events.get()
         if event.get("event") != "message":
@@ -230,9 +230,9 @@ if __name__ == "__main__":
     main()
 ```
 
-## Streaming with Slash Commands
+## Slash 指令中的串流
 
-When a user invokes a slash command, the interaction is deferred with a "thinking" indicator. You can stream the response using the `interaction_token`:
+使用者叫用 Slash 指令時，互動會先顯示「思考中」。你可以用 `interaction_token` 進行串流回應：
 
 ```python
 def handle_slash_command(agent, event):
@@ -255,24 +255,24 @@ def handle_slash_command(agent, event):
 ```
 
 <Callout type="warning">
-Interaction tokens expire after 15 minutes. If your LLM takes longer than that, the `stream_start` with an `interaction_token` will fail. For long-running tasks, use a regular `stream_start` with just the `channel_id` and send a followup message to acknowledge the slash command separately.
+互動 token 會在 15 分鐘後過期。若 LLM 運行超過 15 分鐘，使用 `interaction_token` 的 `stream_start` 會失敗。對於長時間任務，請改用只帶 `channel_id` 的一般 `stream_start`，並額外送出 followup 先回覆 Slash 指令收到。
 </Callout>
 
-## Handling Long Responses
+## 處理長回應
 
-Discord messages have a 2,000 character limit. discli handles overflow automatically:
+Discord 訊息上限為 2000 字元。discli 會自動處理溢位：
 
-- During streaming, the buffer is truncated to 2,000 characters for the edit
-- On `stream_end`, if the final content exceeds 2,000 characters, discli edits the original message with the first 2,000 characters and sends the remainder as follow-up messages
+- 串流時會將緩衝區編輯內容截斷為 2000 字元
+- `stream_end` 時，如果最終內容超過 2000 字元，discli 會將前 2000 字元留在原訊息中，並以 followup 訊息傳送剩餘內容
 
-You do not need to handle this in your agent code.
+代理程式不需要自己處理這些邊界。
 
-## Edge Cases
+## 邊界情況
 
-<Accordion title="What if stream_end is never sent?">
-The stream will remain in memory indefinitely. The flush loop continues running, but since no new chunks arrive, no edits are made after the last chunk. The message stays in whatever state it was last flushed to.
+<Accordion title="如果沒有送出 stream_end 會怎麼樣？">
+`stream` 狀態會保留在記憶體中。flush 迴圈仍持續運作，但若沒有新 chunk，最後一次 flush 之後就不會再有編輯；訊息維持到最後一次刷新時的狀態。
 
-Always wrap your streaming logic in a try/finally to ensure `stream_end` is called:
+務必以 try/finally 包住串流邏輯，保證一定呼叫 `stream_end`：
 
 ```python
 stream_id = None
@@ -287,33 +287,33 @@ finally:
 ```
 </Accordion>
 
-<Accordion title="What if I send chunks too fast?">
-No problem. Chunks are appended to an in-memory buffer immediately. The flush loop only edits Discord every 1.5 seconds, so rapid chunks are batched into a single edit. There is no rate limiting on the chunk action itself.
+<Accordion title="如果串流太快？">
+不會有問題。chunk 先放入記憶體緩衝區。flush 迴圈每 1.5 秒只做一次編輯，因此大量快速到達的 chunk 會被合併為同一次編輯。`stream_chunk` 本身沒有速率限制。
 </Accordion>
 
-<Accordion title="What if I send an empty stream?">
-If you call `stream_start` followed immediately by `stream_end` with no chunks, the message will be edited to "(empty response)".
+<Accordion title="如果是空串流？">
+若你呼叫 `stream_start` 後立刻 `stream_end` 而沒有 chunk，訊息會被編輯為「(empty response)」。
 </Accordion>
 
-<Accordion title="Can I stream to multiple channels simultaneously?">
-Yes. Each `stream_start` returns a unique `stream_id`. You can have multiple active streams, each with its own buffer and flush loop.
+<Accordion title="可以同時串流到多個頻道嗎？">
+可以。每次 `stream_start` 會回傳獨立 `stream_id`。可以同時有多個進行中串流，每個都有自己的緩衝區與 flush 迴圈。
 </Accordion>
 
-<Accordion title="What if the Discord edit fails?">
-discli catches `HTTPException` on edits silently. If Discord is temporarily unavailable, the next flush cycle will retry with the latest buffer content. No chunks are lost.
+<Accordion title="若 Discord 編輯失敗呢？">
+discli 會靜默攔截編輯時的 `HTTPException`。若 Discord 暫時無法使用，下一輪 flush 會用最新的緩衝區內容重試，不會丟失任何 chunk。
 </Accordion>
 
-## Timing Considerations
+## 時序考量
 
-| Scenario | Recommendation |
+| 場景 | 建議 |
 |----------|---------------|
-| LLM generates faster than 1.5s flush | Normal. Chunks batch, user sees smooth updates. |
-| LLM generates slower than 1.5s per token | User sees occasional jumps. Consider buffering a few tokens before sending as a chunk. |
-| Very short response (under 10 tokens) | Streaming adds overhead for minimal benefit. Consider a direct `reply` instead. |
-| Very long response (over 2000 chars) | Handled automatically. Overflow goes to follow-up messages. |
+| LLM 生成速度快於 1.5 秒一輪 | 正常。chunk 會被合併，使用者感受為順暢更新。 |
+| LLM 每 token 超過 1.5 秒才產生 | 更新會有間歇性跳躍，建議先收集幾個 token 再做一次 chunk。 |
+| 很短的回應（少於 10 個 token） | 串流對效益幫助不大，建議直接用 `reply`。 |
+| 很長回應（超過 2000 字元） | 由 discli 自動處理，溢位會轉為 followup 訊息。 |
 
-## Next Steps
+## 下一步
 
-- [Building Agents](/guides/building-agents) -- See streaming in the Level 3 and Level 5 agent examples
-- [Serve Mode](/guides/serve-mode) -- Full protocol reference for all actions and events
-- [Slash Commands](/guides/slash-commands) -- Stream responses to slash command interactions
+- [建構代理](/guides/building-agents) ─ 參考第 3、5 級代理範例中的串流應用
+- [Serve 模式](/guides/serve-mode) ─ 全部動作與事件的完整協定
+- [Slash 指令](/guides/slash-commands) ─ 對 Slash 互動進行串流回應

@@ -1,71 +1,71 @@
 ---
-title: Your First Bot
-description: Build a working Discord bot agent from scratch
+title: 第一個機器人
+description: 從零開始建立可上線的 Discord 機器人代理
 ---
 
-# Your First Bot
+# 第一個機器人
 
-This guide walks you through creating a Discord application, inviting your bot to a server, and building a working agent that echoes messages — all from scratch. By the end, you will have a Python script that listens for Discord messages and replies automatically using `discli serve`.
+本指南會從頭帶你建立 Discord 應用程式、邀請機器人加入伺服器，並建立一個會回音訊息的工作代理。完成後你會有一個 Python 腳本，透過 `discli serve` 監聽訊息並自動回覆。
 
-## Prerequisites
+## 前置作業
 
-- [discli installed](/getting-started/installation)
-- A Discord account
-- A Discord server where you have admin permissions (create a test server if needed)
+- [已安裝 discli](/getting-started/installation)
+- Discord 帳號
+- 你有管理權限的 Discord 伺服器（必要時建立測試伺服器）
 
-## Set up your Discord bot
+## 設定 Discord 機器人
 
 <Steps>
-  <Step title="Create a Discord Application">
-    Go to the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.
+  <Step title="建立 Discord 應用程式">
+    前往 [Discord 開發者平台](https://discord.com/developers/applications)，點選 **New Application**。
 
-    Give it a name (e.g., "My discli Bot") and click **Create**.
+    輸入名稱（例如「My discli Bot」）並點 **Create**。
 
-    You will land on the application's General Information page.
+    你會進入該應用程式的「一般資訊」頁面。
   </Step>
 
-  <Step title="Create the Bot and copy your token">
-    In the left sidebar, click **Bot**.
+  <Step title="建立機器人並複製 Token">
+    在左側導覽列點選 **Bot**。
 
-    Click **Reset Token** (or **Add Bot** if prompted) to generate a bot token. Copy this token immediately — you will not be able to see it again.
+    點選 **Reset Token**（如果尚未建立則先點 **Add Bot**）產生機器人 Token，並立刻複製，關閉後無法再次查看。
 
     <Callout type="danger">
-      **Never share your bot token.** Anyone with the token has full control of your bot. If you accidentally expose it, reset it immediately in the Developer Portal.
+      **請不要外流機器人 Token。** 任何拿到 Token 的人都能完整控制你的機器人。若不慎外洩，請立即到開發者平台重設。
     </Callout>
   </Step>
 
-  <Step title="Enable MESSAGE CONTENT for live message events">
-    On the same **Bot** settings page, scroll down to **Privileged Gateway Intents**.
+  <Step title="啟用 MESSAGE CONTENT 供即時訊息事件使用">
+    在同一個 **Bot** 設定頁面，往下捲到 **Privileged Gateway Intents**。
 
-    Enable **MESSAGE CONTENT INTENT** if you will use `discli listen`, `discli serve`, or another feature that consumes live message events. One-shot REST commands do not open a Gateway session, although Discord may still restrict message-content fields on HTTP responses.
+    若你將使用 `discli listen`、`discli serve` 或其他會消費即時訊息事件的功能，請啟用 **MESSAGE CONTENT INTENT**。單次 REST 指令不會開啟 Gateway 連線，但 Discord 仍可能在 HTTP 回應中限制 `content` 欄位。
 
-    Click **Save Changes**.
+    點選 **Save Changes**。
 
     <Callout type="warning">
-      Without the MESSAGE CONTENT intent, your bot will receive message events but the `content` field will be empty. This is the most common reason a new bot appears to "not respond" to messages.
+      未開啟 MESSAGE CONTENT INTENT 時，機器人仍可收到事件但 `content` 會是空值，這是新機器人「看起來沒回應」最常見原因。
     </Callout>
   </Step>
 
-  <Step title="Invite the bot to your server">
-    In the left sidebar, click **OAuth2**.
+  <Step title="邀請機器人到伺服器">
+    在左側導覽點選 **OAuth2**。
 
-    Under **OAuth2 URL Generator**:
+    在 **OAuth2 URL Generator** 下方：
 
-    1. In **Scopes**, check **bot**
-    2. In **Bot Permissions**, check:
-       - **Send Messages**
-       - **Read Message History**
-       - **View Channels**
+    1. 在 **Scopes** 勾選 **bot**
+    2. 在 **Bot Permissions** 勾選：
+       - **Send Messages**（傳送訊息）
+       - **Read Message History**（讀取訊息歷史）
+       - **View Channels**（檢視頻道）
 
-    Copy the generated URL at the bottom of the page and open it in your browser. Select your test server and click **Authorize**.
+    複製頁面底部產生的 URL 並在瀏覽器開啟，選擇測試伺服器後點 **Authorize**。
 
     <Callout type="tip">
-      For a full-featured agent, you may want to add more permissions later (Manage Messages, Add Reactions, Create Public Threads, etc.). Start minimal and add permissions as you need them.
+      若你要做完整功能代理，之後可再補足更多權限（管理訊息、加上表情、建立公開討論串等）。建議先以最小權限起步，依需求逐步擴充。
     </Callout>
   </Step>
 
-  <Step title="Configure discli with your token">
-    Back in your terminal, save the bot token:
+  <Step title="用 discli 設定 Token">
+    回到終端機，儲存機器人 Token：
 
     ```bash
     discli config set token YOUR_BOT_TOKEN
@@ -75,37 +75,37 @@ This guide walks you through creating a Discord application, inviting your bot t
     Set token.
     ```
 
-    Replace `YOUR_BOT_TOKEN` with the actual token you copied in Step 2.
+    將 `YOUR_BOT_TOKEN` 換成你在步驟 2 複製的實際值。
   </Step>
 
-  <Step title="Test the connection">
-    Verify that discli can connect to Discord with your token:
+  <Step title="測試連線">
+    驗證 discli 是否能使用你的 Token 連到 Discord：
 
     ```bash
     discli server list
     ```
 
     ```
-    My Test Server (ID: 1234567890123456789) — 5 members
+    我的測試伺服器（ID: 1234567890123456789）— 5 位成員
     ```
 
-    You should see the server you just invited the bot to. If you see an error, double-check that your token is correct with `discli config show`.
+    你應該會看到剛才邀請機器人到的伺服器。若有錯誤，請用 `discli config show` 再確認一次 Token。
   </Step>
 </Steps>
 
-## Build your first agent
+## 建立第一個代理
 
-Now for the exciting part — building a bot that listens for messages and replies to them. This uses `discli serve`, which opens a persistent JSONL (JSON Lines) session over stdin/stdout.
+接著進入核心：建立一個會監聽訊息並回覆的機器人。這會使用 `discli serve`，透過 stdin/stdout 開啟持續 JSONL（JSON Lines）連線。
 
 <Steps>
-  <Step title="Create the agent script">
-    Create a file called `my_bot.py` with the following code:
+  <Step title="建立代理腳本">
+    建立 `my_bot.py`，內容如下：
 
     ```python
     import json
     import subprocess
 
-    # Start discli in serve mode with JSON output
+    # 以 JSON 輸出啟動 discli 的 serve 模式
     proc = subprocess.Popen(
         ["discli", "--json", "serve"],
         stdin=subprocess.PIPE,
@@ -113,55 +113,55 @@ Now for the exciting part — building a bot that listens for messages and repli
         text=True,
     )
 
-    # Read events from stdout, one JSON object per line
+    # 從 stdout 逐列讀取 JSON 物件事件
     for line in proc.stdout:
         event = json.loads(line)
 
-        # Only respond to non-bot messages
+        # 只回應非機器人訊息
         if event.get("event") == "message" and not event.get("is_bot"):
-            # Build a reply action
+            # 建立回覆動作
             cmd = json.dumps({
                 "action": "reply",
                 "channel_id": event["channel_id"],
                 "message_id": event["message_id"],
-                "content": f"You said: {event['content']}",
+    "content": f"你剛才說：{event['content']}",
             })
 
-            # Send the action to discli via stdin
+            # 經由 stdin 傳送動作給 discli
             proc.stdin.write(cmd + "\n")
             proc.stdin.flush()
     ```
 
-    That is 15 lines of logic — no Discord library boilerplate, no event loop setup, no gateway connection management. discli handles all of that.
+    這段程式只用 15 行邏輯，沒有 Discord 函式庫樣板、沒有額外事件迴圈設定，也不需要你自己管理 Gateway 連線，全部由 discli 接管。
   </Step>
 
-  <Step title="Run the agent">
+  <Step title="執行代理">
     ```bash
     python my_bot.py
     ```
 
-    The process starts and waits for Discord events. You will not see any output yet — that is expected.
+    程式會啟動並等待 Discord 事件，初始可能看不到輸出，這是正常現象。
   </Step>
 
-  <Step title="Test it">
-    Go to your Discord server and send a message in any channel the bot can see:
+  <Step title="測試">
+    到 Discord 伺服器中找一個機器人可讀取的頻道，傳送一則訊息：
 
     ```
-    You: Hello bot!
-    My discli Bot: You said: Hello bot!
+你：你好，bot！
+    My discli Bot：你剛才說：你好，bot！
     ```
 
-    The bot should reply within a second. Send a few more messages to confirm it is working.
+    機器人應在一秒內回覆，請再多送幾則訊息確認流程正常。
 
-    Press `Ctrl+C` in your terminal to stop the agent.
+    在終端機按 `Ctrl+C` 可停止代理。
   </Step>
 </Steps>
 
-## How the code works
+## 程式碼運作方式
 
-Let's break down each part of the agent:
+先把代理程式拆開解讀：
 
-### Starting the serve process
+### 啟動 serve 流程
 
 ```python
 proc = subprocess.Popen(
@@ -172,19 +172,19 @@ proc = subprocess.Popen(
 )
 ```
 
-This launches `discli serve` as a subprocess. The `--json` flag tells discli to output events as JSON. The `stdin` and `stdout` pipes create a bidirectional communication channel:
+這會以子進程方式啟動 `discli serve`。`--json` 旗標讓 discli 以 JSON 輸出事件，`stdin` 與 `stdout` 形成雙向通訊管道：
 
-- **stdout** — discli sends events (messages, reactions, member joins, etc.) as JSON lines
-- **stdin** — your agent sends actions (send message, reply, react, etc.) as JSON lines
+- **stdout** — discli 會將事件（訊息、表情、成員加入等）以 JSON 列輸出
+- **stdin** — 你的代理將動作（傳訊息、回覆、加表情等）以 JSON 列輸入
 
-### Reading events
+### 讀取事件
 
 ```python
 for line in proc.stdout:
     event = json.loads(line)
 ```
 
-Each line from stdout is a complete JSON object representing a Discord event. The `event` field tells you what happened. A message event looks like:
+stdout 的每列都是完整 JSON 物件，代表一則 Discord 事件。`event` 欄位指示事件種類。訊息事件範例如下：
 
 ```json
 {
@@ -193,80 +193,80 @@ Each line from stdout is a complete JSON object representing a Discord event. Th
   "message_id": "2222222222222222222",
   "author": "Alice",
   "author_id": "3333333333333333333",
-  "content": "Hello bot!",
+    "content": "你好，bot！",
   "is_bot": false,
   "guild_id": "4444444444444444444"
 }
 ```
 
-### Filtering events
+### 過濾事件
 
 ```python
 if event.get("event") == "message" and not event.get("is_bot"):
 ```
 
-This checks two things:
-1. The event is a message (not a reaction, member join, etc.)
-2. The message was not sent by a bot (prevents the bot from replying to itself in an infinite loop)
+這行邏輯會檢查兩件事：
+1. 事件是訊息而非表情、成員加入等
+2. 訊息不是機器人自己傳的（避免機器人自我回覆形成無限循環）
 
-### Sending actions
+### 傳送動作
 
 ```python
 cmd = json.dumps({
     "action": "reply",
     "channel_id": event["channel_id"],
     "message_id": event["message_id"],
-    "content": f"You said: {event['content']}",
+    "content": f"你剛才說：{event['content']}",
 })
 proc.stdin.write(cmd + "\n")
 proc.stdin.flush()
 ```
 
-To make the bot do something, write a JSON action to stdin. The `reply` action sends a reply to a specific message. Other actions include `send` (send a new message), `react` (add a reaction), `thread_create` (create a thread), and [many more](/reference/serve-actions).
+要讓機器人執行動作，就將 JSON 動作寫進 stdin。`reply` 會回覆指定訊息；其他動作還有 `send`（傳訊息）、`react`（加表情）、`thread_create`（建立討論串）與[更多](/reference/serve-actions)。
 
-The `flush()` call is important — without it, Python may buffer the write and the action will not reach discli immediately.
+`flush()` 非常重要，否則 Python 可能暫存輸出，導致動作無法即時送到 discli。
 
-## Troubleshooting
+## 疑難排解
 
 <Callout type="warning">
-  **Bot does not respond to messages?** Check these common issues:
+  **機器人沒有回應訊息嗎？** 請檢查以下常見情況：
 
-  1. **MESSAGE CONTENT intent not enabled.** Go to the Developer Portal, Bot settings, and make sure the MESSAGE CONTENT intent toggle is on. Without it, `event['content']` will be an empty string.
+  1. **MESSAGE CONTENT INTENT 未啟用。** 到開發者平台的 Bot 設定確認此開關已開啟，否則 `event['content']` 會是空字串。
 
-  2. **Bot is not in the channel.** Make sure the bot has "View Channel" permission for the channel you are testing in.
+  2. **機器人不在測試頻道。** 確認機器人在測試頻道有「檢視頻道」權限。
 
-  3. **Token is wrong or expired.** Run `discli server list` to verify the token works. If it fails, reset the token in the Developer Portal and run `discli config set token NEW_TOKEN`.
+  3. **Token 錯誤或已過期。** 執行 `discli server list` 驗證。若失敗，請在開發者平台重設 token，並執行 `discli config set token NEW_TOKEN`。
 
-  4. **Firewall or network issues.** `discli serve` needs an outbound WebSocket connection to Discord. Make sure your network allows this.
+  4. **防火牆或網路問題。** `discli serve` 需要連到 Discord 的 WebSocket 外傳連線，請確認網路允許該連線。
 </Callout>
 
 <Callout type="note">
-  **On Windows:** If stdin appears to hang, this is a known issue with Python's `subprocess` on Windows. discli handles this internally with a threaded stdin reader. Make sure you are using discli v0.5.0 or later (`pip install --upgrade discord-cli-agent`).
+  **Windows：** 若 stdin 顯示停住，這是 Python `subprocess` 在 Windows 上的已知情況。discli 內部有用執行緒式 stdin 讀取器處理，請確認使用 discli v0.5.0 以上版本（`pip install --upgrade discord-cli-agent`）。
 </Callout>
 
-## Extending your agent
+## 擴充代理
 
-Here are some ideas to build on top of this foundation:
+你可以在這個基礎上再做：
 
-- **Add an AI model.** Instead of echoing, send the message content to an LLM (Claude, GPT, etc.) and reply with the AI's response.
-- **Read conversation history.** Use the `message_list` action to fetch previous messages and give your AI context.
-- **Create threads.** Use `thread_create` to start a dedicated thread for each conversation.
-- **Add slash commands.** Register custom slash commands that users can invoke with `/`.
-- **Restrict permissions.** Use `discli permission set chat` to limit what the agent can do.
+- **加入 AI 模型。** 不必只回音，改為把訊息內容送進 LLM（Claude、GPT 等）再以 AI 回覆。
+- **讀取對話歷史。** 用 `message_list` 取得先前訊息，補齊 AI 需要的上下文。
+- **建立討論串。** 用 `thread_create` 幫每個對話各建一個專用討論串。
+- **加入斜線指令。** 設定使用者可透過 `/` 呼叫的自訂指令。
+- **限制權限。** 用 `discli permission set chat` 把可執行操作縮小到必要範圍。
 
-## What's next
+## 下一步
 
 <CardGroup cols={2}>
-  <Card title="Building Agents" href="/guides/building-agents">
-    Learn the progressive autonomy pattern — from reactive bots to fully autonomous agents.
+  <Card title="建立代理" href="/guides/building-agents">
+    了解逐步提升自主性：從反應式機器人到全自主代理。
   </Card>
-  <Card title="Serve Mode" href="/guides/serve-mode">
-    Deep dive into the JSONL protocol, all available events, and every action you can send.
+  <Card title="Serve 模式" href="/guides/serve-mode">
+    深入了解 JSONL 協定、所有可接收事件與可發送動作。
   </Card>
-  <Card title="Slash Commands" href="/guides/slash-commands">
-    Register and handle custom slash commands with deferred responses.
+  <Card title="斜線指令" href="/guides/slash-commands">
+    設定並處理可延遲回應的自訂斜線指令。
   </Card>
-  <Card title="Security & Permissions" href="/guides/security-permissions">
-    Lock down your agent with permission profiles, audit logging, and rate limiting.
+  <Card title="安全與權限" href="/guides/security-permissions">
+    用權限設定檔、稽核日誌與速率限制加強代理安全性。
   </Card>
 </CardGroup>

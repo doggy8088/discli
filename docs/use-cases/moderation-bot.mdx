@@ -1,56 +1,58 @@
 ---
-title: Moderation Bot
-description: Auto-detect spam, warn users, and kick repeat offenders
+title: 自動審核機器人
+description: 偵測違規內容、發送警告，並對重複違規者執行踢出
 ---
 
-# Moderation Bot
+# 自動審核機器人
 
-Build an automated moderation system that detects banned content, issues warnings, and escalates to kicks for repeat offenders -- all using discli commands from a simple Python script.
+建立自動化審核流程：偵測禁止內容、警告使用者，並對重複違規者執行踢出。這套機制可用 discli 指令在簡單 Python 腳本中完成。
 
-## The problem
+## 問題背景
 
-Your Discord server is growing and spam, scam links, and toxic content are getting harder to manage manually. You need automated moderation that acts instantly, tracks violations per user, and escalates enforcement progressively.
+Discord 伺服器成長後，垃圾訊息、詐騙連結、低品質訊息會越來越難人工管理。你需要一個即時機制，能即時處理違規、按使用者追蹤違規次數，並逐步升級處置。
 
-## The solution
+## 解法
 
-A Python script that:
+用一段 Python 腳本：
 
-1. Streams all messages in real time via `discli listen`
-2. Checks each message against a ban list (words, patterns, or AI classification)
-3. Deletes offending messages with `discli message delete`
-4. Warns the user with `discli message send`
-5. Kicks repeat offenders with `discli member kick`
+1. 透過 `discli listen` 持續監聽訊息事件
+2. 檢查訊息是否命中黑名單（關鍵字、樣式或 AI 分類）
+3. 用 `discli message delete` 刪除違規訊息
+4. 以 `discli message send` 提醒使用者
+5. 對超過次數限制者用 `discli member kick`
 
-No database required for the basic version -- the script tracks violations in memory.
+基礎版本無需資料庫，違規次數僅保留在記憶體。
 
-## Full working code
+## 完整可執行範例
 
 ```python
 #!/usr/bin/env python3
-"""Moderation Bot — auto-detect spam and enforce rules with discli."""
+"""自動審核機器人 — 用 discli 自動偵測垃圾訊息並執行規則。"""
 
 import json
 import subprocess
 import sys
 from collections import defaultdict
 
-# --- Configuration ---
+# --- 設定 ---
 BANNED_WORDS = {"spam", "scam", "phishing", "free nitro", "discord.gg/scam"}
-WARN_THRESHOLD = 3  # Kicks after this many violations
+WARN_THRESHOLD = 3  # 達到此次數後踢出
+
 
 def run_discli(*args):
-    """Run a discli command and return the result."""
+    """執行 discli 指令並回傳結果。"""
     result = subprocess.run(
         ["discli", "-y", *args],
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        print(f"[error] discli {' '.join(args)}: {result.stderr.strip()}", file=sys.stderr)
+        print(f"[錯誤] discli {' '.join(args)}: {result.stderr.strip()}", file=sys.stderr)
     return result
 
+
 def run_discli_json(*args):
-    """Run a discli command with JSON output."""
+    """執行帶 JSON 輸出的 discli 指令並解析回傳。"""
     result = subprocess.run(
         ["discli", "--json", "-y", *args],
         capture_output=True,
@@ -63,17 +65,18 @@ def run_discli_json(*args):
     except json.JSONDecodeError:
         return None
 
-# Track violations per user
+
+# 追蹤每位使用者違規次數
 violations = defaultdict(int)
 
-# Start listening for all messages (including from bots is optional)
+# 開始監聽所有訊息（可選是否包含 bot）
 proc = subprocess.Popen(
     ["discli", "--json", "listen", "--events", "messages"],
     stdout=subprocess.PIPE,
     text=True,
 )
 
-print("Moderation bot running. Ctrl+C to stop.", file=sys.stderr)
+print("自動審核機器人已啟動，按 Ctrl+C 可停止。", file=sys.stderr)
 
 for line in proc.stdout:
     line = line.strip()
@@ -92,61 +95,61 @@ for line in proc.stdout:
     message_id = event.get("message_id", "")
     server = event.get("server", "")
 
-    # Check for banned content
+    # 檢查違規字串
     found = [w for w in BANNED_WORDS if w in content]
     if not found:
         continue
 
-    print(f"[violation] {author} ({author_id}): matched {found}", file=sys.stderr)
+    print(f"[違規] {author} ({author_id}): 命中 {found}", file=sys.stderr)
 
-    # Step 1: Delete the offending message
+    # 步驟一：刪除違規訊息
     run_discli("message", "delete", channel_id, message_id)
 
-    # Step 2: Track and escalate
+    # 步驟二：累積違規並升級處理
     violations[author_id] += 1
     count = violations[author_id]
 
     if count >= WARN_THRESHOLD:
-        # Kick the user
+        # 踢除使用者
         run_discli(
             "member", "kick", server, author_id,
-            "--reason", f"Automated: {count} content violations",
+            "--reason", f"自動化處置：違規次數 {count} 次",
         )
         run_discli(
             "message", "send", channel_id,
-            f"**{author}** has been kicked after {count} violations.",
+            f"**{author}** 已因 {count} 次違規而被移除。",
         )
         del violations[author_id]
-        print(f"[kicked] {author} ({author_id}) after {count} violations", file=sys.stderr)
+        print(f"[已踢除] {author} ({author_id})，已超過 {count} 次違規", file=sys.stderr)
     else:
         remaining = WARN_THRESHOLD - count
         run_discli(
             "message", "send", channel_id,
-            f"{author}, your message was removed for violating server rules. "
-            f"**{remaining}** warning(s) remaining before a kick.",
+            f"{author}，你的訊息已違反伺服器規範而移除。"
+            f"**{remaining}** 次警告後將啟動踢除。",
         )
-        print(f"[warned] {author} ({author_id}): {count}/{WARN_THRESHOLD}", file=sys.stderr)
+        print(f"[警告] {author} ({author_id}): {count}/{WARN_THRESHOLD}", file=sys.stderr)
 ```
 
-## Step-by-step explanation
+## 逐步解說
 
 <Steps>
-  <Step title="Configure your bot permissions">
-    The bot needs these Discord permissions to moderate:
+  <Step title="設定機器人權限">
+    實際執行審核前，機器人需要以下 Discord 權限：
 
-    - **Read Messages** -- to receive the event stream
-    - **Manage Messages** -- to delete offending messages
-    - **Kick Members** -- to remove repeat offenders
+    - **讀取訊息**：接收事件串流
+    - **管理訊息**：刪除違規訊息
+    - **移除成員**：移除重複違規使用者
 
-    Set these in the Discord Developer Portal under your bot's OAuth2 settings.
+    在 Discord 開發者後台，將這些權限加入 bot 的 OAuth2 權限。
 
     <Callout type="tip">
-      Use `discli --profile moderation` to restrict the bot to only moderation commands. See [Security & Permissions](/guides/security-permissions) for details.
+      使用 `discli --profile moderation` 可限制機器人僅執行審核相關指令。詳細可參考 [安全性與權限](/guides/security-permissions)。
     </Callout>
   </Step>
 
-  <Step title="Define your rules">
-    The `BANNED_WORDS` set contains lowercase strings to match against message content. Matching is substring-based, so `"scam"` will catch `"this is a scam link"`.
+  <Step title="定義規則">
+    `BANNED_WORDS` 內放小寫關鍵字，依序比對訊息內容。由於是子字串比對，`scam` 會同時命中 `this is a scam link`。
 
     ```python
     BANNED_WORDS = {"spam", "scam", "phishing", "free nitro"}
@@ -154,63 +157,63 @@ for line in proc.stdout:
     ```
   </Step>
 
-  <Step title="Listen for messages">
-    The script starts `discli listen --events messages` as a long-running subprocess. Each message arrives as a JSON line on stdout.
+  <Step title="監聽訊息">
+    腳本會以 `discli listen --events messages` 啟動長生命週期程序，所有訊息會以 JSON 行輸出。
 
     ```bash
     discli --json listen --events messages
     ```
   </Step>
 
-  <Step title="Delete and warn">
-    When a violation is detected, the script immediately deletes the message using `discli message delete`, then sends a warning. The `-y` flag skips the confirmation prompt that discli normally shows for destructive actions.
+  <Step title="刪除與警告">
+    偵測到違規後，先用 `discli message delete` 刪訊息，再發出警告。`-y` 可略過確認提示。
 
     ```bash
     discli -y message delete CHANNEL_ID MESSAGE_ID
-    discli message send CHANNEL_ID "Warning message here"
+    discli message send CHANNEL_ID "警告訊息內容"
     ```
   </Step>
 
-  <Step title="Escalate to kick">
-    After `WARN_THRESHOLD` violations, the script kicks the user and posts a notification. The `--reason` flag records the reason in Discord's audit log.
+  <Step title="升級到踢除">
+    當違規次數達到 `WARN_THRESHOLD`，改為踢出使用者並寫入稽核紀錄。`--reason` 會記在 Discord 稽核日誌。
 
     ```bash
-    discli -y member kick "My Server" USER_ID --reason "Automated: 3 content violations"
+    discli -y member kick "My Server" USER_ID --reason "自動化: 3 次違規"
     ```
   </Step>
 </Steps>
 
-## Edge cases and pitfalls
+## 邊際案例與陷阱
 
 <Callout type="warning">
-  **Bot permission hierarchy.** Discord prevents bots from kicking members with a role higher than the bot's highest role. If the bot tries to kick a moderator or admin, the command will fail. Always assign the bot's role above regular member roles but below admin roles.
+  **機器人權限階層。** 如果目標成員角色高於機器人角色，Discord 會拒絕踢除。若要避免失敗，將機器人角色置於一般成員之上、但低於管理權限角色。
 </Callout>
 
 <Callout type="warning">
-  **Mass spam floods.** If a spammer sends dozens of messages per second, the bot will try to delete each one individually, which may hit Discord's rate limit (5 requests per 5 seconds per channel). For mass spam, consider banning the user immediately rather than warning first.
+  **大量垃圾訊息衝擊。** 每秒大量訊息可能使 Bot 對每則都呼叫刪除 API，接近速率限制。若垃圾訊息頻率極高，建議直接封鎖而非逐條警告。
 </Callout>
 
 <Callout type="warning">
-  **Case sensitivity and Unicode.** The example uses `.lower()` for matching, but sophisticated spammers use Unicode lookalikes (e.g., using Cyrillic characters). For production use, normalize Unicode with `unicodedata.normalize("NFKC", content)` before matching.
+  **大小寫與 Unicode。** 範例用 `.lower()` 比對，但惡意使用者可混用類似字符規避。上線前可加上 `unicodedata.normalize("NFKC", content)` 再比對。
 </Callout>
 
 <Callout type="warning">
-  **In-memory state.** The `violations` dictionary resets when the script restarts. For persistence, write violation counts to a JSON file or SQLite database.
+  **記憶體狀態。** `violations` 僅維持在程序記憶體，重啟後會清空。若要持久化，應寫入 JSON 檔或 SQLite。
 </Callout>
 
-## Extending the bot
+## 擴充方向
 
 <CardGroup cols={2}>
-  <Card title="AI content analysis">
-    Replace keyword matching with Claude to detect nuanced toxicity, context-dependent spam, and social engineering attempts. See [AI Support Agent](/use-cases/ai-support-agent) for the Claude integration pattern.
+  <Card title="AI 內容分析">
+    將關鍵字比對改為 Claude 解析上下文，辨識隱性毒性、內容型詐騙、社交工程手法。可參考 [AI 客服代理](/use-cases/ai-support-agent)。
   </Card>
-  <Card title="Configurable rules per server">
-    Load rules from a JSON config file so each server can customize banned words, thresholds, and actions without changing code.
+  <Card title="每伺服器差異化規則">
+    從 JSON 組態檔讀取規則，讓每個伺服器可自定義黑名單、警告次數、處置方式。
   </Card>
-  <Card title="Temp bans instead of kicks">
-    Use `discli member ban` with a scheduled `discli member unban` to implement temporary bans. Track ban expiry times in a database.
+  <Card title="暫時封鎖">
+    用 `discli member ban` 加上定時解封，可建立暫時封鎖流程。可在資料庫中記錄封鎖到期時間。
   </Card>
-  <Card title="Audit logging">
-    Log every moderation action to a dedicated `#mod-log` channel using `discli message send "#mod-log" "..."`. This gives your mod team full visibility.
+  <Card title="稽核日誌輸出">
+    透過 `discli message send "#mod-log" ...` 將每筆操作記錄到專門頻道，供管理者快速複盤。
   </Card>
 </CardGroup>

@@ -1,28 +1,28 @@
 ---
-title: Meeting Transcription
-description: A discli + Claude bot that joins a Discord voice channel, captures speaker-labelled transcripts, and produces a structured summary on exit
+title: 會議逐字稿
+description: 使用 discli + Claude 的機器人，加入 Discord 語音頻道進行逐字轉錄，並在離開時輸出結構化總結
 ---
 
-# Meeting Transcription
+# 會議逐字稿
 
-This use case walks through `examples/meeting_transcriber.py` — a complete, ~280-line script that joins a Discord server voice channel, transcribes every speaker live with their display name, writes to a local markdown file, and on exit asks Claude for a Summary / Key decisions / Action items / Open questions breakdown.
+本使用情境以 `examples/meeting_transcriber.py` 為主軸，這是一支約 280 行完整腳本，可加入 Discord 伺服器語音頻道，逐字辨識並即時標示發言者名稱，寫入本機 Markdown 檔，離開時再透過 Claude 產生「摘要 / 決議事項 / 行動項目 / 未解決問題」。
 
-It exists because the most common voice ask isn't "make the bot speak" — it's "give me a searchable record of what was said". This is that.
+這個功能存在的核心原因是，最常見的語音需求不是「讓機器人發聲」，而是「要可搜尋的逐字紀錄」。本文件示範的就是這一點。
 
-## What it does
+## 功能說明
 
-- Connects to a server voice channel by ID using a regular bot token
-- Streams audio to Deepgram (or OpenAI Whisper) and prints each finalised utterance to console with the speaker's display name
-- Appends every line to `~/.discli/transcripts/meeting-<YYYYMMDD-HHMMSS>.md`
-- On Ctrl+C, sends the full transcript to Claude via the Agent SDK and appends a structured summary to the same file
+- 以伺服器中的語音頻道 ID 連線。
+- 串流音訊到 Deepgram（或 OpenAI Whisper），將每位發言者的最終結果即時輸出到主控台。
+- 每一列都會附加到 `~/.discli/transcripts/meeting-<YYYYMMDD-HHMMSS>.md`。
+- 按下 Ctrl+C 時，將完整逐字稿送入 Claude，並把結構化摘要附加到同一個檔案。
 
-## What it does **not** do
+## 不包含的內容
 
-- DM voice or group-DM voice — bot tokens cannot join those per Discord's API
-- Live summary during the call — only on exit
-- Speaker recognition across calls — display names come from the current guild membership
+- 無法在 DM 或群組 DM 語音使用：機器人權杖無法加入這類語音。
+- 會議中不會即時總結：只在離開時一次輸出。
+- 不支援跨會議辨識同一位說話者：顯示名稱取自當前伺服器成員資料。
 
-## Setup
+## 安裝設定
 
 ```bash
 pip install 'discord-cli-agent[voice,deepgram]' claude-agent-sdk
@@ -30,96 +30,96 @@ discli config set token YOUR_BOT_TOKEN
 export DEEPGRAM_API_KEY=...
 ```
 
-Verify with:
+先檢查：
 
 ```bash
 discli doctor
 ```
 
-You want green ticks across CORE and VOICE, plus `DEEPGRAM_API_KEY` set under STT.
+你應該看到 CORE、VOICE 都為綠色，且 `DEEPGRAM_API_KEY` 在 STT 欄位有設定。
 
 <Callout type="note">
-  The Claude summary call uses your existing Claude Code authentication. You do **not** need an Anthropic API key separately.
+  Claude 總結使用你既有的 Claude Code 驗證，不需再額外配置 Anthropic API Key。
 </Callout>
 
-## Running it
+## 執行方式
 
-Get the voice channel ID (right-click in Discord with Developer Mode on, or `discli channel list --type voice`):
+先取得語音頻道 ID（Discord 開啟開發者模式，對目標語音頻道按右鍵複製 ID，或用 `discli channel list --type voice`）：
 
 ```bash
 python examples/meeting_transcriber.py 1016638171854938152
 ```
 
-To use OpenAI Whisper instead of Deepgram:
+若要改用 OpenAI Whisper：
 
 ```bash
 export OPENAI_API_KEY=...
 python examples/meeting_transcriber.py 1016638171854938152 --stt openai
 ```
 
-During the meeting, the console fills with speaker-labelled lines:
+會議過程中，主控台會出現逐字紀錄：
 
 ```
 Connected as MyBot#1234 (12345)
-Listening to #standup. Transcript: /home/me/.discli/transcripts/meeting-20260514-103000.md
-Press Ctrl+C to stop and generate a summary.
+Listening to #standup。逐字稿：/home/me/.discli/transcripts/meeting-20260514-103000.md
+按 Ctrl+C 停止後會自動產生摘要。
 
-- **[10:30:14] Roy:** ok let's go around — what did everyone do yesterday
-- **[10:30:22] Sara:** finished the auth migration, started on the rate limiter
-- **[10:30:35] Roy:** nice — anything blocking
+- **[10:30:14] Roy:** 好，大家先依序報告——昨天大家做了什麼？
+- **[10:30:22] Sara:** 完成了 auth 轉移，並開始進行速率限制器
+- **[10:30:35] Roy:** 很好，現在有誰卡住了嗎？
 ```
 
-Press Ctrl+C to end. You'll see:
+按 Ctrl+C 結束：
 
 ```
-Stopping listener…
-Generating summary from 47 line(s)…
-Summary cost: $0.0084
+停止監聽…
+共處理 47 行文字…
+摘要成本：$0.0084
 
-=== Meeting Summary ===
+=== 會議摘要 ===
 
-## Summary
-Standup covering yesterday's work and today's plan. Sara finished the auth
-migration; rate limiter is next.
+## 摘要
+團隊回顧昨日工作並規劃今日任務。Sara 已完成 auth
+移轉，接著進行 rate limiter。
 
-## Key decisions
-- Move forward with read-path-first for the migration this sprint.
+## 關鍵決策
+- 本次移轉先採用 read-path-first 流程。
 
-## Action items
-- Sara: finish rate limiter today.
-- Roy: write the migration runbook by Friday.
+## 行動項目
+- Sara：今天完成 rate limiter。
+- Roy：在週五前完成移轉 runbook 文件。
 
-## Open questions
-- Do we backfill old sessions or expire them?
+## 未解決問題
+- 舊的會議會話要補回填，還是直接過期？
 
-Full transcript + summary saved to: /home/me/.discli/transcripts/meeting-20260514-103000.md
+完整逐字稿與摘要已儲存到： /home/me/.discli/transcripts/meeting-20260514-103000.md
 ```
 
-## The output file
+## 輸出檔案
 
-The transcript file is plain markdown — readable, grep-able, easy to commit to a private repo or paste into a doc:
+輸出的逐字稿是一般 Markdown，方便閱讀、可用 `grep`，也可提交到內部 repo 或轉貼到文件：
 
 ```markdown
-# Meeting transcript — 2026-05-14 10:30:00
+# 會議逐字稿 — 2026-05-14 10:30:00
 
-- **Channel:** #standup (Engineering)
-- **Bot:** MyBot#1234
+- **頻道：** #standup（Engineering）
+- **機器人：** MyBot#1234
 
-## Transcript
+## 逐字稿
 
-- **[10:30:14] Roy:** ok let's go around — what did everyone do yesterday
-- **[10:30:22] Sara:** finished the auth migration, started on the rate limiter
-- **[10:30:35] Roy:** nice — anything blocking
+- **[10:30:14] Roy:** 好，大家先依序報告——昨天大家做了什麼？
+- **[10:30:22] Sara:** 完成了 auth 轉移，並開始進行速率限制器
+- **[10:30:35] Roy:** 很好，現在有誰卡住了嗎？
 
 ---
 
-## Summary
+## 摘要
 ...
 ```
 
-## How it works (~280 LOC)
+## 運作原理（約 280 行）
 
-The script is intentionally small — it reuses `VoiceEngine` from discli rather than rebuilding the voice stack:
+腳本刻意維持精簡，直接重用 discli 的 `VoiceEngine`，而非重建整套語音堆疊：
 
 ```python
 from discli.voice_engine import VoiceEngine
@@ -130,7 +130,7 @@ await engine.connect(channel)
 await engine.listen_start(channel.guild.id)
 ```
 
-The `on_event` callback receives every `voice_speech_detected` event, resolves the user ID to a display name via the guild membership, appends a markdown line to the transcript file, and prints it to console:
+`on_event` 會接收每一筆 `voice_speech_detected` 事件，根據伺服器成員查出顯示名稱，組成 markdown 行寫入檔案，也同步輸出到主控台：
 
 ```python
 def on_event(event: dict) -> None:
@@ -148,7 +148,7 @@ def on_event(event: dict) -> None:
         f.write(line + "\n")
 ```
 
-On Ctrl+C, the finally block stops the listener, disconnects, and pipes the whole transcript through Claude:
+按下 Ctrl+C 後，`finally` 會停止監聽、斷線，並將完整逐字稿透過 Claude 彙總：
 
 ```python
 async with sdk.ClaudeSDKClient(options) as claude:
@@ -157,30 +157,30 @@ async with sdk.ClaudeSDKClient(options) as claude:
         ...
 ```
 
-`SUMMARY_SYSTEM_PROMPT` instructs Claude to emit exactly four sections (Summary, Key decisions, Action items, Open questions) using the display names already in the transcript.
+`SUMMARY_SYSTEM_PROMPT` 會要求 Claude 只輸出四個欄位：`Summary`（摘要）、`Key decisions`（關鍵決策）、`Action items`（行動項目）、`Open questions`（未解決問題），並使用逐字稿中的顯示名稱。
 
-## Customising
+## 客製化
 
-Common changes:
+常見調整：
 
-| Change | Where |
+| 調整項目 | 說明 |
 |--------|-------|
-| Use a different STT provider | `--stt openai` flag, or change the `stt_provider` config default |
-| Change the summary prompt | Edit `SUMMARY_SYSTEM_PROMPT` near the top of the file |
-| Skip the summary entirely | Comment out the `_write_summary(...)` call in `finally` |
-| Post the summary back to Discord | Add a `client.get_channel(channel_id).send(summary)` after writing the file |
-| Custom transcript filename | Change `path = transcript_dir / f"meeting-{stamp}.md"` |
+| 切換 STT 提供者 | 使用 `--stt openai`，或修改預設 `stt_provider` 設定 |
+| 修改總結提示詞 | 編輯檔案上方的 `SUMMARY_SYSTEM_PROMPT` |
+| 完全略過總結 | 在 `finally` 區塊註解 `_write_summary(...)` 呼叫 |
+| 回傳總結到 Discord | 在寫入檔案後呼叫 `client.get_channel(channel_id).send(summary)` |
+| 自訂逐字稿檔名 | 修改 `path = transcript_dir / f"meeting-{stamp}.md"` |
 
-## Privacy
+## 隱私
 
-The transcript captures everyone in the channel by display name. Treat it like a recording:
+逐字稿會以顯示名稱紀錄每位參與者，因此應視為錄音紀錄來處理：
 
-- Tell participants the bot is transcribing — most jurisdictions require consent for recording
-- Store the transcript file somewhere private (the default `~/.discli/transcripts/` is your local home)
-- If you post summaries to a public channel, scrub any sensitive content first
+- 提前告知參與者正在轉錄；許多司法管轄區對錄音有同意義務
+- 將檔案保存在私有目錄（預設 `~/.discli/transcripts/` 位在使用者家目錄）
+- 若要將摘要張貼到公開頻道，先清除可能敏感內容
 
-## Where to go next
+## 下一步
 
-- See [Voice](/guides/voice) for the full voice stack overview
-- See [Building Agents](/guides/building-agents) if you want a persistent agent that transcribes alongside other tasks
-- The complete file is in the repo at [`examples/meeting_transcriber.py`](https://github.com/DevRohit06/discli/blob/main/examples/meeting_transcriber.py)
+- 參考 [Voice](/guides/voice) 了解完整語音堆疊
+- 若要建立可同時處理其他任務的常駐型機器人，參考 [建構代理](/guides/building-agents)
+- 完整腳本請見 [`examples/meeting_transcriber.py`](https://github.com/DevRohit06/discli/blob/main/examples/meeting_transcriber.py)

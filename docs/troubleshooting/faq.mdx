@@ -1,76 +1,77 @@
 ---
-title: FAQ
-description: Frequently asked questions about discli
+title: 常見問答
+description: discli 常見問題與操作解答
 ---
 
-# FAQ
+# 常見問答
 
-<Accordion title="Can I use discli without Python?">
-**Yes, for the CLI.** discli is installed via pip (it is a Python package), but once installed, the `discli` binary works as a standalone command-line tool. You do not need to write any Python.
+<Accordion title="我可以不用 Python 使用 discli 嗎？">
+**可以。** discli 本身透過 pip 安裝後會安裝為 Python 套件，但 `discli` 可執行檔可直接使用。你不用在代理端寫 Python。
 
-For agents, **any language works**. The `discli serve` protocol is language-agnostic JSONL over stdin/stdout. Your agent can be written in Node.js, Go, Rust, Ruby, Bash, or anything else that can spawn a subprocess and read/write lines.
+對代理端來說語言不受限制。`discli serve` 是跨語言協定，透過 stdin/stdout 交換 JSONL。你的代理可用 Node.js、Go、Rust、Ruby、Bash 等任意語言，只要能啟動子程序並讀寫文字流。
 
 ```bash
-# Install (requires Python/pip one time)
+# 安裝（需一次安裝 Python/pip）
 pip install discord-cli-agent
 
-# Use from any language — no Python needed after install
+# 任何語言都能使用，不需 Python
+
 discli message send "#general" "Hello from Rust!"
 ```
 </Accordion>
 
-<Accordion title="Does it work with self-hosted Discord (Fosscord, Spacebar)?">
-**No.** discli uses the official Discord API exclusively. Self-hosted Discord alternatives (Fosscord, Spacebar, Revolt, Guilded) have different APIs and are not supported.
+<Accordion title="可以搭配 Fosscord、Spacebar 之類的自架 Discord 平台嗎？">
+**不建議。** discli 使用官方 Discord API。像 Fosscord、Spacebar、Revolt、Guilded 等有各自 API 實作，未受官方支援。
 
-If a self-hosted platform offers a Discord-compatible API, discli might work by pointing the API base URL at it, but this is untested and unsupported.
+若有平台宣稱相容 API，理論上可嘗試改 base URL，但這屬未測試範圍，不在正式支援內。
 </Accordion>
 
-<Accordion title="Can multiple agents share one bot token?">
-**One `discli serve` instance per token.** Discord's gateway allows a single active WebSocket connection per bot token. Running two `discli serve` processes with the same token causes a reconnect loop.
+<Accordion title="多個代理可共用同一 bot token 嗎？">
+**每個 token 僅允許一個 `discli serve` 實例。** Discord gateway 對 bot token 只允許一個活躍 WebSocket 連線，若同時啟動兩個 `discli serve`，會互相重連。
 
-However, **one-shot CLI commands can run concurrently** with no issues. They use stateless REST API calls and never open a gateway connection, so you can have one `discli serve` running and simultaneously use `discli message send` from another terminal or script.
+但**一次性 CLI 指令可以同時執行**。它們使用無狀態 REST API 呼叫，絕不會開啟 Gateway 連線，因此可在一個 `discli serve` 執行期間，同時從其他終端機或腳本呼叫 `discli message send`。
 
-The exceptions are `discli listen` and the `discli voice` commands, which need live gateway state and therefore compete for the same single-connection slot as `serve`.
+例外是 `discli listen` 與 `discli voice` 指令；它們需要即時 Gateway 狀態，因此會與 `serve` 競爭同一個連線名額。
 
-If you need multiple independent agents, create a separate bot application and token for each one.
+若你需要多個獨立代理，請為每個代理建立不同 bot application 與 token。
 </Accordion>
 
-<Accordion title="Is this against Discord's Terms of Service?">
-**No.** discli uses the official Discord Bot API with proper bot tokens. It does not:
+<Accordion title="這樣會違反 Discord 的服務條款嗎？">
+**不會。** discli 透過官方 Discord Bot API 並使用合法 bot token。它沒有：
 
-- Use user/selfbot tokens
-- Scrape the Discord client
-- Reverse-engineer proprietary protocols
-- Bypass rate limits
+- 使用使用者 / selfbot token
+- 擷取 Discord 客戶端畫面
+- 反向工程私有協定
+- 繞過速率限制
 
-discli is no different from any other Discord bot library (discord.py, discord.js) in terms of API compliance. Your bot must still follow [Discord's Developer Terms of Service](https://discord.com/developers/docs/policies-and-agreements/developer-terms-of-service) and [Developer Policy](https://discord.com/developers/docs/policies-and-agreements/developer-policy).
+discli 在 API 合規面與一般 Discord 函式庫（discord.py、discord.js）同等。仍需遵守 [Discord 開發者條款](https://discord.com/developers/docs/policies-and-agreements/developer-terms-of-service) 與 [開發者政策](https://discord.com/developers/docs/policies-and-agreements/developer-policy)。
 </Accordion>
 
-<Accordion title="Can I use this with OpenAI, Claude, or local models?">
-**Yes, discli is model-agnostic.** The JSONL protocol does not know or care what AI model (if any) is processing events. You can use:
+<Accordion title="可以搭配 OpenAI、Claude、或本地模型嗎？">
+**可以。** discli 的 JSONL 協定不會依賴你使用的是哪個模型。你可以使用：
 
-- **OpenAI** (GPT-4, GPT-4o, etc.)
-- **Anthropic Claude** (Claude 3, Claude 4, etc.)
-- **Local models** (Llama, Mistral, Phi via Ollama, llama.cpp, vLLM)
-- **Any other model** that can read JSON and produce text
-- **No model at all** — discli works just fine for rule-based bots or simple scripts
+- **OpenAI**（GPT-4、GPT-4o 等）
+- **Anthropic Claude**（Claude 3、Claude 4 等）
+- **本地模型**（Llama、Mistral、Phi，透過 Ollama、llama.cpp、vLLM）
+- **其他任何可讀寫 JSON 並輸出文字的模型**
+- **完全不用模型**：只靠規則化機器人或腳本也可以
 
 ```python
-# Your agent decides what to do with events
+# 代理可自行決定如何處理事件
 event = json.loads(line_from_discli)
 
-# Send to whatever model you want
-response = openai.chat(...)       # or
-response = anthropic.messages(...) # or
-response = ollama.generate(...)    # or
-response = my_rules_engine(event)  # no AI needed
+# 送到指定模型
+response = openai.chat(...)       # 或
+response = anthropic.messages(...) # 或
+response = ollama.generate(...)    # 或
+response = my_rules_engine(event)  # 不一定要 AI
 ```
 </Accordion>
 
-<Accordion title="How do I add embeds, buttons, or select menus?">
-**Embeds are fully supported** in both CLI and serve mode. **Components (buttons, select menus, modals) are serve-mode only.**
+<Accordion title="怎麼加 embed、按鈕、選單？">
+**CLI 與 serve 均完整支援 embed。** 但互動元件（按鈕、選單、模態視窗）僅在 serve 模式可用。
 
-For **CLI usage**, rich embeds are supported via flags:
+**CLI 端**：透過旗標送出 embed：
 
 ```bash
 discli message send "#announcements" "New release!" \
@@ -84,13 +85,13 @@ discli message send "#announcements" "New release!" \
   --embed-field "Changes" "Bug fixes and perf improvements"
 ```
 
-Available embed flags: `--embed-title`, `--embed-desc`, `--embed-color`, `--embed-footer`, `--embed-image`, `--embed-thumbnail`, `--embed-author`, `--embed-field`.
+可用 embed 旗標：`--embed-title`、`--embed-desc`、`--embed-color`、`--embed-footer`、`--embed-image`、`--embed-thumbnail`、`--embed-author`、`--embed-field`。
 
-For **serve mode**, full embeds are supported via JSON in the `embed` field, plus interactive components:
+**serve 模式**：透過 `embed` JSON 送出完整 embed，並透過 `components` 送出互動元件：
 
-- **Buttons** — primary, secondary, success, danger, and link styles
-- **Select menus** — string select, user select, role select, and channel select
-- **Modal forms** — popup forms with short and long text inputs
+- **按鈕**：primary、secondary、success、danger、link
+- **選單**：字串、使用者、身分組、頻道選擇
+- **模態表單**：彈出式表單，含短文字與長文欄位
 
 ```json
 {"action": "send", "channel_id": "456", "content": "Pick:", "embed": {"title": "Choose", "color": "5865F2"}, "components": [
@@ -98,44 +99,44 @@ For **serve mode**, full embeds are supported via JSON in the `embed` field, plu
 ]}
 ```
 
-Components (buttons, select menus, modals) are **serve-mode only** — they are not available via the CLI. See [Components & Modals](/guides/components-modals) for the full guide.
+按鈕、選單、模態視窗都是 serve-only，不支援 CLI。詳細請看 [元件與模態視窗](/guides/components-modals)。
 </Accordion>
 
-<Accordion title="What permissions does my bot need?">
-It depends on what you are doing. Here is a minimum set for common use cases:
+<Accordion title="我的機器人需要哪些權限？">
+需求視使用情境而定。以下為常見最低權限：
 
-| Use case | Required permissions |
+| 使用情境 | 需要的 Discord 權限 |
 |---|---|
-| Send messages | Send Messages |
-| Read messages | View Channel, Read Message History |
-| Listen to events | View Channel, Read Message History |
-| Manage channels | Manage Channels |
-| Moderate members | Kick Members, Ban Members |
-| Use slash commands | Use Application Commands (enabled by default) |
+| 傳送訊息 | 發送訊息 |
+| 讀取訊息 | 檢視頻道、檢視訊息歷史 |
+| 監聽事件 | 檢視頻道、檢視訊息歷史 |
+| 管理頻道 | 管理頻道（Manage Channels） |
+| 成員管理 | 踢除成員、停權成員 |
+| 使用 slash 指令 | 使用應用程式指令（通常預設啟用） |
 
 <Callout type="tip">
-Start with the minimum permissions your bot needs. You can always add more later. The principle of least privilege applies to bots too.
+盡量先用最小權限，之後再逐步擴展。最小權限原則也適用於機器人。
 </Callout>
 </Accordion>
 
-<Accordion title="How do I update discli?">
-Use pip's upgrade flag:
+<Accordion title="如何更新 discli？">
+使用 pip 的升級參數：
 
 ```bash
 pip install --upgrade discord-cli-agent
 ```
 
-Check your current version:
+查看目前版本：
 
 ```bash
 discli --version
 ```
 
-discli follows semantic versioning. Minor and patch updates are backward-compatible. Major version bumps may include breaking changes and will be documented in the changelog.
+discli 以語意化版本管理。次版本與修正版可向下相容；主版本更新可能有破壞性變更，通常會寫在 changelog。
 </Accordion>
 
-<Accordion title="Can I run this in Docker?">
-**Yes.** discli is a standard Python package with no system-level dependencies beyond Python itself. A minimal Dockerfile:
+<Accordion title="可以放在 Docker 跑嗎？">
+**可以。** discli 是標準 Python 套件，除 Python 本身外，沒有太多系統前置。最小 Dockerfile：
 
 ```dockerfile
 FROM python:3.11-slim
@@ -144,7 +145,7 @@ ENV DISCORD_BOT_TOKEN=your_token_here
 CMD ["discli", "serve", "--events", "messages"]
 ```
 
-For production, use a non-root user and pass the token via environment variable at runtime (not baked into the image):
+上線建議使用非 root 帳號，並在執行時透過環境變數傳 token（不要寫進映像檔）：
 
 ```dockerfile
 FROM python:3.11-slim
@@ -159,12 +160,12 @@ docker run -e DISCORD_BOT_TOKEN=your_token my-discli-bot serve --events messages
 ```
 </Accordion>
 
-<Accordion title="Is there a rate limit?">
-**Yes, two layers:**
+<Accordion title="有沒有速率限制？">
+**有，分兩層：**
 
-1. **discli's built-in rate limiter** — 5 destructive actions (send, delete, ban, etc.) per 5-second window. This protects against runaway agents and keeps you well under Discord's limits. Read-only actions (list, search, info) are not rate-limited by discli.
+1. **discli 內建限制**：每 5 秒最多 5 次破壞性操作（send、delete、ban 等），用來避免代理失控並留有緩衝，唯讀操作（list、search、info）不受此限制。
 
-2. **Discord's API rate limits** — vary by endpoint. Most endpoints allow 5 requests per 5 seconds per route. Some endpoints (like bulk message delete) have stricter limits. discli handles Discord 429 responses automatically with exponential backoff.
+2. **Discord API 限制**：不同 endpoint 不同。大多數端點約每 5 秒 5 次；少部分（如 bulk delete）更嚴格。discli 會自動對 Discord 429 做指數退避。
 
-If you need higher throughput for a specific use case, check the [Discord Rate Limits documentation](https://discord.com/developers/docs/topics/rate-limits) for per-endpoint details.
+需要更高吞吐量時，請先閱讀 [Discord 速率限制文件](https://discord.com/developers/docs/topics/rate-limits)。
 </Accordion>

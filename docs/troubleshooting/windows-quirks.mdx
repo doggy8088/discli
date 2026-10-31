@@ -1,22 +1,22 @@
 ---
-title: Windows Quirks
-description: Windows-specific issues and workarounds
+title: Windows 特性
+description: Windows 專用議題與可行替代
 ---
 
-# Windows Quirks
+# Windows 特性
 
-discli works on Windows, but there are a few platform-specific behaviors to be aware of. This page documents them and their workarounds.
+discli 在 Windows 可正常運作，但有少數平台行為差異。此頁面彙整這些差異與處理方式。
 
-## stdin in serve mode
+## serve 模式中的 stdin
 
-**Issue:** Python's `asyncio` does not support reading from stdin on Windows the way it does on Unix. discli works around this by using an internal threading-based stdin reader.
+**問題：** Python `asyncio` 在 Windows 上無法像 Unix 一樣讀 stdin。discli 會用內部以執行緒實作的 stdin 讀取器處理。
 
-This is transparent in normal use — you write JSONL to stdin and discli processes it. However, there are two edge cases:
+平常使用下這對外部行為影響不大：你可直接將 JSONL 寫到 stdin，discli 就會處理。但有兩個邊界情況：
 
-- **Ctrl+C may not terminate cleanly.** The stdin reader thread can keep the process alive after a keyboard interrupt.
-- **Subprocess cleanup** needs explicit handling in your agent code.
+- **Ctrl+C 可能無法順利結束。** 讀取執行緒可能在鍵盤中斷後仍留著程序。
+- **子程序清理** 需要在代理端明確處理。
 
-**Fix:** When controlling `discli serve` from another program, use `proc.terminate()` instead of relying on Ctrl+C:
+**修正方式：** 從外部控制 `discli serve` 時，使用 `proc.terminate()` 而不是依賴 Ctrl+C：
 
 ```python
 import subprocess, signal
@@ -33,150 +33,152 @@ try:
         # process events...
         pass
 except KeyboardInterrupt:
-    proc.terminate()  # Clean shutdown on Windows
+    proc.terminate()  # Windows 用明確終止
     proc.wait(timeout=5)
 ```
 
 <Callout type="note">
-On Unix, Ctrl+C sends SIGINT which discli handles gracefully. On Windows, there is no SIGINT for child processes — `proc.terminate()` is the reliable shutdown method.
+Unix 環境中 Ctrl+C 會送 SIGINT，discli 可正常收斂；Windows 對子程序沒有 SIGINT，`proc.terminate()` 比較可靠。
 </Callout>
 
-## Path separators
+## 路徑分隔符
 
-**Issue:** Windows uses backslashes (`\`) in file paths. discli normalizes paths internally, but you may see backslashes in error messages or config output.
+**問題：** Windows 的路徑使用反斜線（`\`）。discli 內部會正規化路徑，但錯誤訊息或設定輸出可能仍看到反斜線。
 
-**Fix:** Use forward slashes everywhere. They work in both PowerShell and cmd.exe:
+**修正方式：** 優先使用正斜線：PowerShell 與 cmd 都可接受。
 
 ```bash
-# Both work on Windows
+# 兩種寫法在 Windows 都可
+
 discli message send "#logs" "report" --file C:/Users/you/report.csv
 discli message send "#logs" "report" --file C:\Users\you\report.csv
 ```
 
-The config file lives at `%USERPROFILE%\.discli\config.json` (or `~/.discli/config.json` with forward slashes).
+設定檔位置為 `%USERPROFILE%\\.discli\\config.json`（或 `~/.discli/config.json`，使用正斜線）。
 
-## PowerShell vs cmd.exe quoting
+## PowerShell 與 cmd.exe 的引號行為
 
-String quoting behaves differently between PowerShell and cmd.exe. Here are the correct forms for each:
+字串引號在 PowerShell 與 cmd.exe 差異不同。以下整理正確用法：
 
 <Tabs>
 <Tab title="PowerShell">
 ```powershell
-# Single quotes work for simple strings
+# 簡單字串可用單引號
 discli message send '#general' 'Hello from PowerShell!'
 
-# Double quotes for variable interpolation
+# 變數插值需雙引號
 $channel = "#general"
 discli message send $channel "Deploy complete at $(Get-Date)"
 
-# Escape double quotes inside double-quoted strings
+# 在雙引號字串中跳脫雙引號
 discli message send '#general' "He said `"hello`""
 
-# JSON output piped to ConvertFrom-Json
+# JSON 輸出轉 JSON 物件
+
 discli --json message list '#general' --limit 5 | ConvertFrom-Json
 ```
 </Tab>
 
 <Tab title="cmd.exe">
 ```batch
-:: Double quotes only in cmd.exe
+:: cmd.exe 只能用雙引號
 discli message send "#general" "Hello from cmd!"
 
-:: Escape inner quotes with backslash
+:: 內部雙引號用反斜線轉義
 discli message send "#general" "He said \"hello\""
 
-:: JSON output piped to a file
+:: JSON 輸出導向到檔案
 discli --json message list "#general" --limit 5 > messages.json
 ```
 </Tab>
 
 <Tab title="Git Bash / WSL">
 ```bash
-# Standard Unix quoting — works as expected
+# 標準 Unix 引號
+
 discli message send '#general' 'Hello from bash!'
 discli message send "#general" "Hello from bash!"
 
-# Pipe to jq
+# 接 jq
+
 discli --json message list '#general' --limit 5 | jq '.[0].content'
 ```
 </Tab>
 </Tabs>
 
 <Callout type="tip">
-If you are on Windows and have a choice of shell, Git Bash or WSL give you the most consistent experience with discli. The examples throughout the documentation use Unix shell syntax.
+如果可以選擇，Git Bash 或 WSL 對 discli 的行為最一致。文件範例預設採 Unix shell 語法。
 </Callout>
 
-## Unicode and emoji in cmd.exe
+## cmd.exe 的 Unicode 與 emoji
 
-**Issue:** The default cmd.exe code page (437) cannot display Unicode characters including emoji. You will see garbled output or question marks.
+**問題：** cmd.exe 預設字碼頁（437）無法顯示 Unicode 與 emoji，可能看到亂碼或問號。
 
-**Fix:** Switch to UTF-8 before running discli:
+**修正方式：** 在執行前切換到 UTF-8：
 
 ```batch
 chcp 65001
 discli message list "#general" --limit 5
 ```
 
-To make this permanent, you can set the default code page in the Windows Registry or use Windows Terminal, which defaults to UTF-8.
+若要固定使用，可在登錄檔設定預設字碼頁，或使用 Windows Terminal（預設 UTF-8）。
 
 <Callout type="note">
-PowerShell and Windows Terminal handle UTF-8 correctly out of the box. This issue only affects the classic cmd.exe console.
+PowerShell 與 Windows Terminal 預設可正確處理 UTF-8，只有經典 cmd.exe 受這個限制。
 </Callout>
 
-## pip not on PATH
+## pip 無法於 PATH
 
-**Issue:** After installing Python from python.org, `pip` and `discli` may not be on your PATH. You get `'pip' is not recognized` or `'discli' is not recognized`.
+**問題：** 使用 python.org 安裝後，`pip` 與 `discli` 可能不在 PATH，會出現 `'pip' is not recognized` 或 `'discli' is not recognized`。
 
-**Fix:**
+**修正方式：**
 
 ```batch
-:: Use python -m pip instead
+:: 改用 python -m pip
 python -m pip install discord-cli-agent
 
-:: Find where scripts are installed
+:: 找到 scripts 安裝路徑
 python -m site --user-site
 
-:: Or use py launcher (installed with Python on Windows)
+:: 或使用 py 啟動器（Python 安裝會帶）
 py -m pip install discord-cli-agent
 ```
 
-After installing, the `discli` executable is placed in Python's Scripts directory. Add it to your PATH:
+安裝後，`discli` 會放在 Python Scripts 目錄。請將該目錄加入 PATH：
 
 ```powershell
-# PowerShell — find the path
+# PowerShell：找出路徑
 python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
 
-# Add it permanently (PowerShell, run as admin)
+# 永久加到 PATH（請以系統管理員執行）
 $scriptsPath = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
 [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$scriptsPath", "User")
 ```
 
-## Long path support
+## 長路徑支援
 
-**Issue:** Windows has a default path length limit of 260 characters. If your username is long or discli's config directory is deeply nested, you may see file access errors.
+**問題：** Windows 預設路徑長度上限為 260 字元。若使用者名稱很長或 discli 設定資料夾層級過深，可能出現檔案存取錯誤。
 
-**Fix:** Enable long path support in Windows 10/11:
+**修正方式：** 啟用 Windows 10/11 長路徑支援：
 
 <Steps>
-<Step title="Open Group Policy Editor">
-Press `Win+R`, type `gpedit.msc`, press Enter.
+<Step title="開啟群組原則編輯器">
+按 `Win+R`，輸入 `gpedit.msc`，按 Enter。
 </Step>
-<Step title="Navigate to the setting">
-Go to **Computer Configuration** > **Administrative Templates** > **System** > **Filesystem**.
-</Step>
-<Step title="Enable long paths">
-Double-click **Enable Win32 long paths**, set it to **Enabled**, click OK.
+<Step title="導覽到設定">走到 **Computer Configuration** > **Administrative Templates** > **System** > **Filesystem**。</Step>
+<Step title="啟用長路徑">
+雙擊 **Enable Win32 long paths**，改為 **Enabled**，按 OK。
 </Step>
 </Steps>
 
-Alternatively, set the registry key directly:
+也可直接用登錄檔：
 
 ```powershell
-# PowerShell (run as admin)
+# PowerShell（需管理員）
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
   -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
 ```
 
 <Callout type="note">
-This issue is rare in practice. It only comes up when the full path to discli's config file exceeds 260 characters, which typically requires a very long Windows username or deeply nested install directory.
+實務上較少遇到。只有當 discli 設定檔完整路徑超過 260 字元時會發生，多半是使用者名稱非常長或安裝路徑非常深才會出現。
 </Callout>

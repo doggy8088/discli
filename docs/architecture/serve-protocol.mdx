@@ -1,11 +1,11 @@
 ---
-title: Serve Protocol
-description: Complete JSONL stdin/stdout protocol specification
+title: Serve 協定
+description: serve 模式完整 JSONL stdin/stdout 協定規格
 ---
 
-# Serve Protocol
+# Serve 協定
 
-`discli serve` implements a bidirectional communication protocol over stdin and stdout using **newline-delimited JSON (JSONL)**. Each line is a single, self-contained JSON object. Events flow out on stdout; actions flow in on stdin.
+`discli serve` 透過 stdin 與 stdout 實作雙向通訊協定，資料格式為 **逐行 JSON（JSONL）**。每一行都是獨立 JSON 物件。事件從 stdout 輸出；動作從 stdin 輸入。
 
 ```mermaid
 flowchart LR
@@ -26,83 +26,83 @@ flowchart LR
     E -- API calls --> F
 ```
 
-## Protocol basics
+## 協定基礎
 
-- **Transport:** stdin (actions) and stdout (events), one JSON object per line
-- **Encoding:** UTF-8
-- **Delimiter:** newline (`\n`) -- each line is a complete JSON object
-- **Direction:** stdout is server-to-client (events), stdin is client-to-server (actions)
-- **Correlation:** actions can include a `req_id` field; the corresponding response will echo it back
+- **傳輸：** stdin（動作）與 stdout（事件），每行一個 JSON 物件
+- **編碼：** UTF-8
+- **分隔：** 換行字元（`\n`），每行為完整 JSON 物件
+- **方向：** stdout 為伺服器到用戶端（事件），stdin 為用戶端到伺服器（動作）
+- **關聯識別：** 動作可包含 `req_id`；對應回應會回寫同一值
 
 <Callout type="warning">
-  Do not write anything to stdout other than JSONL when using serve mode programmatically. Diagnostic messages are written to stderr. If you need to debug, read stderr separately.
+  serve 模式程式化使用時，請不要輸出非 JSONL 內容到 stdout。診斷訊息都應寫入 stderr。若需除錯，請改讀取 stderr。
 </Callout>
 
-## Events (stdout)
+## 事件（stdout）
 
-Events are emitted by discli as things happen on Discord. Every event object has an `"event"` field identifying its type.
+事件由 discli 在 Discord 發生對應狀態時發出。每個事件物件都會有 `"event"` 欄位標示類型。
 
-### Lifecycle events
+### 生命週期事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `ready` | `bot_id`, `bot_name` | Bot connected to Discord gateway |
-| `slash_commands_synced` | `count`, `guilds` | Slash commands registered with Discord |
-| `error` | `message` | Internal error (non-fatal) |
-| `shutdown` | -- | Bot is shutting down |
+| `ready` | `bot_id`, `bot_name` | 機器人已連上 Discord Gateway |
+| `slash_commands_synced` | `count`, `guilds` | Slash 指令已向 Discord 註冊 |
+| `error` | `message` | 內部錯誤（非致命） |
+| `shutdown` | -- | 機器人正在關閉 |
 
-### Message events
+### 訊息事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `message` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `content`, `is_bot`, `mentions_bot`, `is_dm`, `timestamp`, `attachments`, `reply_to` | New message received |
-| `message_edit` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `old_content`, `new_content`, `timestamp` | Message was edited |
-| `message_delete` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `content` | Message was deleted |
+| `message` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `content`, `is_bot`, `mentions_bot`, `is_dm`, `timestamp`, `attachments`, `reply_to` | 收到新訊息 |
+| `message_edit` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `old_content`, `new_content`, `timestamp` | 訊息被編輯 |
+| `message_delete` | `message_id`, `channel_id`, `channel`, `server`, `server_id`, `author`, `author_id`, `content` | 訊息被刪除 |
 
-### Interaction events
+### 互動事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `slash_command` | `command`, `args`, `user`, `user_id`, `channel_id`, `guild_id`, `interaction_token`, `is_admin` | Slash command invoked by a user |
-| `component_interaction` | `custom_id`, `component_type`, `values`, `user`, `user_id`, `channel_id`, `message_id`, `interaction_token` | Button click or select menu choice |
-| `modal_submit` | `custom_id`, `fields`, `user`, `user_id`, `channel_id`, `interaction_token` | Modal form submitted by a user |
+| `slash_command` | `command`, `args`, `user`, `user_id`, `channel_id`, `guild_id`, `interaction_token`, `is_admin` | 使用者觸發 slash command |
+| `component_interaction` | `custom_id`, `component_type`, `values`, `user`, `user_id`, `channel_id`, `message_id`, `interaction_token` | 點擊按鈕或選擇下拉選單 |
+| `modal_submit` | `custom_id`, `fields`, `user`, `user_id`, `channel_id`, `interaction_token` | 使用者提交 modal 表單 |
 
-### Voice events
+### 語音事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `voice_state` | `user`, `user_id`, `channel`, `channel_id`, `old_channel`, `old_channel_id`, `guild_id`, `self_mute`, `self_deaf` | User joined, left, or moved voice channels |
+| `voice_state` | `user`, `user_id`, `channel`, `channel_id`, `old_channel`, `old_channel_id`, `guild_id`, `self_mute`, `self_deaf` | 使用者加入、離開或移動語音頻道 |
 
-### Connection events
+### 連線事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `disconnected` | `code`, `reason` | Bot disconnected from Discord gateway |
-| `resumed` | -- | Bot reconnected and resumed the session |
+| `disconnected` | `code`, `reason` | 機器人從 Discord Gateway 斷線 |
+| `resumed` | -- | 會話已重連並恢復 |
 
-### Reaction events
+### 表情事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `reaction_add` | `emoji`, `user`, `user_id`, `message_id`, `channel_id`, `server`, `channel` | Reaction added to a message |
-| `reaction_remove` | `emoji`, `user`, `user_id`, `message_id`, `channel_id`, `server`, `channel` | Reaction removed from a message |
+| `reaction_add` | `emoji`, `user`, `user_id`, `message_id`, `channel_id`, `server`, `channel` | 新增訊息表情 |
+| `reaction_remove` | `emoji`, `user`, `user_id`, `message_id`, `channel_id`, `server`, `channel` | 移除訊息表情 |
 
-### Member events
+### 成員事件
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `member_join` | `member`, `member_id`, `server`, `server_id` | User joined a server |
-| `member_remove` | `member`, `member_id`, `server`, `server_id` | User left or was removed from a server |
+| `member_join` | `member`, `member_id`, `server`, `server_id` | 成員加入伺服器 |
+| `member_remove` | `member`, `member_id`, `server`, `server_id` | 成員離開或被移除 |
 
-### Response events
+### 回應事件
 
-Every action sent via stdin produces a response on stdout:
+每個透過 stdin 發出的動作都會在 stdout 產生回應：
 
-| Event | Fields | Description |
+| 事件 | 欄位 | 說明 |
 |---|---|---|
-| `response` | `status` (`ok` or `error`), `req_id` (if provided), plus action-specific fields | Result of a dispatched action |
+| `response` | `status`（`ok` 或 `error`）、`req_id`（若有）與 action 專用欄位 | 指定動作的執行結果 |
 
-#### Example event payloads
+#### 事件範例
 
 <Tabs>
   <Tab title="message">
@@ -131,7 +131,7 @@ Every action sent via stdin produces a response on stdout:
     {
       "event": "slash_command",
       "command": "ask",
-      "args": {"question": "What is discli?"},
+      "args": {"question": "什麼是 discli？"},
       "channel_id": "222222222222222222",
       "user": "Alice#1234",
       "user_id": "333333333333333333",
@@ -153,38 +153,38 @@ Every action sent via stdin produces a response on stdout:
   </Tab>
 </Tabs>
 
-## Actions (stdin)
+## 動作（stdin）
 
-Actions are JSON objects sent to discli via stdin. Every action must have an `"action"` field. Optionally include `"req_id"` to correlate the response.
+動作是 JSON 物件，透過 stdin 送入 discli。每個動作都必須有 `"action"` 欄位。可選擇加入 `"req_id"` 以對應回應。
 
 ```json
 {"action": "send", "channel_id": "222222222222222222", "content": "Hello!", "req_id": "msg-001"}
 ```
 
-### Messaging
+### 訊息操作
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `send` | `channel_id`, `content` | `embed`, `components`, `files`, `req_id` | Send a message to a channel |
-| `reply` | `channel_id`, `message_id`, `content` | `embed`, `components`, `files`, `req_id` | Reply to a specific message |
-| `edit` | `channel_id`, `message_id`, `content` | `embed`, `components`, `req_id` | Edit a bot message |
-| `delete` | `channel_id`, `message_id` | `req_id` | Delete a message |
+| `send` | `channel_id`, `content` | `embed`, `components`, `files`, `req_id` | 傳送訊息到頻道 |
+| `reply` | `channel_id`, `message_id`, `content` | `embed`, `components`, `files`, `req_id` | 回覆指定訊息 |
+| `edit` | `channel_id`, `message_id`, `content` | `embed`, `components`, `req_id` | 編輯機器人訊息 |
+| `delete` | `channel_id`, `message_id` | `req_id` | 刪除訊息 |
 
-### Streaming
+### 串流回應
 
-Streaming lets you progressively update a single message, similar to how ChatGPT streams responses. Content is buffered and flushed to Discord every 1.5 seconds to respect rate limits.
+串流可逐步更新同一則訊息，類似 ChatGPT 的回應方式。內容先暫存，並每 1.5 秒一次批次送到 Discord，以符合速率限制。
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `stream_start` | `channel_id` | `reply_to`, `interaction_token`, `req_id` | Start a streaming message (sends "..." placeholder) |
-| `stream_chunk` | `stream_id`, `content` | `req_id` | Append text to the stream buffer |
-| `stream_end` | `stream_id` | `req_id` | Finalize the stream, flush remaining content |
+| `stream_start` | `channel_id` | `reply_to`, `interaction_token`, `req_id` | 開始串流訊息（先送 `...` 佔位內容） |
+| `stream_chunk` | `stream_id`, `content` | `req_id` | 將文字加入串流暫存 |
+| `stream_end` | `stream_id` | `req_id` | 結束串流並送出剩餘內容 |
 
 <Callout type="tip">
-  The `stream_start` response includes a `stream_id` that you must pass to subsequent `stream_chunk` and `stream_end` actions. If the content exceeds Discord's 2000-character limit, `stream_end` automatically splits it across multiple messages.
+  `stream_start` 會回傳 `stream_id`，後續 `stream_chunk` 與 `stream_end` 必須帶入同一值。若內容超過 Discord 2000 字上限，`stream_end` 會自動拆成多則訊息。
 </Callout>
 
-#### Streaming example
+#### 串流範例
 
 ```json
 {"action": "stream_start", "channel_id": "222222222222222222", "req_id": "s1"}
@@ -193,148 +193,148 @@ Streaming lets you progressively update a single message, similar to how ChatGPT
 {"event": "response", "req_id": "s1", "stream_id": "a1b2c3d4", "message_id": "555555555555555555"}
 ```
 ```json
-{"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "Here is the "}
+{"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "以下是"}
 ```
 ```json
-{"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "answer to your question..."}
+{"action": "stream_chunk", "stream_id": "a1b2c3d4", "content": "您的問題回覆..."}
 ```
 ```json
 {"action": "stream_end", "stream_id": "a1b2c3d4", "req_id": "s1-end"}
 ```
 
-### Interactions
+### 互動操作
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `interaction_respond` | `interaction_token`, `content` | `embed`, `components`, `ephemeral`, `req_id` | Immediate response to a component interaction |
-| `interaction_edit` | `interaction_token` | `content`, `embed`, `components`, `req_id` | Edit the original interaction message |
-| `interaction_followup` | `interaction_token`, `content` | `embed`, `components`, `req_id` | Send a follow-up response to a slash command |
-| `modal_send` | `interaction_token`, `title`, `custom_id`, `fields` | `req_id` | Open a modal form in response to a component interaction |
+| `interaction_respond` | `interaction_token`, `content` | `embed`, `components`, `ephemeral`, `req_id` | 對元件互動作立即回應 |
+| `interaction_edit` | `interaction_token` | `content`, `embed`, `components`, `req_id` | 編輯原始互動訊息 |
+| `interaction_followup` | `interaction_token`, `content` | `embed`, `components`, `req_id` | 對 slash command 送出追蹤回應 |
+| `modal_send` | `interaction_token`, `title`, `custom_id`, `fields` | `req_id` | 在互動事件中開啟 modal 表單 |
 
 <Callout type="note">
-  Slash command interactions are automatically deferred with a "thinking" indicator. You must respond with either `interaction_followup` or `stream_start` (with the `interaction_token`) within 15 minutes, per Discord's limits.
+  Slash command 互動會自動使用「思考中」狀態延遲回應。依照 Discord 限制，必須在 15 分鐘內以 `interaction_followup` 或 `stream_start`（需 `interaction_token`）回應。
 </Callout>
 
-### Typing
+### 輸入指示
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `typing_start` | `channel_id` | `req_id` | Start showing "bot is typing..." indicator |
-| `typing_stop` | `channel_id` | `req_id` | Stop the typing indicator |
+| `typing_start` | `channel_id` | `req_id` | 開始顯示「bot 正在輸入…」 |
+| `typing_stop` | `channel_id` | `req_id` | 停止輸入指示 |
 
-### Presence
+### 狀態更新
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `presence` | -- | `status`, `activity_type`, `activity_text`, `req_id` | Update bot status and activity |
+| `presence` | -- | `status`, `activity_type`, `activity_text`, `req_id` | 更新機器人狀態與活動 |
 
-`status` can be `online`, `idle`, `dnd`, or `invisible`. `activity_type` can be `playing`, `watching`, `listening`, or `competing`.
+`status` 可為 `online`、`idle`、`dnd`、`invisible`。`activity_type` 可為 `playing`、`watching`、`listening`、`competing`。
 
-### Reactions
+### 表情操作
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `reaction_add` | `channel_id`, `message_id`, `emoji` | `req_id` | Add a reaction to a message |
-| `reaction_remove` | `channel_id`, `message_id`, `emoji` | `req_id` | Remove the bot's reaction from a message |
+| `reaction_add` | `channel_id`, `message_id`, `emoji` | `req_id` | 對訊息加反應 |
+| `reaction_remove` | `channel_id`, `message_id`, `emoji` | `req_id` | 移除機器人的反應 |
 
-### Threads
+### 討論串
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `thread_create` | `channel_id`, `name` | `message_id`, `auto_archive_duration`, `content`, `req_id` | Create a thread (optionally from a message) |
-| `thread_send` | `thread_id`, `content` | `files`, `req_id` | Send a message to a thread |
-| `thread_list` | `channel_id` | `req_id` | List threads in a channel |
-| `thread_archive` | `thread_id` | `req_id` | Archive a thread |
-| `thread_rename` | `thread_id`, `name` | `req_id` | Rename a thread |
-| `thread_add_member` | `thread_id`, `user_id` | `req_id` | Add a member to a thread |
-| `thread_remove_member` | `thread_id`, `user_id` | `req_id` | Remove a member from a thread |
+| `thread_create` | `channel_id`, `name` | `message_id`, `auto_archive_duration`, `content`, `req_id` | 建立討論串（可選擇性由訊息建立） |
+| `thread_send` | `thread_id`, `content` | `files`, `req_id` | 在討論串發送訊息 |
+| `thread_list` | `channel_id` | `req_id` | 列出頻道中的討論串 |
+| `thread_archive` | `thread_id` | `req_id` | 封存討論串 |
+| `thread_rename` | `thread_id`, `name` | `req_id` | 重新命名討論串 |
+| `thread_add_member` | `thread_id`, `user_id` | `req_id` | 將成員加入討論串 |
+| `thread_remove_member` | `thread_id`, `user_id` | `req_id` | 將成員移出討論串 |
 
-### Polls
+### 投票
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `poll_send` | `channel_id`, `question`, `answers` | `duration_hours`, `multiple`, `content`, `req_id` | Create a poll in a channel |
-| `poll_results` | `channel_id`, `message_id` | `req_id` | Get current poll results |
-| `poll_end` | `channel_id`, `message_id` | `req_id` | End a poll early |
+| `poll_send` | `channel_id`, `question`, `answers` | `duration_hours`, `multiple`, `content`, `req_id` | 在頻道建立投票 |
+| `poll_results` | `channel_id`, `message_id` | `req_id` | 取得目前投票結果 |
+| `poll_end` | `channel_id`, `message_id` | `req_id` | 提早結束投票 |
 
-`answers` is an array of strings or objects with `text` and optional `emoji` fields. Minimum 2 answers required.
+`answers` 是字串陣列，或含 `text` 且可選 `emoji` 欄位的物件陣列。最少需提供 2 個答案。
 
-### Channels
+### 頻道
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `channel_list` | -- | `guild_id`, `req_id` | List channels (optionally filtered by server) |
-| `channel_create` | `guild_id`, `name` | `type`, `req_id` | Create a channel (`text`, `voice`, or `category`) |
-| `channel_info` | `channel_id` | `req_id` | Get channel details |
-| `channel_edit` | `channel_id` | `name`, `topic`, `nsfw`, `slowmode`, `req_id` | Edit channel settings |
-| `channel_set_permissions` | `channel_id`, `target_id`, `target_type` | `allow`, `deny`, `req_id` | Set permission overwrites for a role or member |
-| `forum_post` | `channel_id`, `name`, `content` | `tags`, `embed`, `req_id` | Create a post in a forum channel |
+| `channel_list` | -- | `guild_id`, `req_id` | 列出頻道（可依伺服器過濾） |
+| `channel_create` | `guild_id`, `name` | `type`, `req_id` | 建立頻道（`text`、`voice` 或 `category`） |
+| `channel_info` | `channel_id` | `req_id` | 取得頻道明細 |
+| `channel_edit` | `channel_id` | `name`, `topic`, `nsfw`, `slowmode`, `req_id` | 修改頻道設定 |
+| `channel_set_permissions` | `channel_id`, `target_id`, `target_type` | `allow`, `deny`, `req_id` | 設定身分組或成員權限覆寫 |
+| `forum_post` | `channel_id`, `name`, `content` | `tags`, `embed`, `req_id` | 在論壇頻道建立貼文 |
 
-### Members
+### 成員
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `member_list` | `guild_id` | `limit`, `req_id` | List server members (default limit: 50) |
-| `member_info` | `guild_id`, `member_id` | `req_id` | Get detailed member info including roles |
-| `member_timeout` | `guild_id`, `member_id`, `duration` | `reason`, `req_id` | Timeout a member (max 2419200s / 28 days, 0 to remove) |
+| `member_list` | `guild_id` | `limit`, `req_id` | 列出伺服器成員（預設 50 筆） |
+| `member_info` | `guild_id`, `member_id` | `req_id` | 取得含角色的成員詳細資料 |
+| `member_timeout` | `guild_id`, `member_id`, `duration` | `reason`, `req_id` | 對成員啟用停權（最長 2419200 秒 / 28 天，填 0 可移除） |
 
-### Roles
+### 身分組
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `role_list` | `guild_id` | `req_id` | List server roles |
-| `role_assign` | `guild_id`, `member_id`, `role_id` | `req_id` | Assign a role to a member |
-| `role_remove` | `guild_id`, `member_id`, `role_id` | `req_id` | Remove a role from a member |
-| `role_edit` | `guild_id`, `role_id` | `name`, `color`, `permissions`, `req_id` | Edit role properties |
+| `role_list` | `guild_id` | `req_id` | 列出伺服器身分組 |
+| `role_assign` | `guild_id`, `member_id`, `role_id` | `req_id` | 指派身分組 |
+| `role_remove` | `guild_id`, `member_id`, `role_id` | `req_id` | 取消指派身分組 |
+| `role_edit` | `guild_id`, `role_id` | `name`, `color`, `permissions`, `req_id` | 編輯身分組屬性 |
 
-### DMs
+### 私訊
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `dm_send` | `user_id`, `content` | `req_id` | Send a direct message to a user |
+| `dm_send` | `user_id`, `content` | `req_id` | 傳送私人訊息 |
 
-### Message queries
+### 訊息查詢
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `message_list` | `channel_id` | `limit`, `req_id` | List recent messages (default limit: 20) |
-| `message_get` | `channel_id`, `message_id` | `req_id` | Get a single message with full details |
-| `message_search` | `channel_id` | `query`, `author`, `limit`, `req_id` | Search messages by content or author |
-| `message_pin` | `channel_id`, `message_id` | `req_id` | Pin a message |
-| `message_unpin` | `channel_id`, `message_id` | `req_id` | Unpin a message |
-| `message_bulk_delete` | `channel_id`, `message_ids` | `req_id` | Delete multiple messages at once (2-100, max 14 days old) |
+| `message_list` | `channel_id` | `limit`, `req_id` | 列出最近訊息（預設 20 筆） |
+| `message_get` | `channel_id`, `message_id` | `req_id` | 取得單筆訊息完整資料 |
+| `message_search` | `channel_id` | `query`, `author`, `limit`, `req_id` | 依內容或作者搜尋訊息 |
+| `message_pin` | `channel_id`, `message_id` | `req_id` | 釘選訊息 |
+| `message_unpin` | `channel_id`, `message_id` | `req_id` | 取消釘選 |
+| `message_bulk_delete` | `channel_id`, `message_ids` | `req_id` | 一次刪除多則訊息（2–100 則，最多 14 天前） |
 
-### Reactions (extended)
+### 表情（延伸）
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `reaction_users` | `channel_id`, `message_id`, `emoji` | `limit`, `req_id` | List users who reacted with a specific emoji |
+| `reaction_users` | `channel_id`, `message_id`, `emoji` | `limit`, `req_id` | 列出對特定 emoji 按過反應的使用者 |
 
-### Webhooks
+### Webhook
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `webhook_list` | `channel_id` | `req_id` | List webhooks for a channel |
-| `webhook_create` | `channel_id`, `name` | `avatar`, `req_id` | Create a webhook |
-| `webhook_delete` | `webhook_id` | `req_id` | Delete a webhook |
+| `webhook_list` | `channel_id` | `req_id` | 列出頻道的 webhook |
+| `webhook_create` | `channel_id`, `name` | `avatar`, `req_id` | 建立 webhook |
+| `webhook_delete` | `webhook_id` | `req_id` | 刪除 webhook |
 
-### Scheduled events
+### 排程事件
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `event_list` | `guild_id` | `req_id` | List scheduled events |
-| `event_create` | `guild_id`, `name`, `start_time` | `end_time`, `description`, `channel_id`, `location`, `req_id` | Create a scheduled event |
+| `event_list` | `guild_id` | `req_id` | 列出已排程事件 |
+| `event_create` | `guild_id`, `name`, `start_time` | `end_time`, `description`, `channel_id`, `location`, `req_id` | 建立排程事件 |
 
-### Server
+### 伺服器
 
-| Action | Required Fields | Optional Fields | Description |
+| 動作 | 必要欄位 | 選用欄位 | 說明 |
 |---|---|---|---|
-| `server_list` | -- | `req_id` | List servers the bot is in |
-| `server_info` | `guild_id` | `req_id` | Get detailed server info |
+| `server_list` | -- | `req_id` | 列出機器人所在伺服器 |
+| `server_info` | `guild_id` | `req_id` | 取得伺服器完整資訊 |
 
-## Request-response correlation
+## 請求/回應關聯
 
-Every action can include a `req_id` field (any string). The response will echo it back, letting you match responses to requests in concurrent scenarios.
+每個動作可帶 `req_id`（任意字串）。回應會回填相同 ID，可在並行情境下對齊請求與回應。
 
 ```json
 {"action": "send", "channel_id": "123", "content": "Hello", "req_id": "abc-001"}
@@ -345,60 +345,60 @@ Every action can include a `req_id` field (any string). The response will echo i
 ```
 
 <Callout type="tip">
-  If you omit `req_id`, the response will still be emitted but without a correlation ID. For simple sequential agents this is fine. For agents that send multiple actions concurrently, always include `req_id`.
+  如果你不帶 `req_id`，回應仍會被送出，但不含關聯識別。對單線程順序代理可接受；若同時發出多個動作，務必提供 `req_id`。
 </Callout>
 
-## Error handling
+## 錯誤處理
 
-When an action fails, the response includes `"error"` instead of `"ok"`:
+動作失敗時，回應改以 `"error"` 取代 `"ok"`：
 
 ```json
 {"event": "response", "req_id": "abc-002", "error": "Channel not found: 999"}
 ```
 
-Common error conditions:
+常見錯誤原因：
 
-| Error | Cause |
+| 錯誤 | 成因 |
 |---|---|
-| `Missing 'action' field` | The JSON object did not include an `action` key |
-| `Unknown action: foo` | The action name is not in the action registry |
-| `Channel not found: ...` | Invalid or inaccessible channel ID |
-| `Missing 'guild_id'` | A required field was omitted |
-| `Invalid JSON: ...` | The stdin line was not valid JSON |
+| `Missing 'action' field` | JSON 物件缺少 `action` 欄位 |
+| `Unknown action: foo` | 行為名稱不在動作登錄表 |
+| `Channel not found: ...` | 無效或不可存取的頻道 ID |
+| `Missing 'guild_id'` | 必填欄位遺漏 |
+| `Invalid JSON: ...` | stdin 其中一行不是有效 JSON |
 
-Non-fatal errors (e.g., slash command sync failures) are emitted as standalone error events:
+非致命錯誤（例如 slash command 同步失敗）會以獨立 error 事件輸出：
 
 ```json
 {"event": "error", "message": "Failed to sync commands to My Server: ..."}
 ```
 
-## Event filtering
+## 事件篩選
 
-Use command-line options to filter which events are forwarded:
+可用指令參數篩選要轉送的事件：
 
 ```bash
-# Only message and reaction events
+# 僅轉送訊息與反應事件
 discli serve --events messages,reactions
 
-# Only events from a specific server
+# 僅來自特定伺服器
 discli serve --server "My Server"
 
-# Only events from a specific channel
+# 僅來自特定頻道
 discli serve --channel "#general"
 
-# Exclude bot's own messages
+# 不包含機器人自己的訊息
 discli serve --no-include-self
 ```
 
-Available event filter values: `messages`, `reactions`, `members`, `edits`, `deletes`, `voice`, `interactions`.
+可用事件過濾值：`messages`, `reactions`, `members`, `edits`, `deletes`, `voice`, `interactions`。
 
 <Callout type="note">
-  The protocol currently supports **54 actions** and **17 event types**. See the [Serve Actions](/reference/serve-actions) and [Serve Events](/reference/serve-events) references for the complete list.
+  本協定目前支援 **54 個動作**與 **17 種事件類型**。完整清單請參考 [Serve 動作](/reference/serve-actions) 與 [Serve 事件](/reference/serve-events)。
 </Callout>
 
-## Slash command registration
+## Slash 指令註冊
 
-Pass a JSON file to register slash commands on startup:
+於啟動時可傳入 JSON 檔註冊 slash 指令：
 
 ```bash
 discli serve --slash-commands commands.json
@@ -408,27 +408,27 @@ discli serve --slash-commands commands.json
 [
   {
     "name": "ask",
-    "description": "Ask the bot a question",
+    "description": "向機器人提問",
     "params": [
-      {"name": "question", "type": "string", "required": true, "description": "Your question"}
+      {"name": "question", "type": "string", "required": true, "description": "你的問題"}
     ]
   },
   {
     "name": "status",
-    "description": "Check bot status"
+    "description": "檢查機器人狀態"
   }
 ]
 ```
 
-Commands are synced per-guild for instant availability. When a user invokes a slash command, a `slash_command` event is emitted with an `interaction_token` that you use to respond.
+指令會逐伺服器同步以提供即時可用性。使用者觸發 slash command 時，會收到 `slash_command` 事件，內含 `interaction_token`，供回應使用。
 
-## Next steps
+## 後續步驟
 
 <CardGroup cols={2}>
-  <Card title="Architecture Overview" href="/architecture/overview">
-    Understand how serve mode fits into the overall discli architecture.
+  <Card title="架構總覽" href="/architecture/overview">
+    了解 serve 模式在 discli 整體架構中的角色。
   </Card>
-  <Card title="Building Agents" href="/guides/building-agents">
-    Build AI agents that communicate over the serve protocol.
+  <Card title="建立代理" href="/guides/building-agents">
+    建置以 serve 協定通訊的 AI 代理。
   </Card>
 </CardGroup>

@@ -102,6 +102,8 @@ It checks your token against Discord *before* saving it and shows you which bot 
 
    ```bash
    discli config set token YOUR_BOT_TOKEN
+   # or save the token from an environment variable into the config file
+   discli config set token $DISCORD_TOKEN
    ```
 
 5. Verify everything works:
@@ -193,6 +195,9 @@ Voice needs the `[voice]` extra plus a provider (`[deepgram]` / `[elevenlabs]` /
 
 ```bash
 discli config set token YOUR_TOKEN
+# or save the token from an environment variable into the config file:
+discli config set token $DISCORD_TOKEN
+
 discli config show
 ```
 
