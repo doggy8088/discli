@@ -3,21 +3,21 @@
 <!-- ===== 導覽 ===== -->
 <nav class="nav">
   <div class="container">
-    <a href="/" class="nav-brand">
-      <img src="/logo.svg" width="24" height="24" alt="discli" />
+    <a href="./" class="nav-brand">
+      <img src="./logo.svg" width="24" height="24" alt="discli" />
       <span>discli</span>
     </a>
     <div class="nav-links">
-      <a href="/getting-started/installation">文件</a>
-      <a href="/guides/building-agents">指南</a>
-      <a href="/reference/cli-commands">參考</a>
+      <a href="./getting-started/installation">文件</a>
+      <a href="./guides/building-agents">指南</a>
+      <a href="./reference/cli-commands">參考</a>
     </div>
     <div class="nav-right">
       <a href="https://github.com/DevRohit06/discli" target="_blank" rel="noopener" class="nav-gh">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         GitHub
       </a>
-      <a href="/getting-started/quickstart" class="nav-cta">開始使用</a>
+      <a href="./getting-started/quickstart" class="nav-cta">開始使用</a>
     </div>
   </div>
 </nav>
@@ -36,7 +36,7 @@
     <h1 class="hero-h1">Discord CLI，供<br />AI 代理與人類使用</h1>
     <p class="hero-sub">在終端機中建立自主 Discord 機器人、伺服器自動化與 AI 代理；全程只需一支工具。單一可執行檔，支援任何語言，無樣板負擔。</p>
     <div class="hero-actions">
-      <a href="/getting-started/quickstart" class="btn-primary">開始使用</a>
+      <a href="./getting-started/quickstart" class="btn-primary">開始使用</a>
       <div class="install-pill" onclick="copyInstall()" role="button" tabindex="0" aria-label="複製安裝指令">
         <span class="pill-dollar">$</span>
         <code>pip install discord-cli-agent</code>
@@ -158,8 +158,8 @@ proc = subprocess.Popen(
         proc.stdin.flush()</pre>
     </div>
     <div class="cta-row">
-      <a href="/getting-started/your-first-bot" class="btn-primary">完整操作步驟 →</a>
-      <a href="/guides/building-agents" class="btn-ghost">建立代理 →</a>
+      <a href="./getting-started/your-first-bot" class="btn-primary">完整操作步驟 →</a>
+      <a href="./guides/building-agents" class="btn-ghost">建立代理 →</a>
     </div>
   </div>
 </section>
@@ -170,32 +170,32 @@ proc = subprocess.Popen(
     <span class="label">應用場景</span>
     <h2 class="section-h2">你想打造什麼？</h2>
     <div class="cases-grid">
-      <a href="/use-cases/ai-support-agent" class="case-card">
+      <a href="./use-cases/ai-support-agent" class="case-card">
         <span class="case-num">01</span>
         <h3>AI 客服代理</h3>
         <p>使用 Claude、GPT 或任何模型，讓代理自主回答問題。</p>
       </a>
-      <a href="/use-cases/moderation-bot" class="case-card">
+      <a href="./use-cases/moderation-bot" class="case-card">
         <span class="case-num">02</span>
         <h3>自動審核機器人</h3>
         <p>自動偵測垃圾訊息，警告使用者，移除反覆違規者。</p>
       </a>
-      <a href="/use-cases/thread-based-support" class="case-card">
+      <a href="./use-cases/thread-based-support" class="case-card">
         <span class="case-num">03</span>
         <h3>討論串客服</h3>
         <p>依需求建立討論串，管理非同步對話。</p>
       </a>
-      <a href="/use-cases/channel-logger" class="case-card">
+      <a href="./use-cases/channel-logger" class="case-card">
         <span class="case-num">04</span>
         <h3>頻道紀錄器</h3>
         <p>將事件串流寫入 JSONL 檔案，單行命令即可完成設定。</p>
       </a>
-      <a href="/use-cases/ci-notifications" class="case-card">
+      <a href="./use-cases/ci-notifications" class="case-card">
         <span class="case-num">05</span>
         <h3>CI 通知</h3>
         <p>接收 GitHub Actions 的建置狀態與部署警示。</p>
       </a>
-      <a href="/guides/building-agents" class="case-card case-card--cta">
+      <a href="./guides/building-agents" class="case-card case-card--cta">
         <span class="case-num">+</span>
         <h3>你的構想</h3>
         <p>通訊協定完全開放，想像中的功能都能實作。</p>
@@ -225,7 +225,7 @@ proc = subprocess.Popen(
     <h2 class="cta-h2">準備好上手了嗎？</h2>
     <p class="cta-sub">數秒內安裝 discli，今天就上線第一個代理。</p>
     <div class="hero-actions">
-      <a href="/getting-started/quickstart" class="btn-primary btn-primary--lg">開始使用</a>
+      <a href="./getting-started/quickstart" class="btn-primary btn-primary--lg">開始使用</a>
     </div>
   </div>
 </section>
@@ -235,8 +235,8 @@ proc = subprocess.Popen(
   <div class="container">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="/" class="footer-logo">
-          <img src="/logo.svg" width="20" height="20" alt="discli" />
+        <a href="./" class="footer-logo">
+          <img src="./logo.svg" width="20" height="20" alt="discli" />
           <span>discli</span>
         </a>
         <p class="footer-tagline">供 AI 代理與人類使用的 Discord CLI</p>
@@ -244,17 +244,17 @@ proc = subprocess.Popen(
       <div class="footer-cols">
         <div class="footer-col">
           <h4>文件</h4>
-          <a href="/getting-started/installation">安裝</a>
-          <a href="/getting-started/quickstart">快速上手</a>
-          <a href="/getting-started/your-first-bot">第一個機器人</a>
-          <a href="/reference/cli-commands">CLI 參考</a>
+          <a href="./getting-started/installation">安裝</a>
+          <a href="./getting-started/quickstart">快速上手</a>
+          <a href="./getting-started/your-first-bot">第一個機器人</a>
+          <a href="./reference/cli-commands">CLI 參考</a>
         </div>
         <div class="footer-col">
           <h4>指南</h4>
-          <a href="/guides/building-agents">建立代理</a>
-          <a href="/guides/serve-mode">Serve 模式</a>
-          <a href="/guides/streaming-responses">串流回應</a>
-          <a href="/guides/security-permissions">安全</a>
+          <a href="./guides/building-agents">建立代理</a>
+          <a href="./guides/serve-mode">Serve 模式</a>
+          <a href="./guides/streaming-responses">串流回應</a>
+          <a href="./guides/security-permissions">安全</a>
         </div>
         <div class="footer-col">
           <h4>社群</h4>

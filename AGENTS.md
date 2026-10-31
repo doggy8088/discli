@@ -119,4 +119,4 @@ Docs live in `docs/` — Lito framework with `docs-config.json` for sidebar/them
 
 Bump version in `pyproject.toml` → commit → `git tag vX.Y.Z && git push origin vX.Y.Z` → CI runs tests (Python 3.10–3.13), builds, creates GitHub Release, publishes to PyPI.
 
-**There is no CI on pushes or PRs** — tests run only on `v*` tags, so run `uv run pytest tests/ -v` locally before pushing. The docs workflow is path-filtered to `docs/**` on `main`.
+**There is no CI on pushes or PRs** — tests run only on `v*` tags, so run `uv run pytest tests/ -v` locally before pushing. The docs workflow is path-filtered to `docs/**` on `zh-tw`, the default branch of this fork, and publishes the Traditional Chinese docs to GitHub Pages.

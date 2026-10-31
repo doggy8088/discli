@@ -121,8 +121,10 @@ test ! -e ~/.local/bin/discli
 
 ## 文件翻譯與部署
 
-`docs/` 已翻譯為台灣正體中文，並由 `.github/workflows/docs.yml` 在 `main`
-有 `docs/**` 變更時部署到 GitHub Pages。
+`docs/` 已翻譯為台灣正體中文，並由 `.github/workflows/docs.yml` 在 `zh-tw`
+（本 fork 的預設分支）有 `docs/**` 變更時部署到 GitHub Pages
+（https://discli.gh.miniasp.com/）。`zh-tw` 之外的分支不會觸發部署，
+GitHub 的 `github-pages` 環境也需要允許該分支。
 
 本機預覽：
 
@@ -136,5 +138,5 @@ npx --yes @litodocs/cli@1.4.2 dev -i ./docs
 git diff <上次同步的 commit> upstream/main --stat -- docs
 ```
 
-上游新增的 `docs/public/.well-known/paw-verify` 是維護者的驗證檔，部署後會出現在
-你的網域下。
+上游的 `docs/public/.well-known/paw-verify` 是上游維護者的網域驗證檔，本 fork
+已刪除，避免從自己的網域對外提供。之後合併上游若再次出現，請保持刪除。
